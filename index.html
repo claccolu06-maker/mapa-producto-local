@@ -15,6 +15,38 @@
 </head>
 <body>
     <h1>Mapa de producto local - Sevilla</h1>
+    <section id="preferencias">
+  <h2>Cuéntanos tus preferencias</h2>
+  <p>Déjanos tus datos y qué tipo de producto local te interesa.</p>
+
+  <form
+    id="form-preferencias"
+    action="https://formspree.io/f/XXXXXXXX"
+    method="POST"
+  >
+    <label for="nombre">Nombre</label><br>
+    <input type="text" id="nombre" name="nombre" required><br><br>
+
+    <label for="email">Email</label><br>
+    <input type="email" id="email" name="email" required><br><br>
+
+    <label for="zona">Zona de Sevilla donde compras normalmente</label><br>
+    <input type="text" id="zona" name="zona" placeholder="Triana, Nervión, Centro..." /><br><br>
+
+    <label for="preferencias">
+      ¿Qué buscas? (por ejemplo: fruta de origuen españñol,ecológica, barata, etc.)
+    </label><br>
+    <textarea id="preferencias" name="preferencias" rows="4" required></textarea><br><br>
+
+    <label>
+      <input type="checkbox" name="permiso" required>
+      Acepto que guardes mis datos para contactarme sobre producto local.
+    </label><br><br>
+
+    <button type="submit">Enviar preferencias</button>
+  </form>
+</section>
+
 
     <div id="map"></div>
 
@@ -25,3 +57,4 @@
 
 </body>
 </html>
+
