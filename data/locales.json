@@ -1,0 +1,29 @@
+[
+  {
+    "nombre": "Frutería Paco",
+    "lat": 37.3891,
+    "lng": -5.9845,
+    "categoria": "fruteria",
+    "origen_espanol": true,
+    "direccion": "Calle Ejemplo 1, Sevilla",
+    "google_maps": "https://maps.google.com/?q=Frutería Paco Sevilla"
+  },
+  {
+    "nombre": "Verduras Triana",
+    "lat": 37.3825,
+    "lng": -5.9995,
+    "categoria": "fruteria",
+    "origen_espanol": false,
+    "direccion": "Calle Ejemplo 2, Sevilla",
+    "google_maps": "https://maps.google.com/?q=Verduras Triana Sevilla"
+  },
+  {
+    "nombre": "Fruta del Arenal",
+    "lat": 37.3875,
+    "lng": -5.9960,
+    "categoria": "fruteria",
+    "origen_espanol": true,
+    "direccion": "Calle Ejemplo 3, Sevilla",
+    "google_maps": "https://maps.google.com/?q=Fruta del Arenal Sevilla"
+  }
+]
