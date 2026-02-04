@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tus preferencias de producto local</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Tus preferencias de producto local</h1>
+
+  <section id="preferencias">
+    <p>Déjanos tus datos y qué tipo de producto local te interesa.</p>
+
+    <form
+      id="form-preferencias"
+      action="https://formspree.io/f/TU_ID_DE_FORM"
+      method="POST"
+    >
+      <label for="nombre">Nombre</label><br>
+      <input type="text" id="nombre" name="nombre" required><br><br>
+
+      <label for="email">Email</label><br>
+      <input type="email" id="email" name="email" required><br><br>
+
+      <label for="zona">Zona de Sevilla donde compras normalmente</label><br>
+      <input type="text" id="zona" name="zona" placeholder="Triana, Nervión, Centro..." /><br><br>
+
+      <label for="preferencias">
+        ¿Qué buscas? (por ejemplo: fruta de origen español, ecológica, barata, etc.)
+      </label><br>
+      <textarea id="preferencias" name="preferencias" rows="4" required></textarea><br><br>
+
+      <label>
+        <input type="checkbox" name="permiso" required>
+        Acepto que guardes mis datos para contactarme sobre producto local.
+      </label><br><br>
+
+      <button type="submit">Enviar preferencias</button>
+    </form>
+  </section>
+</body>
+</html>
