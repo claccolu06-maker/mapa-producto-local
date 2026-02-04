@@ -92,4 +92,116 @@ h1 {
     width: 100%;
     height: calc(100% - 80px); /* título + barra */
 }
+body {
+    background: #f3f4f6;
+}
+
+/* Cabecera */
+.pref-header {
+    max-width: 800px;
+    margin: 20px auto 10px;
+    padding: 0 16px;
+    text-align: left;
+}
+
+.pref-header h1 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    color: #111827;
+    background: none;
+    padding: 0;
+}
+
+.pref-header p {
+    margin: 0;
+    color: #6b7280;
+}
+
+/* Contenido principal */
+.pref-main {
+    display: flex;
+    justify-content: center;
+    padding: 10px 16px 40px;
+}
+
+/* Tarjeta del formulario */
+.pref-card {
+    width: 100%;
+    max-width: 640px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+    padding: 20px 24px 24px;
+    box-sizing: border-box;
+}
+
+.pref-card h2 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 18px;
+    color: #111827;
+}
+
+/* Grupos de campos */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #374151;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+/* Checkbox */
+.form-check label {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.form-check input[type="checkbox"] {
+    margin-top: 2px;
+}
+
+/* Botón principal */
+.btn-primary {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 8px 18px;
+    background: #10b981;
+    color: #ffffff;
+    border: none;
+    border-radius: 999px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background: #059669;
+}
+
 
