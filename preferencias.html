@@ -7,37 +7,53 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Tus preferencias de producto local</h1>
+  <header class="pref-header">
+    <h1>Tus preferencias de producto local</h1>
+    <p>Ayúdanos a encontrar las mejores tiendas para ti en Sevilla.</p>
+  </header>
 
-  <section id="preferencias">
-    <p>Déjanos tus datos y qué tipo de producto local te interesa.</p>
+  <main class="pref-main">
+    <section class="pref-card">
+      <h2>Cuéntanos qué buscas</h2>
 
-    <form
-      id="form-preferencias"
-      action="https://formspree.io/f/TU_ID_DE_FORM"
-      method="POST"
-    >
-      <label for="nombre">Nombre</label><br>
-      <input type="text" id="nombre" name="nombre" required><br><br>
+      <form
+        id="form-preferencias"
+        action="https://formspree.io/f/TU_ID_DE_FORM"
+        method="POST"
+      >
+        <div class="form-group">
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" name="nombre" required>
+        </div>
 
-      <label for="email">Email</label><br>
-      <input type="email" id="email" name="email" required><br><br>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required>
+        </div>
 
-      <label for="zona">Zona de Sevilla donde compras normalmente</label><br>
-      <input type="text" id="zona" name="zona" placeholder="Triana, Nervión, Centro..." /><br><br>
+        <div class="form-group">
+          <label for="zona">Zona de Sevilla donde compras normalmente</label>
+          <input type="text" id="zona" name="zona" placeholder="Triana, Nervión, Centro...">
+        </div>
 
-      <label for="preferencias">
-        ¿Qué buscas? (por ejemplo: fruta de origen español, ecológica, barata, etc.)
-      </label><br>
-      <textarea id="preferencias" name="preferencias" rows="4" required></textarea><br><br>
+        <div class="form-group">
+          <label for="preferencias">
+            ¿Qué buscas? (fruta de origen español, ecológica, barata, etc.)
+          </label>
+          <textarea id="preferencias" name="preferencias" rows="4" required></textarea>
+        </div>
 
-      <label>
-        <input type="checkbox" name="permiso" required>
-        Acepto que guardes mis datos para contactarme sobre producto local.
-      </label><br><br>
+        <div class="form-group form-check">
+          <label>
+            <input type="checkbox" name="permiso" required>
+            Acepto que guardes mis datos para contactarme sobre producto local.
+          </label>
+        </div>
 
-      <button type="submit">Enviar preferencias</button>
-    </form>
-  </section>
+        <button type="submit" class="btn-primary">Enviar preferencias</button>
+      </form>
+    </section>
+  </main>
 </body>
 </html>
+
