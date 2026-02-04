@@ -50,3 +50,27 @@ h1 {
 #preferencias button:hover {
     background: #005c38;
 }
+#barra-superior {
+    padding: 8px 15px;
+    background: #f7f7f7;
+    border-bottom: 1px solid #ddd;
+}
+
+#barra-superior button {
+    padding: 6px 12px;
+    background: #007b4b;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#barra-superior button:hover {
+    background: #005c38;
+}
+
+/* ajusta la altura del mapa ahora que hay barra extra */
+#map {
+    width: 100%;
+    height: calc(100% - 80px); /* título + barra */
+}
