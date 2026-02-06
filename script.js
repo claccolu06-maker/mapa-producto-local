@@ -79,29 +79,21 @@ var iconoEspanol = L.icon({
 fetch('data/locales.json')
   .then(response => {
     if (!response.ok) {
-      throw new Error('Error al cargar locales.json');
+        throw new Error('Error al cargar locales.json');
     }
     return response.json();
   })
   .then(locales => {
     console.log("Locales cargados:", locales);
 
-  locales.forEach(local => {
-  const textoOrigen = local.origen_espanol
-    ? '✔ Producto español'
-    : '✖ Producto español no verificado';
-      
-.then(locales => {
-    console.log("Locales cargados:", locales); // Esto ya lo tienes y funciona
-
     locales.forEach(local => {
-        console.log("Pintando local:", local.nombre); // <--- AÑADE ESTO
-
-        // Aquí debería estar tu lógica de iconos...
-        // let icon = ...
-        // L.marker([local.lat, local.lng], ...).addTo(map);
+        // Solución temporal: Usar un marcador azul estándar para todos
+        L.marker([local.lat, local.lng])
+         .bindPopup(`<b>${local.nombre}</b>`)
+         .addTo(map);
     });
-})
+  })
+  .catch(error => console.error('Error cargando locales:', error));
 
   const popupHtml = `
     <strong>${local.nombre}</strong><br>
@@ -131,6 +123,7 @@ fetch('data/locales.json')
   .catch(error => {
     console.error(error);
   });
+
 
 
 
