@@ -1,60 +1,42 @@
-// Inicializar el mapa centrado en Sevilla
+// 1. Mapa centrado en Sevilla
 var map = L.map('map').setView([37.3891, -5.9845], 13);
 
-// Capa de mapa base
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-console.log("Cargando locales...");
-
+// 2. Cargar datos
 fetch('data/locales.json')
-    .then(response => {
-        if (!response.ok) throw new Error("Error al cargar JSON");
-        return response.json();
-    })
+    .then(r => r.json())
     .then(locales => {
-        console.log("Locales encontrados:", locales.length);
-
         var markers = L.featureGroup();
 
         locales.forEach(local => {
             if (local.lat && local.lng) {
-                
-                // 1. Decidir qué emoji poner según el nombre
+                // Lógica simple de emojis
                 let nombre = (local.nombre || "").toLowerCase();
-                let emoji = "📍"; // Icono por defecto (chincheta roja)
+                let emoji = "📍"; 
 
-                if (nombre.includes("fruta") || nombre.includes("verdura")) {
-                    emoji = "🍎"; // Frutería
-                } else if (nombre.includes("pan") || nombre.includes("horno") || nombre.includes("confitería") || nombre.includes("pastelería")) {
-                    emoji = "🥖"; // Panadería
-                } else if (nombre.includes("carn") || nombre.includes("charcut")) {
-                    emoji = "🥩"; // Carnicería
-                }
+                if (nombre.includes("frut") || nombre.includes("verdura")) emoji = "🍎";
+                else if (nombre.includes("pan") || nombre.includes("horno") || nombre.includes("confitería")) emoji = "🥖";
+                else if (nombre.includes("carn") || nombre.includes("charcut")) emoji = "🥩";
 
-                // 2. Crear el icono "divIcon" que permite usar HTML/Emojis
-                var emojiIcon = L.divIcon({
-                    html: `<div style="font-size: 25px; text-shadow: 2px 2px 2px white;">${emoji}</div>`,
-                    className: '', // Dejar vacío para quitar estilos feos por defecto de Leaflet
+                // Icono
+                var icon = L.divIcon({
+                    html: `<div style="font-size: 24px;">${emoji}</div>`,
+                    className: '', 
                     iconSize: [30, 30],
-                    iconAnchor: [15, 15] // Centrar el emoji
+                    iconAnchor: [15, 15]
                 });
 
-                // 3. Crear el marcador con ese icono
-                var marker = L.marker([local.lat, local.lng], { icon: emojiIcon });
-
-                marker.bindPopup(`<b>${local.nombre || 'Sin nombre'}</b>`);
-                
+                var marker = L.marker([local.lat, local.lng], { icon: icon });
+                marker.bindPopup(`<b>${local.nombre}</b>`);
                 marker.addTo(map);
                 markers.addLayer(marker);
             }
         });
 
-        // Auto-centrar
-        if (markers.getLayers().length > 0) {
-            map.fitBounds(markers.getBounds());
-        }
+        map.fitBounds(markers.getBounds());
     })
-    .catch(error => console.error('Error:', error));
+    .catch(e => console.error(e));
