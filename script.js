@@ -1,132 +1,55 @@
-console.log("Cargando mapa...");
-
-// Crear el mapa centrado en Sevilla
+// 1. Inicializar el mapa centrado en Sevilla
 var map = L.map('map').setView([37.3891, -5.9845], 13);
 
-// Añadir capa de tiles de OpenStreetMap
+// 2. Añadir la capa de OpenStreetMap
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors'
+    attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// Icono azul (normal)
-var iconoNormal = L.icon({
-    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    shadowSize: [41, 41]
-});
+// 3. Cargar los locales desde el JSON
+console.log("Iniciando carga de locales...");
 
-// Icono verde (producto español)
-var iconoEspanol = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    shadowSize: [41, 41]
-});
-// Icono por defecto (frutería)
-var iconoFruteria = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  shadowSize: [41, 41]
-});
-
-// Otros colores
-var iconoPanaderia = L.icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  shadowSize: [41, 41]
-});
-
-var iconoCarniceria = L.icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  shadowSize: [41, 41]
-});
-
-var iconoOtros = L.icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  shadowSize: [41, 41]
-});
-
-// Icono verde para “producto español” (solo fruterías, si quieres mantenerlo)
-var iconoEspanol = L.icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  shadowSize: [41, 41]
-});
-// Cargar locales desde el JSON
 fetch('data/locales.json')
   .then(response => {
+    // Verificar si la carga del archivo fue correcta
     if (!response.ok) {
-        throw new Error('Error al cargar locales.json');
+      throw new Error(`No se pudo cargar el archivo: ${response.statusText}`);
     }
     return response.json();
   })
   .then(locales => {
-    console.log("Locales cargados:", locales);
+    console.log(`JSON cargado. Hay ${locales.length} locales.`);
 
+    // Crear un grupo para guardar todos los marcadores (útil para centrar el mapa)
+    var grupoMarcadores = L.featureGroup();
+
+    // Recorrer cada local y poner un pin
     locales.forEach(local => {
-        // Solución temporal: Usar un marcador azul estándar para todos
-        L.marker([local.lat, local.lng])
-         .bindPopup(`<b>${local.nombre}</b>`)
-         .addTo(map);
+      // Verificar que tenga coordenadas válidas
+      if (local.lat && local.lng) {
+        
+        // Crear el marcador (azul por defecto)
+        var marker = L.marker([local.lat, local.lng]);
+
+        // Añadir popup con el nombre (o "Sin nombre" si no tiene)
+        marker.bindPopup(`<b>${local.nombre || 'Local sin nombre'}</b>`);
+
+        // Añadir al mapa y al grupo
+        marker.addTo(map);
+        grupoMarcadores.addLayer(marker);
+      }
     });
-  })
-  .catch(error => console.error('Error cargando locales:', error));
 
-  const popupHtml = `
-    <strong>${local.nombre}</strong><br>
-    ${local.direccion}<br>
-    Categoría: ${local.categoria}<br>
-    ${textoOrigen}<br>
-    <a href="${local.google_maps}" target="_blank">Abrir en Google Maps</a>
-  `;
+    // 4. Ajustar la vista del mapa para que se vean todos los puntos
+    if (grupoMarcadores.getLayers().length > 0) {
+      map.fitBounds(grupoMarcadores.getBounds(), { padding: [50, 50] });
+      console.log("Mapa centrado en los locales.");
+    } else {
+      console.warn("No se han creado marcadores (revisa lat/lng en el JSON).");
+    }
 
-  let icono;
-
-  if (local.categoria === 'fruteria') {
-    icono = local.origen_espanol ? iconoEspanol : iconoFruteria;
-  } else if (local.categoria === 'panaderia') {
-    icono = iconoPanaderia;
-  } else if (local.categoria === 'carniceria') {
-    icono = iconoCarniceria;
-  } else {
-    icono = iconoOtros;
-  }
-
-  L.marker([local.lat, local.lng], { icon: icono })
-    .addTo(map)
-    .bindPopup(popupHtml);
-});
   })
   .catch(error => {
-    console.error(error);
+    console.error('Error grave cargando el mapa:', error);
   });
-
-
-
-
-
-
-
