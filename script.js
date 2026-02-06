@@ -25,21 +25,38 @@ fetch('data/locales.json')
     var grupoMarcadores = L.featureGroup();
 
     // Recorrer cada local y poner un pin
-    locales.forEach(local => {
-      // Verificar que tenga coordenadas válidas
-      if (local.lat && local.lng) {
-        
-        // Crear el marcador (azul por defecto)
-        var marker = L.marker([local.lat, local.lng]);
+        locales.forEach(local => {
+        if (local.lat && local.lng) {
+            
+            // Detectar tipo por el nombre (chapuza temporal pero efectiva)
+            let nombre = (local.nombre || "").toLowerCase();
+            let iconoEmoji = "📍"; // Por defecto
+            
+            if (nombre.includes("fruta") || nombre.includes("verdura")) {
+                iconoEmoji = "🍎";
+            } else if (nombre.includes("pan") || nombre.includes("horno") || nombre.includes("confitería")) {
+                iconoEmoji = "🥖";
+            } else if (nombre.includes("carn") || nombre.includes("charcut")) {
+                iconoEmoji = "🥩";
+            }
 
-        // Añadir popup con el nombre (o "Sin nombre" si no tiene)
-        marker.bindPopup(`<b>${local.nombre || 'Local sin nombre'}</b>`);
+            // Crear icono personalizado con HTML (Emoji)
+            var customIcon = L.divIcon({
+                html: `<div style="font-size: 24px;">${iconoEmoji}</div>`,
+                className: 'my-custom-icon',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
 
-        // Añadir al mapa y al grupo
-        marker.addTo(map);
-        grupoMarcadores.addLayer(marker);
-      }
+            // Usar el icono nuevo
+            var marker = L.marker([local.lat, local.lng], { icon: customIcon });
+
+            marker.bindPopup(`<b>${local.nombre || 'Sin nombre'}</b>`);
+            marker.addTo(map);
+            markers.addLayer(marker);
+        }
     });
+
 
     // 4. Ajustar la vista del mapa para que se vean todos los puntos
     if (grupoMarcadores.getLayers().length > 0) {
@@ -53,3 +70,4 @@ fetch('data/locales.json')
   .catch(error => {
     console.error('Error grave cargando el mapa:', error);
   });
+
