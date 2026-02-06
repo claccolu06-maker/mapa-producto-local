@@ -90,6 +90,18 @@ fetch('data/locales.json')
   const textoOrigen = local.origen_espanol
     ? '✔ Producto español'
     : '✖ Producto español no verificado';
+      
+.then(locales => {
+    console.log("Locales cargados:", locales); // Esto ya lo tienes y funciona
+
+    locales.forEach(local => {
+        console.log("Pintando local:", local.nombre); // <--- AÑADE ESTO
+
+        // Aquí debería estar tu lógica de iconos...
+        // let icon = ...
+        // L.marker([local.lat, local.lng], ...).addTo(map);
+    });
+})
 
   const popupHtml = `
     <strong>${local.nombre}</strong><br>
@@ -119,6 +131,7 @@ fetch('data/locales.json')
   .catch(error => {
     console.error(error);
   });
+
 
 
 
