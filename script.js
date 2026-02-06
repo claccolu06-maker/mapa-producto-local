@@ -76,7 +76,7 @@ var iconoEspanol = L.icon({
   shadowSize: [41, 41]
 });
 // Cargar locales desde el JSON
-fetch('data/locales_sevilla.json')
+fetch('data/locales.json')
   .then(response => {
     if (!response.ok) {
       throw new Error('Error al cargar locales.json');
@@ -119,6 +119,7 @@ fetch('data/locales_sevilla.json')
   .catch(error => {
     console.error(error);
   });
+
 
 
 
