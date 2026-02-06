@@ -1,73 +1,60 @@
-// 1. Inicializar el mapa centrado en Sevilla
+// Inicializar el mapa centrado en Sevilla
 var map = L.map('map').setView([37.3891, -5.9845], 13);
 
-// 2. Añadir la capa de OpenStreetMap
+// Capa de mapa base
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// 3. Cargar los locales desde el JSON
-console.log("Iniciando carga de locales...");
+console.log("Cargando locales...");
 
 fetch('data/locales.json')
-  .then(response => {
-    // Verificar si la carga del archivo fue correcta
-    if (!response.ok) {
-      throw new Error(`No se pudo cargar el archivo: ${response.statusText}`);
-    }
-    return response.json();
-  })
-  .then(locales => {
-    console.log(`JSON cargado. Hay ${locales.length} locales.`);
+    .then(response => {
+        if (!response.ok) throw new Error("Error al cargar JSON");
+        return response.json();
+    })
+    .then(locales => {
+        console.log("Locales encontrados:", locales.length);
 
-    // Crear un grupo para guardar todos los marcadores (útil para centrar el mapa)
-    var grupoMarcadores = L.featureGroup();
+        var markers = L.featureGroup();
 
-    // Recorrer cada local y poner un pin
         locales.forEach(local => {
-        if (local.lat && local.lng) {
-            
-            // Detectar tipo por el nombre (chapuza temporal pero efectiva)
-            let nombre = (local.nombre || "").toLowerCase();
-            let iconoEmoji = "📍"; // Por defecto
-            
-            if (nombre.includes("fruta") || nombre.includes("verdura")) {
-                iconoEmoji = "🍎";
-            } else if (nombre.includes("pan") || nombre.includes("horno") || nombre.includes("confitería")) {
-                iconoEmoji = "🥖";
-            } else if (nombre.includes("carn") || nombre.includes("charcut")) {
-                iconoEmoji = "🥩";
+            if (local.lat && local.lng) {
+                
+                // 1. Decidir qué emoji poner según el nombre
+                let nombre = (local.nombre || "").toLowerCase();
+                let emoji = "📍"; // Icono por defecto (chincheta roja)
+
+                if (nombre.includes("fruta") || nombre.includes("verdura")) {
+                    emoji = "🍎"; // Frutería
+                } else if (nombre.includes("pan") || nombre.includes("horno") || nombre.includes("confitería") || nombre.includes("pastelería")) {
+                    emoji = "🥖"; // Panadería
+                } else if (nombre.includes("carn") || nombre.includes("charcut")) {
+                    emoji = "🥩"; // Carnicería
+                }
+
+                // 2. Crear el icono "divIcon" que permite usar HTML/Emojis
+                var emojiIcon = L.divIcon({
+                    html: `<div style="font-size: 25px; text-shadow: 2px 2px 2px white;">${emoji}</div>`,
+                    className: '', // Dejar vacío para quitar estilos feos por defecto de Leaflet
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15] // Centrar el emoji
+                });
+
+                // 3. Crear el marcador con ese icono
+                var marker = L.marker([local.lat, local.lng], { icon: emojiIcon });
+
+                marker.bindPopup(`<b>${local.nombre || 'Sin nombre'}</b>`);
+                
+                marker.addTo(map);
+                markers.addLayer(marker);
             }
+        });
 
-            // Crear icono personalizado con HTML (Emoji)
-            var customIcon = L.divIcon({
-                html: `<div style="font-size: 24px;">${iconoEmoji}</div>`,
-                className: 'my-custom-icon',
-                iconSize: [30, 30],
-                iconAnchor: [15, 15]
-            });
-
-            // Usar el icono nuevo
-            var marker = L.marker([local.lat, local.lng], { icon: customIcon });
-
-            marker.bindPopup(`<b>${local.nombre || 'Sin nombre'}</b>`);
-            marker.addTo(map);
-            markers.addLayer(marker);
+        // Auto-centrar
+        if (markers.getLayers().length > 0) {
+            map.fitBounds(markers.getBounds());
         }
-    });
-
-
-    // 4. Ajustar la vista del mapa para que se vean todos los puntos
-    if (grupoMarcadores.getLayers().length > 0) {
-      map.fitBounds(grupoMarcadores.getBounds(), { padding: [50, 50] });
-      console.log("Mapa centrado en los locales.");
-    } else {
-      console.warn("No se han creado marcadores (revisa lat/lng en el JSON).");
-    }
-
-  })
-  .catch(error => {
-    console.error('Error grave cargando el mapa:', error);
-  });
-
+    })
+    .catch(error => console.error('Error:', error));
