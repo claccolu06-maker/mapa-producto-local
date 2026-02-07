@@ -126,7 +126,9 @@ function pintarMapa(locales) {
         if (local.categoria === 'compras') color = '#27ae60';    // Verde
         if (local.categoria === 'salud') color = '#8e44ad';      // Morado
 
-        var circle = L.circleMarker([local.lat, local.lng], {
+        var latitud = local.lat || local.latitude;
+var longitud = local.lng || local.lon || local.longitude;
+var circle = L.circleMarker([latitud, longitud], {
             radius: 6,
             fillColor: color,
             color: "#fff",
@@ -231,3 +233,19 @@ if (navigator.geolocation) {
         }
     );
 }
+// --- DIAGNÓSTICO DE ERRORES ---
+setTimeout(() => {
+    console.log("=== INICIO DIAGNÓSTICO ===");
+    console.log("1. ¿Existe el mapa?", !!map);
+    console.log("2. ¿Datos cargados?", todosLosLocales.length);
+    if (todosLosLocales.length > 0) {
+        console.log("   Ejemplo de dato:", todosLosLocales[0]);
+        console.log("   ¿Tiene lat?", todosLosLocales[0].lat);
+        console.log("   ¿Tiene lng?", todosLosLocales[0].lng);
+    } else {
+        console.error("   ¡CUIDADO! El array 'todosLosLocales' está vacío. Falló la carga del JSON.");
+    }
+    console.log("3. ¿Botón encontrado?", !!document.getElementById('btn-buscar'));
+    console.log("=== FIN DIAGNÓSTICO ===");
+}, 2000);
+
