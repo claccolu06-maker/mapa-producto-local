@@ -42,13 +42,13 @@ fetch('data/locales.json')
                 }
 
                 // Crear icono (Intentamos Emojis, si falla se verá un cuadrado pero funcionará)
-                var icono = L.divIcon({
-                    html: `<div style="font-size: 24px; text-shadow: 0 0 3px white;">${emoji}</div>`,
-                    className: 'mi-icono', // Clase vacía para evitar bordes raros
-                    iconSize: [30, 30],
-                    iconAnchor: [15, 15]
-                });
-
+               // Crear icono de texto puro (Emoji)
+var icono = L.divIcon({
+    html: `<div style="font-size: 30px; line-height: 30px; text-align: center;">${emoji}</div>`,
+    className: 'emoji-icon', // Usamos una clase nueva
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+});
                 // Crear marcador y añadirlo al GRUPO correspondiente (no al mapa directamente)
                 var marker = L.marker([local.lat, local.lng], { icon: icono });
                 marker.bindPopup(`<b>${local.nombre || 'Sin nombre'}</b>`);
@@ -76,3 +76,4 @@ fetch('data/locales.json')
 
     })
     .catch(e => console.error("Error:", e));
+
