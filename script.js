@@ -1,75 +1,53 @@
-// Inicializar mapa
+console.log("script.js cargado");
+
 var map = L.map('map').setView([37.3891, -5.9845], 13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap contributors'
+  maxZoom: 19,
+  attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// CREAR GRUPOS DE CLUSTERING (Bolitas que agrupan)
-// Uno para cada categoría, así podemos filtrarlos
-var clusterAlimentacion = L.markerClusterGroup();
-var clusterHosteleria   = L.markerClusterGroup();
-var clusterModa         = L.markerClusterGroup();
-var clusterOtros        = L.markerClusterGroup();
-
-console.log("Cargando 4.500+ locales...");
+// Clusters por categoría (para poder filtrar)
+var clAlim = L.markerClusterGroup({ chunkedLoading: true });
+var clHost = L.markerClusterGroup({ chunkedLoading: true });
+var clModa = L.markerClusterGroup({ chunkedLoading: true });
+var clOtros = L.markerClusterGroup({ chunkedLoading: true });
 
 fetch('data/locales.json')
-    .then(r => r.json())
-    .then(locales => {
-        console.log(`Procesando ${locales.length} puntos...`);
+  .then(r => {
+    if (!r.ok) throw new Error("No puedo cargar data/locales.json");
+    return r.json();
+  })
+  .then(locales => {
+    console.log("Locales:", locales.length);
 
-        locales.forEach(local => {
-            if (local.lat && local.lng) {
-                
-                let cat = local.categoria; // El script Python ya nos dio la categoría
-                let destino = clusterOtros;
-                let emoji = "📍"; 
+    locales.forEach(l => {
+      if (l.lat == null || l.lng == null) return;
 
-                // Asignar grupo y emoji según la categoría que trajo Python
-                if (cat === "Alimentación") {
-                    destino = clusterAlimentacion;
-                    emoji = "🛒";
-                } else if (cat === "Hostelería") {
-                    destino = clusterHosteleria;
-                    emoji = "☕";
-                } else if (cat === "Moda") {
-                    destino = clusterModa;
-                    emoji = "👕";
-                }
+      const cat = l.categoria || "Otros";
+      let group = clOtros;
 
-                // Icono simple
-                var icono = L.divIcon({
-                    html: `<div style="font-size: 24px;">${emoji}</div>`,
-                    className: 'dummy-class', // Clase vacía para evitar estilos default
-                    iconSize: [30, 30],
-                    iconAnchor: [15, 15]
-                });
+      if (cat === "Alimentación") group = clAlim;
+      else if (cat === "Hostelería") group = clHost;
+      else if (cat === "Moda") group = clModa;
 
-                var marker = L.marker([local.lat, local.lng], { icon: icono });
-                marker.bindPopup(`<b>${local.nombre}</b><br><i>${local.tipo_detalle}</i>`);
-                
-                // Añadir al cluster correspondiente
-                destino.addLayer(marker);
-            }
-        });
+      const m = L.marker([l.lat, l.lng]).bindPopup(
+        `<b>${l.nombre || "Sin nombre"}</b><br>${l.tipo_detalle || ""}`
+      );
 
-        // Añadir clusters al mapa
-        map.addLayer(clusterAlimentacion);
-        map.addLayer(clusterHosteleria);
-        map.addLayer(clusterModa);
-        map.addLayer(clusterOtros);
+      group.addLayer(m);
+    });
 
-        // Control de capas
-        var overlayMaps = {
-            "🛒 Alimentación": clusterAlimentacion,
-            "☕ Hostelería": clusterHosteleria,
-            "👕 Moda": clusterModa,
-            "📍 Otros": clusterOtros
-        };
-        L.control.layers(null, overlayMaps, { collapsed: false }).addTo(map);
+    map.addLayer(clAlim);
+    map.addLayer(clHost);
+    map.addLayer(clModa);
+    map.addLayer(clOtros);
 
-        console.log("¡Mapa cargado!");
-    })
-    .catch(e => console.error(e));
+    L.control.layers(null, {
+      "Alimentación": clAlim,
+      "Hostelería": clHost,
+      "Moda": clModa,
+      "Otros": clOtros
+    }, { collapsed: false }).addTo(map);
+  })
+  .catch(err => console.error(err));
