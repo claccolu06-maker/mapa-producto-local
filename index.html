@@ -3,62 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de producto local - Sevilla</title>
+    <title>Mapa Comercial de Sevilla - 4.500+ Locales</title>
 
-    <!-- 1. CSS DE LEAFLET (OBLIGATORIO PARA QUE SE VEA EL MAPA) -->
+    <!-- 1. CSS LEAFLET -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
-    <!-- 2. ESTILOS DEL MAPA (para que tenga altura) -->
+    <!-- 2. CSS MARKERCLUSTER (Para las bolitas de colores) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+
+    <!-- 3. ESTILOS PROPIOS -->
     <style>
         body { margin: 0; padding: 0; }
-        #map { height: 100vh; width: 100%; }
+        
+        #map { 
+            height: 100vh; 
+            width: 100%; 
+        }
+
+        /* Título flotante */
         h1 { 
             position: absolute; 
             top: 10px; 
             left: 50px; 
             z-index: 1000; 
             background: white; 
-            padding: 10px; 
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            padding: 10px 20px; 
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             font-family: Arial, sans-serif;
             margin: 0;
+            font-size: 18px;
         }
-       /* Esto va en index.html dentro de <style> */
-.leaflet-data-marker {
-    background: none !important;
-    border: none !important;
-}
-        <!-- CSS de Leaflet (ya lo tienes, no lo borres) -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" ... />
 
-<!-- AÑADE ESTO: CSS de MarkerCluster -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+        /* Quitar fondo cuadrado a los iconos de emojis */
+        .dummy-class {
+            background: transparent !important;
+            border: none !important;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Mapa de producto local - Sevilla</h1>
+    <h1>Mapa Comercial de Sevilla (4.500+ Locales)</h1>
     
-    <!-- CONTENEDOR DEL MAPA -->
     <div id="map"></div>
 
-    <!-- 3. JS DE LEAFLET -->
+    <!-- 4. JS LEAFLET -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-    <!-- 4. TU SCRIPT (debe ir al final) -->
+    <!-- 5. JS MARKERCLUSTER -->
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+    <!-- 6. TU SCRIPT (Donde está la lógica) -->
     <script src="script.js"></script>
-<!-- JS de Leaflet (ya lo tienes) -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" ...></script>
 
-<!-- AÑADE ESTO: JS de MarkerCluster -->
-<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-
-<!-- Tu script (siempre el último) -->
-<script src="script.js"></script>
 </body>
 </html>
-
-
-
