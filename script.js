@@ -13,7 +13,7 @@ var clHost = L.markerClusterGroup({ chunkedLoading: true });
 var clModa = L.markerClusterGroup({ chunkedLoading: true });
 var clOtros = L.markerClusterGroup({ chunkedLoading: true });
 
-fetch('data/locales.json')
+fetch('data/locales_nuevos.json')
   .then(r => {
     if (!r.ok) throw new Error("No puedo cargar data/locales.json");
     return r.json();
@@ -51,3 +51,4 @@ fetch('data/locales.json')
     }, { collapsed: false }).addTo(map);
   })
   .catch(err => console.error(err));
+
