@@ -51,4 +51,11 @@ fetch('data/locales_nuevos.json')
     }, { collapsed: false }).addTo(map);
   })
   .catch(err => console.error(err));
+function activarModoEdicion() {
+    alert("Haz clic en el mapa donde quieras poner el nuevo sitio.");
+    map.on('click', function(e) {
+        window.location.href = `formulario.html?lat=${e.latlng.lat}&lng=${e.latlng.lng}`;
+    });
+}
+
 
