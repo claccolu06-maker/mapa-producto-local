@@ -66,7 +66,7 @@ try:
 
     # Guardar
     os.makedirs("data", exist_ok=True)
-    ruta_salida = os.path.join("data", "locales.json")
+    ruta_salida = os.path.join("data", "locales_nuevos.json")
     
     with open(ruta_salida, "w", encoding="utf-8") as f:
         json.dump(locales_procesados, f, ensure_ascii=False, indent=0) # indent=0 para que ocupe menos
@@ -76,3 +76,4 @@ try:
 
 except Exception as e:
     print(f"❌ Error: {e}")
+
