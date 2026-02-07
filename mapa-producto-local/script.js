@@ -1,64 +1,233 @@
-console.log("Cargando mapa...");
+// ==========================================
+// CONFIGURACIÓN DE CATEGORÍAS ("DICCIONARIO")
+// ==========================================
+// Esto traduce lo que escribe el usuario a etiquetas técnicas de OSM
+const CATEGORIAS_MAESTRAS = {
+    // COMER Y BEBER
+    "bar":        ["bar", "pub", "biergarten", "cafe"],
+    "copas":      ["pub", "bar", "nightclub"],
+    "restaurante":["restaurant", "food_court", "fast_food"],
+    "comer":      ["restaurant", "fast_food", "food_court", "bar", "pub", "cafe"], // ¡Busca todo!
+    "cafe":       ["cafe"],
+    
+    // COMPRAS
+    "super":      ["supermarket", "convenience"],
+    "tienda":     ["shop", "clothes", "shoes", "electronics", "bakery", "butcher", "greengrocer"],
+    "ropa":       ["clothes", "fashion", "shoes"],
+    "pan":        ["bakery"],
 
-// Crear el mapa centrado en Sevilla
-var map = L.map('map').setView([37.3891, -5.9845], 13);
+    // SERVICIOS
+    "banco":      ["bank", "atm"],
+    "salud":      ["pharmacy", "hospital", "dentist", "doctors"],
+    "farmacia":   ["pharmacy"],
+    "turismo":    ["hotel", "hostel", "museum", "artwork", "attraction"]
+};
 
-// Añadir capa de tiles de OpenStreetMap
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors'
+// ==========================================
+// 1. INICIALIZAR EL MAPA
+// ==========================================
+// Coordenadas iniciales (Centro de Sevilla) por si falla el GPS
+var map = L.map('map').setView([37.3886, -5.9823], 13);
+
+// Capa base (el diseño del mapa)
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap contributors & CartoDB',
+    subdomains: 'abcd',
+    maxZoom: 19
 }).addTo(map);
 
-// Icono azul (normal)
-var iconoNormal = L.icon({
-    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    shadowSize: [41, 41]
-});
+// Variables globales para guardar los datos
+var todosLosLocales = [];
+var marcadoresActuales = L.layerGroup().addTo(map);
 
-// Icono verde (producto español)
-var iconoEspanol = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    shadowSize: [41, 41]
-});
+// ==========================================
+// 2. CARGAR DATOS (JSON)
+// ==========================================
+fetch('sevilla_todo.json')
+    .then(response => response.json())
+    .then(data => {
+        todosLosLocales = data;
+        console.log("¡Datos cargados!", todosLosLocales.length, "locales listos.");
+        
+        // Al principio mostramos TODO (o puedes dejarlo vacío si prefieres)
+        pintarMapa(todosLosLocales); 
+    })
+    .catch(error => console.error('Error cargando el JSON:', error));
 
-// Cargar locales desde el JSON
-fetch('data/locales.json')
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Error al cargar locales.json');
-    }
-    return response.json();
-  })
-  .then(locales => {
-    console.log("Locales cargados:", locales);
+// ==========================================
+// 3. FUNCIONES DE BÚSQUEDA Y FILTRADO
+// ==========================================
 
-    locales.forEach(local => {
-      const textoOrigen = local.origen_espanol
-        ? '✔ Producto español'
-        : '✖ Producto español no verificado';
+// Función auxiliar para quitar tildes y mayúsculas
+function normalizar(texto) {
+    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
 
-      const popupHtml = `
-        <strong>${local.nombre}</strong><br>
-        ${local.direccion}<br>
-        ${textoOrigen}<br>
-        <a href="${local.google_maps}" target="_blank">Abrir en Google Maps</a>
-      `;
+// Función PRINCIPAL del buscador
+function filtrarDatos(texto, radio, latUser, lngUser) {
+    var inputUsuario = normalizar(texto);
+    
+    // 1. Mirar si el usuario busca una Categoría Maestra (ej: "bar")
+    var etiquetasBuscadas = CATEGORIAS_MAESTRAS[inputUsuario] || [];
 
-      const icono = local.origen_espanol ? iconoEspanol : iconoNormal;
+    var resultados = todosLosLocales.filter(local => {
+        var nombre = normalizar(local.nombre || "");
+        var tipoOSM = normalizar(local.tipo_detalle || ""); // Etiqueta técnica (ej: "pub")
+        var categoria = normalizar(local.categoria || "");
 
-      L.marker([local.lat, local.lng], { icon: icono })
-        .addTo(map)
-        .bindPopup(popupHtml);
+        // --- LÓGICA DE COINCIDENCIA ---
+        var coincide = false;
+
+        // A) ¿Es una Categoría Maestra?
+        if (etiquetasBuscadas.length > 0) {
+            // Si el tipo del local está en la lista de la categoría
+            if (etiquetasBuscadas.includes(tipoOSM)) {
+                coincide = true;
+            }
+        } 
+        // B) Si no, búsqueda normal por texto libre
+        else {
+            if (nombre.includes(inputUsuario) || tipoOSM.includes(inputUsuario) || categoria.includes(inputUsuario)) {
+                coincide = true;
+            }
+        }
+        
+        // --- LÓGICA DE DISTANCIA ---
+        var dentroDelRadio = true;
+        if (radio > 0) {
+            // Calculamos distancia real en metros
+            var dist = map.distance([latUser, lngUser], [local.lat, local.lng]);
+            dentroDelRadio = dist <= radio;
+        }
+
+        return coincide && dentroDelRadio;
     });
-  })
-  .catch(error => {
-    console.error(error);
-  });
+
+    console.log(`Buscando: "${inputUsuario}" | Encontrados: ${resultados.length}`);
+    
+    pintarMapa(resultados);
+
+    if(resultados.length === 0) {
+        // Un pequeño aviso en consola (o puedes usar alert)
+        console.log("No se encontraron resultados cercanos.");
+    }
+}
+
+// Función para dibujar los puntos en el mapa
+function pintarMapa(locales) {
+    // 1. Borrar marcadores antiguos
+    marcadoresActuales.clearLayers();
+
+    // 2. Crear nuevos marcadores
+    locales.forEach(local => {
+        // Elegir color según categoría (simple)
+        var color = '#3388ff'; // Azul por defecto
+        if (local.categoria === 'hosteleria') color = '#e74c3c'; // Rojo
+        if (local.categoria === 'compras') color = '#27ae60';    // Verde
+        if (local.categoria === 'salud') color = '#8e44ad';      // Morado
+
+        var circle = L.circleMarker([local.lat, local.lng], {
+            radius: 6,
+            fillColor: color,
+            color: "#fff",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        });
+
+        // Popup con información
+        var contenidoPopup = `
+            <b>${local.nombre || "Sin nombre"}</b><br>
+            <i>${local.tipo_detalle}</i><br>
+            ${local.direccion || ""}
+        `;
+        
+        circle.bindPopup(contenidoPopup);
+        marcadoresActuales.addLayer(circle);
+    });
+}
+
+// ==========================================
+// 4. EVENTOS (BOTÓN BUSCAR)
+// ==========================================
+document.getElementById('btn-buscar').addEventListener('click', function() {
+    var texto = document.getElementById('buscador').value;
+    var radio = parseInt(document.getElementById('distancia').value);
+
+    // Si hay filtro de distancia, necesitamos la ubicación del usuario
+    if (radio > 0) {
+        if (!navigator.geolocation) {
+            alert("Tu navegador no soporta GPS.");
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(position => {
+            var latUser = position.coords.latitude;
+            var lngUser = position.coords.longitude;
+            
+            // Centrar mapa en usuario
+            map.setView([latUser, lngUser], 15);
+            
+            // Filtrar
+            filtrarDatos(texto, radio, latUser, lngUser);
+
+        }, error => {
+            alert("Necesitamos tu ubicación para filtrar por distancia.");
+            console.error(error);
+        });
+
+    } else {
+        // Si es "Toda Sevilla" (radio 0), filtramos sin coordenadas
+        filtrarDatos(texto, 0, 0, 0);
+    }
+});
+
+// Permitir buscar pulsando "Enter"
+document.getElementById('buscador').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        document.getElementById('btn-buscar').click();
+    }
+});
+
+// ==========================================
+// 5. AUTO-LOCALIZACIÓN AL INICIO
+// ==========================================
+// Esto se ejecuta nada más abrir la web
+if (navigator.geolocation) {
+    console.log("Pidiendo ubicación inicial...");
+    
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            var lat = position.coords.latitude;
+            var lng = position.coords.longitude;
+
+            console.log("Usuario localizado en:", lat, lng);
+
+            // 1. Centrar mapa
+            map.setView([lat, lng], 16);
+
+            // 2. Icono especial "YO"
+            var iconoYo = L.divIcon({
+                html: '<div style="width: 15px; height: 15px; background: #4285F4; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>',
+                className: 'user-location-dot',
+                iconSize: [20, 20]
+            });
+
+            L.marker([lat, lng], { icon: iconoYo })
+                .addTo(map)
+                .bindPopup("<b>¡Estás aquí!</b>")
+                .openPopup();
+            
+            // 3. Círculo de precisión visual
+            L.circle([lat, lng], {
+                color: '#4285F4',
+                fillColor: '#4285F4',
+                fillOpacity: 0.1,
+                radius: 300
+            }).addTo(map);
+        },
+        (error) => {
+            console.warn("Ubicación denegada o error:", error.message);
+        }
+    );
+}
