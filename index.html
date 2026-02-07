@@ -3,64 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa Comercial de Sevilla - 4.500+ Locales</title>
+    <title>Mapa Comercial de Sevilla</title>
 
-    <!-- 1. CSS LEAFLET -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-
-    <!-- 2. CSS MARKERCLUSTER (Para las bolitas de colores) -->
+    <!-- CSS de Leaflet y MarkerCluster -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
 
-    <!-- 3. ESTILOS PROPIOS -->
     <style>
-        body { margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
-        #map { 
-            height: 100vh; 
-            width: 100%; 
-        }
+        #map { height: 100vh; width: 100%; }
 
-        /* Título flotante */
-        h1 { 
-            position: absolute; 
-            top: 10px; 
-            left: 50px; 
-            z-index: 1000; 
-            background: white; 
-            padding: 10px 20px; 
+        /* BUSCADOR FLOTANTE ESTÉTICO */
+        .search-card {
+            position: absolute;
+            top: 20px;
+            left: 60px; /* Separado del zoom */
+            z-index: 1000; /* Por encima del mapa */
+            background: white;
+            padding: 15px;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            font-family: Arial, sans-serif;
-            margin: 0;
-            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        /* Quitar fondo cuadrado a los iconos de emojis */
-        .dummy-class {
-            background: transparent !important;
-            border: none !important;
+        .search-card h2 { margin: 0 0 10px 0; font-size: 16px; color: #333; }
+        
+        .search-input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
         }
+        .search-input:focus { border-color: #007bff; }
+
+        .search-row { display: flex; gap: 5px; }
+        
+        .search-btn {
+            background: #007bff; color: white; border: none;
+            padding: 10px; border-radius: 4px; cursor: pointer; flex: 1;
+            font-weight: bold;
+        }
+        .search-btn:hover { background: #0056b3; }
+
+        .reset-btn {
+            background: #f8f9fa; color: #333; border: 1px solid #ddd;
+            padding: 10px; border-radius: 4px; cursor: pointer;
+        }
+
+        /* Estilos para los iconos del mapa (para que no tengan fondo) */
+        .dummy-class { background: transparent !important; border: none !important; }
     </style>
 </head>
 <body>
 
-    <h1>Mapa Comercial de Sevilla (4.500+ Locales)</h1>
-    
+    <!-- EL MAPA -->
     <div id="map"></div>
 
-    <!-- 4. JS LEAFLET -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css">
+    <!-- EL BUSCADOR FLOTANTE -->
+    <div class="search-card">
+        <h2>🔍 ¿Qué buscas hoy?</h2>
+        <input type="text" id="txtBusqueda" class="search-input" placeholder="Ej: Pan, Zapatos, Cerveza...">
+        
+        <div class="search-row">
+            <select id="selDistancia" class="search-input" style="width: 100px;">
+                <option value="0">Toda Sevilla</option>
+                <option value="500">500 m</option>
+                <option value="1000">1 km</option>
+            </select>
+            <button class="search-btn" onclick="buscarLocales()">Buscar</button>
+            <button class="reset-btn" onclick="resetMapa()">❌</button>
+        </div>
+        <small style="color:gray; font-size:11px; margin-top:5px;">
+            * Si eliges distancia, haremos zoom a tu posición.
+        </small>
+    </div>
 
-<div id="map"></div>
+    <!-- JS Libraries -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script src="script.js"></script>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-<script src="script.js"></script>
 </body>
-    <a href="#" onclick="activarModoEdicion()" style="position:absolute; top:20px; right:60px; z-index:9999; background:green; color:white; padding:10px; text-decoration:none; font-weight:bold; border-radius:5px;">➕ Añadir</a>
 </html>
-
-
