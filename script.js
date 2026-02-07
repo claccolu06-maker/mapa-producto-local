@@ -7,11 +7,11 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// Clusters por categoría (para poder filtrar)
-var clAlim = L.markerClusterGroup({ chunkedLoading: true });
-var clHost = L.markerClusterGroup({ chunkedLoading: true });
-var clModa = L.markerClusterGroup({ chunkedLoading: true });
-var clOtros = L.markerClusterGroup({ chunkedLoading: true });
+// En tu script.js, cambia las líneas de creación de clusters por esto:
+var clusterAlimentacion = L.markerClusterGroup({ chunkedLoading: true });
+var clusterHosteleria   = L.markerClusterGroup({ chunkedLoading: true });
+var clusterModa         = L.markerClusterGroup({ chunkedLoading: true });
+var clusterOtros        = L.markerClusterGroup({ chunkedLoading: true });
 
 fetch('data/locales_nuevos.json')
   .then(r => {
@@ -57,5 +57,6 @@ function activarModoEdicion() {
         window.location.href = `formulario.html?lat=${e.latlng.lat}&lng=${e.latlng.lng}`;
     });
 }
+
 
 
