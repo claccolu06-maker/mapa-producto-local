@@ -13,7 +13,7 @@ map.addLayer(clusterGroup);
 
 console.log("Cargando datos...");
 
-fetch('data/locales_nuevos.json')
+fetch('https://claccolu06-maker.github.io/mapa-producto-local/locales.json')
     .then(r => r.json())
     .then(locales => {
         todosLosLocales = locales; // Guardamos copia de seguridad
@@ -182,5 +182,6 @@ if (navigator.geolocation) {
 } else {
     console.log("Este navegador no tiene GPS.");
 }
+
 
 
