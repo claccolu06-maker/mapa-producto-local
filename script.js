@@ -80,13 +80,41 @@ function buscarLocales() {
     }
 }
 
+// Diccionario de "sinónimos" para ayudar al buscador
+const sinonimos = {
+    "restaurante": "restaurant",
+    "tienda": "shop",
+    "cafeteria": "cafe",
+    "fruteria": "greengrocer",
+    "panaderia": "bakery",
+    "carniceria": "butcher",
+    "ropa": "clothes",
+    "super": "supermarket"
+};
+
+function normalizar(texto) {
+    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
 function filtrarDatos(texto, radio, latUser, lngUser) {
+    var textoUser = normalizar(texto);
+    
+    // Si el usuario escribe "restaurante", buscamos también "restaurant"
+    var textoTecnico = sinonimos[textoUser] || textoUser;
+
     var resultados = todosLosLocales.filter(local => {
-        // Filtro por texto (nombre o tipo)
-        var coincideTexto = (local.nombre || "").toLowerCase().includes(texto) || 
-                            (local.tipo_detalle || "").toLowerCase().includes(texto);
+        var nombre = normalizar(local.nombre || "");
+        var tipo = normalizar(local.tipo_detalle || "");     // Ej: "restaurant"
+        var categoria = normalizar(local.categoria || "");   // Ej: "hostelería"
+
+        // Buscamos si coincide con lo que escribió el usuario O con su traducción técnica
+        var coincideTexto = nombre.includes(textoUser) || 
+                            tipo.includes(textoUser) || 
+                            categoria.includes(textoUser) ||
+                            // Aquí está la magia: buscamos también el término en inglés
+                            tipo.includes(textoTecnico);
         
-        // Filtro por distancia (si aplica)
+        // Filtro de distancia
         var dentroDelRadio = true;
         if (radio > 0) {
             var dist = map.distance([latUser, lngUser], [local.lat, local.lng]);
@@ -96,9 +124,13 @@ function filtrarDatos(texto, radio, latUser, lngUser) {
         return coincideTexto && dentroDelRadio;
     });
 
+    console.log(`Buscando: "${textoUser}" (o "${textoTecnico}") | Resultados: ${resultados.length}`);
+    
     pintarMapa(resultados);
     
-    if(resultados.length === 0) alert("No se encontraron locales con ese criterio 😢");
+    if(resultados.length === 0) {
+        alert(`No encontrado 😢. Prueba con "bar", "tapas" o "comida".`);
+    }
 }
 
 function resetMapa() {
@@ -150,4 +182,5 @@ if (navigator.geolocation) {
 } else {
     console.log("Este navegador no tiene GPS.");
 }
+
 
