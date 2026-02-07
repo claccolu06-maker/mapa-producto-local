@@ -1,43 +1,42 @@
-!-- modify this form HTML and place wherever you want your form -->
-<form id="my-form" action="https://formspree.io/f/xaqbzawk" method="POST">
-  <label>Email:</label>
-  <input type="email" name="email" />
-  <label>Message:</label>
-  <input type="text" name="message" />
-  <button id="my-form-button">Submit</button>
-  <p id="my-form-status"></p>
-</form>
-
-<!-- Place this script at the end of the body tag -->
-<script>
-  var form = document.getElementById("my-form");
-  
-  async function handleSubmit(event) {
-    event.preventDefault();
-    var status = document.getElementById("my-form-status");
-    var data = new FormData(event.target);
-    fetch(event.target.action, {
-      method: form.method,
-      body: data,
-      headers: {
-          'Accept': 'application/json'
-      }
-    }).then(response => {
-      if (response.ok) {
-        status.innerHTML = "Thanks for your submission!";
-        form.reset()
-      } else {
-        response.json().then(data => {
-          if (Object.hasOwn(data, 'errors')) {
-            status.innerHTML = data["errors"].map(error => error["message"]).join(", ")
-          } else {
-            status.innerHTML = "Oops! There was a problem submitting your form"
-          }
-        })
-      }
-    }).catch(error => {
-      status.innerHTML = "Oops! There was a problem submitting your form"
-    });
-  }
-  form.addEventListener("submit", handleSubmit)
-</script>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Añadir Local</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input, select, button { width: 100%; padding: 10px; margin-top: 10px; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📍 Añadir Local</h2>
+        <form id="form">
+            <input type="text" id="nombre" placeholder="Nombre del sitio" required>
+            <select id="categoria">
+                <option value="Alimentación">🛒 Alimentación</option>
+                <option value="Hostelería">☕ Hostelería</option>
+                <option value="Moda">👕 Moda</option>
+                <option value="Otros">📍 Otros</option>
+            </select>
+            <input type="text" id="lat" placeholder="Latitud" required readonly>
+            <input type="text" id="lng" placeholder="Longitud" required readonly>
+            <button type="submit">Guardar (Simulado)</button>
+        </form>
+        <a href="index.html" style="display:block; text-align:center; margin-top:15px;">Volver al mapa</a>
+    </div>
+    <script>
+        const p = new URLSearchParams(window.location.search);
+        document.getElementById('lat').value = p.get('lat');
+        document.getElementById('lng').value = p.get('lng');
+        document.getElementById('form').onsubmit = (e) => {
+            e.preventDefault();
+            alert("¡Guardado! (En una app real, esto iría a la base de datos)");
+            window.location.href = "index.html";
+        };
+    </script>
+</body>
+</html>
