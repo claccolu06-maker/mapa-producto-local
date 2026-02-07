@@ -201,3 +201,14 @@ if (navigator.geolocation) {
         }
     );
 }
+// --- INSPECTOR DE DATOS ---
+setTimeout(() => {
+    if (todosLosLocales.length > 0) {
+        console.log("=== ASÍ ES UN LOCAL DE TU JSON ===");
+        console.log(todosLosLocales[0]); // Muestra el primer local
+        console.log("Propiedades disponibles:", Object.keys(todosLosLocales[0]));
+    } else {
+        console.log("El array sigue vacío...");
+    }
+}, 2000);
+
