@@ -29,6 +29,12 @@
     background: none !important;
     border: none !important;
 }
+        <!-- CSS de Leaflet (ya lo tienes, no lo borres) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" ... />
+
+<!-- AÑADE ESTO: CSS de MarkerCluster -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
     </style>
 </head>
 <body>
@@ -43,8 +49,16 @@
 
     <!-- 4. TU SCRIPT (debe ir al final) -->
     <script src="script.js"></script>
+<!-- JS de Leaflet (ya lo tienes) -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" ...></script>
 
+<!-- AÑADE ESTO: JS de MarkerCluster -->
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+<!-- Tu script (siempre el último) -->
+<script src="script.js"></script>
 </body>
 </html>
+
 
 
