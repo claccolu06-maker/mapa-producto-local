@@ -66,31 +66,40 @@ function filtrarDatos(texto, radio, latUser, lngUser) {
     var etiquetasBuscadas = CATEGORIAS_MAESTRAS[inputUsuario] || [];
 
     var resultados = todosLosLocales.filter(local => {
-        var nombre = normalizar(local.nombre || "");
-        var tipoOSM = normalizar(local.tipo_detalle || "");
-        var categoria = normalizar(local.categoria || "");
+        // INTENTAMOS LEER DE TODAS PARTES
+        var nombre = normalizar(local.nombre || local.name || local.title || "");
+        
+        // A veces el tipo está suelto, a veces dentro de "tags"
+        var tipo1 = normalizar(local.tipo_detalle || local.type || local.amenity || local.shop || "");
+        var tipo2 = "";
+        if (local.tags) {
+             tipo2 = normalizar(local.tags.amenity || local.tags.shop || local.tags.leisure || "");
+        }
+        
+        var tipoOSM = tipo1 + " " + tipo2; // Juntamos todo por si acaso
 
         var coincide = false;
 
-        // A) ¿Es una Categoría Maestra?
+        // A) Categoría Maestra
         if (etiquetasBuscadas.length > 0) {
-            if (etiquetasBuscadas.includes(tipoOSM)) {
+            // Comprobamos si alguna etiqueta buscada está en el tipo del local
+            if (etiquetasBuscadas.some(tag => tipoOSM.includes(tag))) {
                 coincide = true;
             }
         } 
-        // B) Si no, búsqueda normal
+        // B) Búsqueda normal
         else {
-            if (nombre.includes(inputUsuario) || tipoOSM.includes(inputUsuario) || categoria.includes(inputUsuario)) {
+            if (nombre.includes(inputUsuario) || tipoOSM.includes(inputUsuario)) {
                 coincide = true;
             }
         }
         
-        // C) Filtro de Distancia
+        // C) Distancia
         var dentroDelRadio = true;
         if (radio > 0) {
-            var latitud = local.lat || local.latitude;    // Soporte para ambos nombres
-            var longitud = local.lng || local.lon || local.longitude; 
-            var dist = map.distance([latUser, lngUser], [latitud, longitud]);
+            var lat = local.lat || local.latitude;
+            var lng = local.lng || local.lon || local.longitude;
+            var dist = map.distance([latUser, lngUser], [lat, lng]);
             dentroDelRadio = dist <= radio;
         }
 
@@ -99,10 +108,6 @@ function filtrarDatos(texto, radio, latUser, lngUser) {
 
     console.log(`Buscando: "${inputUsuario}" | Encontrados: ${resultados.length}`);
     pintarMapa(resultados);
-
-    if(resultados.length === 0) {
-        console.log("No se encontraron resultados cercanos.");
-    }
 }
 
 function pintarMapa(locales) {
@@ -211,4 +216,5 @@ setTimeout(() => {
         console.log("El array sigue vacío...");
     }
 }, 2000);
+
 
