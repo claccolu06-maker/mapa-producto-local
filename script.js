@@ -106,3 +106,48 @@ function resetMapa() {
     pintarMapa(todosLosLocales);
     map.setView([37.3891, -5.9845], 13);
 }
+// --- AUTO-LOCALIZACIÓN AL INICIO ---
+
+// Intentar localizar al usuario nada más entrar
+if (navigator.geolocation) {
+    console.log("Pidiendo ubicación...");
+    
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            var lat = position.coords.latitude;
+            var lng = position.coords.longitude;
+
+            console.log("Usuario localizado en:", lat, lng);
+
+            // 1. Centrar el mapa en el usuario
+            map.setView([lat, lng], 16); // Zoom 16 para ver detalle callejero
+
+            // 2. Poner un marcador especial "YO" (Punto azul pulsante)
+            var iconoYo = L.divIcon({
+                html: '<div style="width: 15px; height: 15px; background: #4285F4; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>',
+                className: 'user-location-dot',
+                iconSize: [20, 20]
+            });
+
+            L.marker([lat, lng], { icon: iconoYo })
+                .addTo(map)
+                .bindPopup("<b>¡Estás aquí!</b>")
+                .openPopup();
+            
+            // 3. Crear un círculo de precisión (radio azul clarito)
+            L.circle([lat, lng], {
+                color: '#4285F4',
+                fillColor: '#4285F4',
+                fillOpacity: 0.1,
+                radius: 200 // 200 metros alrededor
+            }).addTo(map);
+        },
+        (error) => {
+            console.warn("El usuario denegó la ubicación o hubo error:", error.message);
+            // No pasa nada, se queda centrado en la Giralda (por defecto)
+        }
+    );
+} else {
+    console.log("Este navegador no tiene GPS.");
+}
+
