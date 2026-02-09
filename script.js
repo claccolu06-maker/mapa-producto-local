@@ -185,28 +185,32 @@ function aplicarPreferenciasEnUI() {
 // ==========================================
 // 5. EVENTOS (BOTÓN BUSCAR + ENTER)
 // ==========================================
-document.getElementById('btn-buscar').addEventListener('click', function() {
-    var texto = document.getElementById('buscador').value;
-    var radio = parseInt(document.getElementById('distancia').value);
+const btnBuscar = document.getElementById('btn-buscar');
+if (btnBuscar) {
+    btnBuscar.addEventListener('click', function() {
+        var texto = document.getElementById('buscador').value;
+        const distanciaSelect = document.getElementById('distancia');
+        var radio = distanciaSelect ? parseInt(distanciaSelect.value) : 0;
 
-    if (radio > 0) {
-        if (!navigator.geolocation) {
-            alert("Tu navegador no soporta GPS.");
-            return;
+        if (radio > 0) {
+            if (!navigator.geolocation) {
+                alert("Tu navegador no soporta GPS.");
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(position => {
+                var latUser = position.coords.latitude;
+                var lngUser = position.coords.longitude;
+                map.setView([latUser, lngUser], 15);
+                filtrarDatos(texto, radio, latUser, lngUser);
+            }, error => {
+                alert("Necesitamos tu ubicación para filtrar por distancia.");
+                console.error(error);
+            });
+        } else {
+            filtrarDatos(texto, 0, 0, 0);
         }
-        navigator.geolocation.getCurrentPosition(position => {
-            var latUser = position.coords.latitude;
-            var lngUser = position.coords.longitude;
-            map.setView([latUser, lngUser], 15);
-            filtrarDatos(texto, radio, latUser, lngUser);
-        }, error => {
-            alert("Necesitamos tu ubicación para filtrar por distancia.");
-            console.error(error);
-        });
-    } else {
-        filtrarDatos(texto, 0, 0, 0);
-    }
-});
+    });
+}
 
 document.getElementById('buscador').addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
@@ -281,4 +285,5 @@ document.addEventListener('DOMContentLoaded', () => {
         filtrarDatos(texto, 0, 0, 0);
     }
 });
+
 
