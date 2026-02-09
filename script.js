@@ -254,5 +254,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Botón que abre la página de filtros avanzados
+const btnFiltrarAvanzado = document.getElementById('btn-filtrar-avanzado');
+if (btnFiltrarAvanzado) {
+    btnFiltrarAvanzado.addEventListener('click', () => {
+        window.location.href = "filtros.html"; // nueva página de filtros
+    });
+}
+
 
 
