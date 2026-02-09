@@ -132,6 +132,47 @@ function filtrarDatos(texto, radio, latUser, lngUser) {
         alert(`No encontrado 😢. Prueba con "bar", "tapas" o "comida".`);
     }
 }
+// ================================
+// PREFERENCIAS DE USUARIO (MAPA)
+// ================================
+function leerPreferenciasUsuario() {
+    try {
+        const raw = localStorage.getItem('preferencias_mapa');
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch (e) {
+        console.warn("No se pudieron leer las preferencias:", e);
+        return null;
+    }
+}
+
+function aplicarPreferenciasEnBuscador() {
+    const pref = leerPreferenciasUsuario();
+    if (!pref) return;
+
+    // Tu formulario guarda: Alimentación, Hostelería, Moda, Otros
+    let textoBuscador = "";
+    switch (pref.categoriaFavorita) {
+        case "Alimentación":
+            textoBuscador = "super";  // supermercados / alimentación
+            break;
+        case "Hostelería":
+            textoBuscador = "comer";  // bares + restaurantes
+            break;
+        case "Moda":
+            textoBuscador = "ropa";   // tiendas de ropa
+            break;
+        default:
+            textoBuscador = "";
+    }
+
+    if (textoBuscador) {
+        const input = document.getElementById('buscador');
+        if (input) {
+            input.value = textoBuscador;
+        }
+    }
+}
 
 function resetMapa() {
     document.getElementById("txtBusqueda").value = "";
@@ -182,5 +223,36 @@ if (navigator.geolocation) {
 } else {
     console.log("Este navegador no tiene GPS.");
 }
+// ================================
+// ARRANQUE AUTOMÁTICO CON PREFERENCIA
+// ================================
+document.addEventListener('DOMContentLoaded', () => {
+    aplicarPreferenciasEnBuscador();
+
+    const inputBuscador = document.getElementById('buscador');
+    if (!inputBuscador) return;
+
+    const texto = inputBuscador.value;
+    if (!texto) return; // si no hay preferencia, no hacemos nada
+
+    // Opcional: si quieres que además busque solo, copia la lógica de tu botón:
+    const distanciaSelect = document.getElementById('distancia');
+    const radio = distanciaSelect ? parseInt(distanciaSelect.value) || 0 : 0;
+
+    if (radio > 0 && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            const latUser = pos.coords.latitude;
+            const lngUser = pos.coords.longitude;
+            map.setView([latUser, lngUser], 15);
+            filtrarDatos(texto, radio, latUser, lngUser);
+        }, err => {
+            console.warn("No se pudo obtener ubicación para búsqueda inicial:", err);
+            filtrarDatos(texto, 0, 0, 0);
+        });
+    } else {
+        filtrarDatos(texto, 0, 0, 0);
+    }
+});
+
 
 
