@@ -28,39 +28,29 @@
         </form>
         <a href="index.html" style="display:block; text-align:center; margin-top:15px;">Volver al mapa</a>
     </div>
-    <script>
-        const p = new URLSearchParams(window.location.search);
-        document.getElementById('lat').value = p.get('lat');
-        document.getElementById('lng').value = p.get('lng');
-        document.getElementById('form').onsubmit = (e) => {
-            e.preventDefault();
-            alert("¡Guardado! (En una app real, esto iría a la base de datos)");
-            window.location.href = "index.html";
+   <script>
+    const p = new URLSearchParams(window.location.search);
+    document.getElementById('lat').value = p.get('lat');
+    document.getElementById('lng').value = p.get('lng');
+
+    document.getElementById('form').onsubmit = (e) => {
+        e.preventDefault();
+
+        // 1) Leemos la categoría elegida
+        const categoriaElegida = document.getElementById('categoria').value; 
+        // Alimentación, Hostelería, Moda, Otros
+
+        // 2) La guardamos como preferencia de mapa
+        const pref = {
+            categoriaFavorita: categoriaElegida  // la usaremos luego en el mapa
         };
-// Llama a esta función cuando el usuario envíe el formulario de preferencias
-function guardarPreferenciasDesdeFormulario(event) {
-    event.preventDefault(); // Evita que recargue la página
+        localStorage.setItem('preferencias_mapa', JSON.stringify(pref));
 
-    // Lee los campos reales de TU formulario
-    const categoriaFavorita = document.querySelector('input[name="categoria"]:checked')?.value || "comer";
-    const barrio = document.getElementById('barrio').value || "Nervion";
-    const radio = parseInt(document.getElementById('radio').value) || 1000; // en metros
-
-    const pref = {
-        categoriaFavorita: categoriaFavorita, // ej: "comer", "bar", "super"
-        barrio: barrio,                       // ej: "Nervion", "Triana"
-        radio: radio                          // ej: 500, 1000, 2000
+        alert("¡Guardado! (En una app real, esto iría a la base de datos)");
+        window.location.href = "index.html";
     };
-
-    localStorage.setItem('preferencias_mapa', JSON.stringify(pref));
-
-    // Opcional: redirigir al mapa directamente
-    window.location.href = "index.html"; // o la URL de tu mapa
-}
-
-// Enlaza la función al formulario
-document.getElementById('form-preferencias').addEventListener('submit', guardarPreferenciasDesdeFormulario);
-    </script>
+</script>
 </body>
 </html>
+
 
