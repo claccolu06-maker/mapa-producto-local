@@ -61,6 +61,27 @@ function leerPreferenciasUsuario() {
 }
 
 function aplicarPreferenciasEnUI() {
+    document.addEventListener('DOMContentLoaded', () => {
+    aplicarPreferenciasEnUI();
+
+    const pref = leerPreferenciasUsuario();
+    if (!pref) return;
+
+    const texto = document.getElementById('buscador').value;
+    const radio = parseInt(document.getElementById('distancia').value) || 0;
+
+    if (radio > 0 && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            const latUser = pos.coords.latitude;
+            const lngUser = pos.coords.longitude;
+            map.setView([latUser, lngUser], 15);
+            filtrarDatos(texto, radio, latUser, lngUser);
+        });
+    } else {
+        // Sin radio (Toda Sevilla) o sin GPS
+        filtrarDatos(texto, 0, 0, 0);
+    }
+});
     const pref = leerPreferenciasUsuario();
     if (!pref) return;
 
@@ -211,6 +232,8 @@ if (navigator.geolocation) {
 } else {
     console.log("Este navegador no tiene GPS.");
 }
+document.addEventListener('DOMContentLoaded', aplicarPreferenciasEnUI);
+
 
 
 
