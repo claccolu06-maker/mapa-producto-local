@@ -185,12 +185,17 @@ function aplicarPreferenciasEnUI() {
 // ==========================================
 // 5. EVENTOS (BOTÓN BUSCAR + ENTER)
 // ==========================================
+
 const btnBuscar = document.getElementById('btn-buscar');
-if (btnBuscar) {
+const inputBuscador = document.getElementById('buscador');
+
+// Solo añadimos eventos si los elementos existen (evita errores en otras páginas)
+if (btnBuscar && inputBuscador) {
+
     btnBuscar.addEventListener('click', function() {
-        var texto = document.getElementById('buscador').value;
+        const texto = inputBuscador.value;
         const distanciaSelect = document.getElementById('distancia');
-        var radio = distanciaSelect ? parseInt(distanciaSelect.value) : 0;
+        const radio = distanciaSelect ? parseInt(distanciaSelect.value) || 0 : 0;
 
         if (radio > 0) {
             if (!navigator.geolocation) {
@@ -198,8 +203,8 @@ if (btnBuscar) {
                 return;
             }
             navigator.geolocation.getCurrentPosition(position => {
-                var latUser = position.coords.latitude;
-                var lngUser = position.coords.longitude;
+                const latUser = position.coords.latitude;
+                const lngUser = position.coords.longitude;
                 map.setView([latUser, lngUser], 15);
                 filtrarDatos(texto, radio, latUser, lngUser);
             }, error => {
@@ -210,14 +215,13 @@ if (btnBuscar) {
             filtrarDatos(texto, 0, 0, 0);
         }
     });
+
+    inputBuscador.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            btnBuscar.click();
+        }
+    });
 }
-
-document.getElementById('buscador').addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        document.getElementById('btn-buscar').click();
-    }
-});
-
 // ==========================================
 // 6. AUTO-LOCALIZACIÓN AL INICIO
 // ==========================================
@@ -257,19 +261,17 @@ if (navigator.geolocation) {
     );
 }
 
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     aplicarPreferenciasEnUI();
 
     const buscadorInput = document.getElementById('buscador');
-    if (!buscadorInput) return; // por si esta página no tiene buscador
+    if (!buscadorInput) return;  // si esta página no tiene buscador, salimos
 
     const texto = buscadorInput.value;
-
     const distanciaSelect = document.getElementById('distancia');
     const radio = distanciaSelect ? parseInt(distanciaSelect.value) || 0 : 0;
 
-    if (!texto) return; // si no hay preferencia guardada, no hacemos nada
+    if (!texto) return;
 
     if (radio > 0 && navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(pos => {
@@ -285,5 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filtrarDatos(texto, 0, 0, 0);
     }
 });
+
+
 
 
