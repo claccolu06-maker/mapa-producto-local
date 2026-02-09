@@ -37,6 +37,30 @@
             alert("¡Guardado! (En una app real, esto iría a la base de datos)");
             window.location.href = "index.html";
         };
+// Llama a esta función cuando el usuario envíe el formulario de preferencias
+function guardarPreferenciasDesdeFormulario(event) {
+    event.preventDefault(); // Evita que recargue la página
+
+    // Lee los campos reales de TU formulario
+    const categoriaFavorita = document.querySelector('input[name="categoria"]:checked')?.value || "comer";
+    const barrio = document.getElementById('barrio').value || "Nervion";
+    const radio = parseInt(document.getElementById('radio').value) || 1000; // en metros
+
+    const pref = {
+        categoriaFavorita: categoriaFavorita, // ej: "comer", "bar", "super"
+        barrio: barrio,                       // ej: "Nervion", "Triana"
+        radio: radio                          // ej: 500, 1000, 2000
+    };
+
+    localStorage.setItem('preferencias_mapa', JSON.stringify(pref));
+
+    // Opcional: redirigir al mapa directamente
+    window.location.href = "index.html"; // o la URL de tu mapa
+}
+
+// Enlaza la función al formulario
+document.getElementById('form-preferencias').addEventListener('submit', guardarPreferenciasDesdeFormulario);
     </script>
 </body>
 </html>
+
