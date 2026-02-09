@@ -254,13 +254,16 @@ if (navigator.geolocation) {
 }
 
 // ==========================================
-// 7. ARRANQUE AUTOMÁTICO CON PREFERENCIAS
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     aplicarPreferenciasEnUI();
 
-    const texto = document.getElementById('buscador').value;
-    const radio = parseInt(document.getElementById('distancia').value) || 0;
+    const buscadorInput = document.getElementById('buscador');
+    if (!buscadorInput) return; // por si esta página no tiene buscador
+
+    const texto = buscadorInput.value;
+
+    const distanciaSelect = document.getElementById('distancia');
+    const radio = distanciaSelect ? parseInt(distanciaSelect.value) || 0 : 0;
 
     if (!texto) return; // si no hay preferencia guardada, no hacemos nada
 
@@ -278,3 +281,4 @@ document.addEventListener('DOMContentLoaded', () => {
         filtrarDatos(texto, 0, 0, 0);
     }
 });
+
