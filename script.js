@@ -239,16 +239,18 @@ function aplicarFiltrosEnUI() {
 document.addEventListener('DOMContentLoaded', () => {
     aplicarFiltrosEnUI(); // Rellena buscador y radio si hay filtros
 
+    const filtros = leerFiltrosMapa();
+    if (!filtros || !filtros.tipo) return; // solo auto-busca si vienes de filtros.html
+
     const buscador = document.getElementById('txtBusqueda');
     if (!buscador) return;
 
     const texto = buscador.value.trim();
-    if (!texto) return; // si no hay tipo elegido, no hacemos nada
+    if (!texto) return;
 
     const distanciaSelect = document.getElementById('selDistancia');
     const radio = distanciaSelect ? parseInt(distanciaSelect.value) || 0 : 0;
 
-    // Igual que al pulsar el botón Buscar:
     if (radio > 0 && navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(pos => {
             const latUser = pos.coords.latitude;
@@ -264,6 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+
 // ==========================================
 // BOTÓN PARA ABRIR filtros.html
 // ==========================================
@@ -273,3 +276,4 @@ if (btnFiltrarAvanzado) {
         window.location.href = "filtros.html";
     });
 }
+
