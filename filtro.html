@@ -9,17 +9,19 @@
         .container { max-width: 520px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         h2 { margin-top: 0; }
         label { display: block; margin-top: 12px; font-weight: 600; }
-        input, select, button { width: 100%; padding: 9px; margin-top: 6px; }
+        input, select, button { width: 100%; padding: 9px; margin-top: 6px; box-sizing: border-box; }
         button { background: #007bff; color: #fff; border: none; cursor: pointer; border-radius: 4px; }
         button:hover { background: #0056b3; }
-        .row { display: flex; gap: 10px; }
+        .row { display: flex; gap: 10px; margin-top: 8px; }
         .row > div { flex: 1; }
         a { display:block; text-align:center; margin-top:15px; color:#007bff; text-decoration:none; }
+        a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>🔍 Filtros avanzados</h2>
+
         <form id="form-filtros">
             <label for="tipo">¿Qué quieres ver?</label>
             <select id="tipo">
@@ -41,7 +43,7 @@
                     </select>
                 </div>
                 <div>
-                    <label for="soloAbiertos">Opcional</label>
+                    <label for="soloAbiertos">Horario</label>
                     <select id="soloAbiertos">
                         <option value="todos">Cualquier horario</option>
                         <option value="abiertos">Solo sitios abiertos ahora</option>
@@ -49,26 +51,34 @@
                 </div>
             </div>
 
-            <!-- Sitio para más filtros en el futuro: precio, barrio, etc. -->
+            <!-- Aquí puedes añadir más filtros en el futuro (precio, barrio, etc.) -->
 
             <button type="submit" style="margin-top:18px;">Aplicar filtros</button>
         </form>
 
-        <a href="index.html">Volver sin aplicar cambios</a>
+        <a href="index.html">Volver al mapa sin aplicar cambios</a>
     </div>
 
     <script>
-        // Cargar filtros guardados (si los hay)
+        // Cargar filtros guardados previamente (si los hay)
         function cargarFiltrosPrevios() {
             try {
                 const raw = localStorage.getItem('filtros_mapa');
                 if (!raw) return;
                 const f = JSON.parse(raw);
+
                 if (f.tipo) document.getElementById('tipo').value = f.tipo;
+
                 if (typeof f.radio === "number" || typeof f.radio === "string") {
-                    document.getElementById('radio').value = String(f.radio);
+                    const radioSelect = document.getElementById('radio');
+                    const valor = String(f.radio);
+                    const existe = Array.from(radioSelect.options).some(opt => opt.value === valor);
+                    if (existe) radioSelect.value = valor;
                 }
-                if (f.soloAbiertos) document.getElementById('soloAbiertos').value = f.soloAbiertos;
+
+                if (f.soloAbiertos) {
+                    document.getElementById('soloAbiertos').value = f.soloAbiertos;
+                }
             } catch(e) {
                 console.warn("No se pudieron leer los filtros previos:", e);
             }
@@ -76,12 +86,13 @@
 
         cargarFiltrosPrevios();
 
+        // Guardar filtros y volver al mapa
         document.getElementById('form-filtros').addEventListener('submit', (e) => {
             e.preventDefault();
 
             const filtros = {
-                tipo: document.getElementById('tipo').value,           // "comer", "super", "ropa", "salud" o ""
-                radio: parseInt(document.getElementById('radio').value), // número en metros o 0
+                tipo: document.getElementById('tipo').value,                 // "comer", "super", "ropa", "salud" o ""
+                radio: parseInt(document.getElementById('radio').value),     // número en metros o 0
                 soloAbiertos: document.getElementById('soloAbiertos').value // "todos" o "abiertos"
             };
 
