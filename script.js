@@ -1,185 +1,146 @@
-// ==========================================
-// CONFIGURACIÓN DE CATEGORÍAS ("DICCIONARIO")
-// ==========================================
-const CATEGORIAS_MAESTRAS = {
-    // COMER Y BEBER
-    "bar":        ["bar", "pub", "biergarten", "cafe"],
-    "copas":      ["pub", "bar", "nightclub"],
-    "restaurante":["restaurant", "food_court", "fast_food"],
-    "comer":      ["restaurant", "fast_food", "food_court", "bar", "pub", "cafe"],
-    "cafe":       ["cafe"],
-    
-    // COMPRAS
-    "super":      ["supermarket", "convenience"],
-    "tienda":     ["shop", "clothes", "shoes", "electronics", "bakery", "butcher", "greengrocer"],
-    "ropa":       ["clothes", "fashion", "shoes"],
-    "pan":        ["bakery"],
+var map = L.map('map').setView([37.3891, -5.9845], 13);
 
-    // SERVICIOS
-    "banco":      ["bank", "atm"],
-    "salud":      ["pharmacy", "hospital", "dentist", "doctors"],
-    "farmacia":   ["pharmacy"],
-    "turismo":    ["hotel", "hostel", "museum", "artwork", "attraction"]
-};
-
-// ==========================================
-// 1. INICIALIZAR EL MAPA
-// ==========================================
-var map = L.map('map').setView([37.3886, -5.9823], 13);
-
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap contributors & CartoDB',
-    subdomains: 'abcd',
-    maxZoom: 19
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-var todosLosLocales = [];
-var marcadoresActuales = L.layerGroup().addTo(map);
+// Variables globales para guardar los datos
+var todosLosLocales = []; 
+var clusterGroup = L.markerClusterGroup({ chunkedLoading: true }); // Un solo grupo para todo (más fácil de limpiar)
 
-// ==========================================
-// 2. CARGAR DATOS (locales.json en la raíz)
-// ==========================================
+map.addLayer(clusterGroup);
+
 console.log("Cargando datos...");
-fetch('./locales.json')
-    .then(response => {
-        if (!response.ok) {
-            throw new Error("No se pudo cargar el archivo JSON. Verifica el nombre.");
-        }
-        return response.json();
-    })
-    .then(data => {
-        todosLosLocales = data;
-        console.log("¡Datos cargados!", todosLosLocales.length, "locales listos.");
-        pintarMapa(todosLosLocales); 
-    })
-    .catch(error => console.error('Error cargando el JSON:', error));
 
-// ==========================================
-// 3. FUNCIONES DE BÚSQUEDA Y FILTRADO
-// ==========================================
+fetch('https://claccolu06-maker.github.io/mapa-producto-local/locales.json')
+    .then(r => r.json())
+    .then(locales => {
+        todosLosLocales = locales; // Guardamos copia de seguridad
+        pintarMapa(todosLosLocales); // Pintamos todo al principio
+        console.log("Cargados " + locales.length + " locales.");
+    })
+    .catch(e => console.error(e));
+
+// Función para pintar una lista de locales en el mapa
+function pintarMapa(listaLocales) {
+    clusterGroup.clearLayers(); // Borrar lo que haya
+
+    listaLocales.forEach(local => {
+        if (local.lat && local.lng) {
+            
+            // Emoji según categoría
+            let cat = local.categoria;
+            let emoji = "📍";
+            if (cat === "Alimentación") emoji = "🛒";
+            else if (cat === "Hostelería") emoji = "☕";
+            else if (cat === "Moda") emoji = "👕";
+
+            var icono = L.divIcon({
+                html: `<div style="font-size: 25px; text-shadow: 0 0 2px white;">${emoji}</div>`,
+                className: 'dummy-class',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+
+            var marker = L.marker([local.lat, local.lng], { icon: icono });
+            marker.bindPopup(`<b>${local.nombre}</b><br>${local.tipo_detalle || ''}`);
+            clusterGroup.addLayer(marker);
+        }
+    });
+}
+
+// LÓGICA DEL BUSCADOR
+function buscarLocales() {
+    var texto = document.getElementById("txtBusqueda").value.toLowerCase();
+    var distancia = parseInt(document.getElementById("selDistancia").value);
+
+    // 1. Si elige distancia, pedir ubicación al usuario
+    if (distancia > 0) {
+        if (!navigator.geolocation) {
+            alert("Tu navegador no soporta GPS");
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(pos => {
+            var miLat = pos.coords.latitude;
+            var miLng = pos.coords.longitude;
+            
+            // Dibujar un círculo azul donde estoy
+            L.circle([miLat, miLng], { radius: distancia }).addTo(map);
+            map.setView([miLat, miLng], 15);
+
+            filtrarDatos(texto, distancia, miLat, miLng);
+        }, () => {
+            alert("No pudimos localizarte. Buscando en todo Sevilla...");
+            filtrarDatos(texto, 0, 0, 0);
+        });
+    } else {
+        // Búsqueda en toda la ciudad
+        filtrarDatos(texto, 0, 0, 0);
+    }
+}
+
+// Diccionario de "sinónimos" para ayudar al buscador
+const sinonimos = {
+    "restaurante": "restaurant",
+    "tienda": "shop",
+    "cafeteria": "cafe",
+    "fruteria": "greengrocer",
+    "panaderia": "bakery",
+    "carniceria": "butcher",
+    "ropa": "clothes",
+    "super": "supermarket"
+};
 
 function normalizar(texto) {
-    return texto
-        ? texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
-        : "";
+    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
 function filtrarDatos(texto, radio, latUser, lngUser) {
-    var inputUsuario = normalizar(texto);
-    var etiquetasBuscadas = CATEGORIAS_MAESTRAS[inputUsuario] || [];
+    var textoUser = normalizar(texto);
+    
+    // Si el usuario escribe "restaurante", buscamos también "restaurant"
+    var textoTecnico = sinonimos[textoUser] || textoUser;
 
     var resultados = todosLosLocales.filter(local => {
-        var nombre = normalizar(local.nombre || local.name || local.title);
-        var tipoOSM = normalizar(local.tipo_detalle || local.type || local.amenity || local.shop || local.category);
-        var categoria = normalizar(local.categoria || "");
+        var nombre = normalizar(local.nombre || "");
+        var tipo = normalizar(local.tipo_detalle || "");     // Ej: "restaurant"
+        var categoria = normalizar(local.categoria || "");   // Ej: "hostelería"
 
-        var coincide = false;
-
-        // A) Categoría maestra (bar, comer, super, ropa...)
-        if (etiquetasBuscadas.length > 0) {
-            if (etiquetasBuscadas.includes(tipoOSM)) {
-                coincide = true;
-            }
-        } 
-        // B) Búsqueda por texto normal
-        else {
-            if (nombre.includes(inputUsuario) || tipoOSM.includes(inputUsuario) || categoria.includes(inputUsuario)) {
-                coincide = true;
-            }
-        }
+        // Buscamos si coincide con lo que escribió el usuario O con su traducción técnica
+        var coincideTexto = nombre.includes(textoUser) || 
+                            tipo.includes(textoUser) || 
+                            categoria.includes(textoUser) ||
+                            // Aquí está la magia: buscamos también el término en inglés
+                            tipo.includes(textoTecnico);
         
-        // C) Filtro de distancia
+        // Filtro de distancia
         var dentroDelRadio = true;
         if (radio > 0) {
-            var latitud = local.lat || local.latitude;
-            var longitud = local.lng || local.lon || local.longitude;
-            if (!latitud || !longitud) return false;
-
-            var dist = map.distance([latUser, lngUser], [latitud, longitud]);
+            var dist = map.distance([latUser, lngUser], [local.lat, local.lng]);
             dentroDelRadio = dist <= radio;
         }
 
-        return coincide && dentroDelRadio;
+        return coincideTexto && dentroDelRadio;
     });
 
-    console.log(`Buscando: "${inputUsuario}" | Resultados: ${resultados.length}`);
+    console.log(`Buscando: "${textoUser}" (o "${textoTecnico}") | Resultados: ${resultados.length}`);
+    
     pintarMapa(resultados);
+    
+    if(resultados.length === 0) {
+        alert(`No encontrado 😢. Prueba con "bar", "tapas" o "comida".`);
+    }
 }
 
-function pintarMapa(locales) {
-    marcadoresActuales.clearLayers();
-
-    locales.forEach(local => {
-        var color = '#3388ff';
-        if (local.categoria === 'hosteleria') color = '#e74c3c';
-        if (local.categoria === 'compras')    color = '#27ae60';
-        if (local.categoria === 'salud')      color = '#8e44ad';
-
-        var latitud = local.lat || local.latitude;
-        var longitud = local.lng || local.lon || local.longitude;
-        if (!latitud || !longitud) return;
-
-        var circle = L.circleMarker([latitud, longitud], {
-            radius: 6,
-            fillColor: color,
-            color: "#fff",
-            weight: 1,
-            opacity: 1,
-            fillOpacity: 0.8
-        });
-
-        var contenidoPopup = `
-            <b>${local.nombre || local.name || "Sin nombre"}</b><br>
-            <i>${local.tipo_detalle || local.amenity || local.shop || ""}</i><br>
-            ${local.direccion || ""}
-        `;
-        
-        circle.bindPopup(contenidoPopup);
-        marcadoresActuales.addLayer(circle);
-    });
+function resetMapa() {
+    document.getElementById("txtBusqueda").value = "";
+    pintarMapa(todosLosLocales);
+    map.setView([37.3891, -5.9845], 13);
 }
+// --- AUTO-LOCALIZACIÓN AL INICIO ---
 
-// ==========================================
-// 4. EVENTOS (BOTÓN BUSCAR + ENTER)
-// ==========================================
-const btnBuscar = document.getElementById('btn-buscar');
-const inputBuscador = document.getElementById('buscador');
-
-if (btnBuscar && inputBuscador) {
-    btnBuscar.addEventListener('click', function() {
-        const texto = inputBuscador.value;
-        const distanciaSelect = document.getElementById('distancia');
-        const radio = distanciaSelect ? parseInt(distanciaSelect.value) || 0 : 0;
-
-        if (radio > 0) {
-            if (!navigator.geolocation) {
-                alert("Tu navegador no soporta GPS.");
-                return;
-            }
-            navigator.geolocation.getCurrentPosition(position => {
-                const latUser = position.coords.latitude;
-                const lngUser = position.coords.longitude;
-                map.setView([latUser, lngUser], 15);
-                filtrarDatos(texto, radio, latUser, lngUser);
-            }, error => {
-                alert("Necesitamos tu ubicación para filtrar por distancia.");
-                console.error(error);
-            });
-        } else {
-            filtrarDatos(texto, 0, 0, 0);
-        }
-    });
-
-    inputBuscador.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            btnBuscar.click();
-        }
-    });
-}
-
-// ==========================================
-// 5. AUTO-LOCALIZACIÓN AL INICIO
-// ==========================================
+// Intentar localizar al usuario nada más entrar
 if (navigator.geolocation) {
     console.log("Pidiendo ubicación...");
     
@@ -190,8 +151,10 @@ if (navigator.geolocation) {
 
             console.log("Usuario localizado en:", lat, lng);
 
-            map.setView([lat, lng], 16);
+            // 1. Centrar el mapa en el usuario
+            map.setView([lat, lng], 16); // Zoom 16 para ver detalle callejero
 
+            // 2. Poner un marcador especial "YO" (Punto azul pulsante)
             var iconoYo = L.divIcon({
                 html: '<div style="width: 15px; height: 15px; background: #4285F4; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>',
                 className: 'user-location-dot',
@@ -203,15 +166,21 @@ if (navigator.geolocation) {
                 .bindPopup("<b>¡Estás aquí!</b>")
                 .openPopup();
             
+            // 3. Crear un círculo de precisión (radio azul clarito)
             L.circle([lat, lng], {
                 color: '#4285F4',
                 fillColor: '#4285F4',
                 fillOpacity: 0.1,
-                radius: 300
+                radius: 200 // 200 metros alrededor
             }).addTo(map);
         },
         (error) => {
-            console.warn("Ubicación denegada o error:", error.message);
+            console.warn("El usuario denegó la ubicación o hubo error:", error.message);
+            // No pasa nada, se queda centrado en la Giralda (por defecto)
         }
     );
+} else {
+    console.log("Este navegador no tiene GPS.");
 }
+
+
