@@ -2,123 +2,154 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa Comercial de Sevilla</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- CSS de Leaflet y MarkerCluster -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <!-- Leaflet CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha512-sA+e2atMs7G7hYju0CjN9hF7kRXKuX3sI5Gucs5cjox96D65V6pZeRAEIJ5zsxgqxbPjzv+mt0bQwF7C5u5rQw=="
+        crossorigin=""
+    />
+
+    <!-- MarkerCluster CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+    />
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+    />
 
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
-        #map { height: 100vh; width: 100%; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
 
-        /* BUSCADOR FLOTANTE ESTÉTICO */
-        .search-card {
-            position: absolute;
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* Caja de búsqueda flotante arriba a la izquierda */
+        .search-box {
+            position: fixed;
             top: 20px;
-            left: 60px; /* Separado del zoom */
-            z-index: 1000; /* Por encima del mapa */
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            width: 300px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            left: 20px;
+            z-index: 1000;
+            background: #ffffff;
+            padding: 12px 14px;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            min-width: 260px;
         }
 
-        .search-card h2 { margin: 0 0 10px 0; font-size: 16px; color: #333; }
-        
-        .search-input {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        .search-box h3 {
+            margin: 0 0 6px 0;
+            font-size: 15px;
+        }
+
+        .search-box input,
+        .search-box select,
+        .search-box button {
             font-size: 14px;
-            outline: none;
-        }
-        .search-input:focus { border-color: #007bff; }
-
-        .search-row { display: flex; gap: 5px; }
-        
-        .search-btn {
-            background: #007bff; color: white; border: none;
-            padding: 10px; border-radius: 4px; cursor: pointer; flex: 1;
-            font-weight: bold;
-        }
-        .search-btn:hover { background: #0056b3; }
-
-        .reset-btn {
-            background: #f8f9fa; color: #333; border: 1px solid #ddd;
-            padding: 10px; border-radius: 4px; cursor: pointer;
         }
 
-        /* Estilos para los iconos del mapa (para que no tengan fondo) */
-        .dummy-class { background: transparent !important; border: none !important; }
+        .search-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .search-row > * {
+            flex: 1;
+        }
+
+        .search-box button {
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            padding: 8px;
+        }
+
+        #btnBuscar {
+            background: #0d6efd;
+            color: white;
+        }
+
+        #btnReset {
+            background: #e0e0e0;
+            color: #333;
+            flex: 0 0 auto;
+            width: 34px;
+        }
+
+        /* Botón Filtrar arriba a la derecha */
+        #btn-filtrar-avanzado {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+            background: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            padding: 8px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body>
-<button id="btn-filtrar-avanzado" style="
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    z-index: 1000;
-    background: #ffffff;
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    padding: 8px 14px;
-    font-size: 14px;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-">
-    <!-- EL MAPA -->
-    <div id="map"></div>
 
-    <!-- EL BUSCADOR FLOTANTE -->
-    <div class="search-card">
-        <h2>🔍 ¿Qué buscas hoy?</h2>
-        <input type="text" id="txtBusqueda" class="search-input" placeholder="Ej: Pan, Zapatos, Cerveza...">
-        
-        <div class="search-row">
-            <select id="selDistancia" class="search-input" style="width: 100px;">
+    <!-- Botón de filtros avanzados -->
+    <button id="btn-filtrar-avanzado">🔍 Filtrar</button>
+
+    <!-- Caja de búsqueda principal -->
+    <div class="search-box">
+        <h3>¿Qué buscas hoy?</h3>
+        <input
+            type="text"
+            id="txtBusqueda"
+            placeholder="Ej: bar, pan, ropa, restaurante..."
+        />
+
+        <div class="search-row" style="margin-top:8px;">
+            <select id="selDistancia">
                 <option value="0">Toda Sevilla</option>
                 <option value="500">500 m</option>
                 <option value="1000">1 km</option>
+                <option value="2000">2 km</option>
             </select>
-            <button class="search-btn" onclick="buscarLocales()">Buscar</button>
-            <button class="reset-btn" onclick="resetMapa()">❌</button>
+
+            <button id="btnBuscar" onclick="buscarLocales()">Buscar</button>
+            <button id="btnReset" onclick="resetMapa()">✕</button>
         </div>
-        <small style="color:gray; font-size:11px; margin-top:5px;">
+
+        <small style="display:block; margin-top:4px; font-size:11px; color:#666;">
             * Si eliges distancia, haremos zoom a tu posición.
         </small>
     </div>
-<button id="btn-filtrar-avanzado" style="
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    z-index: 1000;
-    background: #ffffff;
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    padding: 8px 14px;
-    font-size: 14px;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-">
-    🔍 Filtrar
-</button>
 
-    <!-- JS Libraries -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <!-- Contenedor del mapa -->
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha512-vRmA+4CcuN2z1h6FYWQpHqUULICwhf66A1VpzwuWgxeqmoeZaZX6mE6oPD58Ll35H5TADaBrZE08C0QY1YfCtw=="
+        crossorigin=""
+    ></script>
+
+    <!-- MarkerCluster JS -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <!-- Tu script principal -->
     <script src="script.js"></script>
-    🔍 Filtrar
-</button>
 </body>
 </html>
-
-
-
