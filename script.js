@@ -1,6 +1,4 @@
-// ==========================================
-// MAPA BASE + CLUSTER
-// ==========================================
+
 var map = L.map('map').setView([37.3891, -5.9845], 13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -25,9 +23,7 @@ fetch('https://claccolu06-maker.github.io/mapa-producto-local/locales.json')
     })
     .catch(e => console.error(e));
 
-// ==========================================
-// PINTAR LOCALES
-// ==========================================
+// Función para pintar una lista de locales en el mapa
 function pintarMapa(listaLocales) {
     clusterGroup.clearLayers(); // Borrar lo que haya
 
@@ -55,9 +51,7 @@ function pintarMapa(listaLocales) {
     });
 }
 
-// ==========================================
-// BUSCADOR
-// ==========================================
+// LÓGICA DEL BUSCADOR
 function buscarLocales() {
     var texto = document.getElementById("txtBusqueda").value.toLowerCase();
     var distancia = parseInt(document.getElementById("selDistancia").value);
@@ -145,10 +139,7 @@ function resetMapa() {
     pintarMapa(todosLosLocales);
     map.setView([37.3891, -5.9845], 13);
 }
-
-// ==========================================
-// AUTO-LOCALIZACIÓN AL INICIO
-// ==========================================
+// --- AUTO-LOCALIZACIÓN AL INICIO ---
 
 // Intentar localizar al usuario nada más entrar
 if (navigator.geolocation) {
@@ -186,94 +177,12 @@ if (navigator.geolocation) {
         },
         (error) => {
             console.warn("El usuario denegó la ubicación o hubo error:", error.message);
-            // No pasa nada, se queda centrado en Sevilla por defecto
+            // No pasa nada, se queda centrado en la Giralda (por defecto)
         }
     );
 } else {
     console.log("Este navegador no tiene GPS.");
 }
 
-// ==========================================
-// FILTROS AVANZADOS (desde filtros.html)
-// ==========================================
-function leerFiltrosMapa() {
-    try {
-        const raw = localStorage.getItem('filtros_mapa');
-        if (!raw) return null;
-        return JSON.parse(raw);
-    } catch (e) {
-        console.warn("No se pudieron leer los filtros del mapa:", e);
-        return null;
-    }
-}
 
-// Aplica tipo y radio a la UI del mapa
-function aplicarFiltrosEnUI() {
-    const filtros = leerFiltrosMapa();
-    if (!filtros) return;
-
-    // 1) Tipo -> caja de texto del buscador
-    if (filtros.tipo) {
-        const buscador = document.getElementById('txtBusqueda');
-        if (buscador) {
-            buscador.value = filtros.tipo; // "comer", "super", "ropa", "salud"
-        }
-    }
-
-    // 2) Radio -> select de distancia
-    const distanciaSelect = document.getElementById('selDistancia');
-    if (distanciaSelect && typeof filtros.radio !== "undefined") {
-        const valor = String(filtros.radio);
-        const optionExiste = Array.from(distanciaSelect.options).some(opt => opt.value === valor);
-        if (optionExiste) {
-            distanciaSelect.value = valor;
-        }
-    }
-
-    // 3) En el futuro: filtros.soloAbiertos cuando tengas horarios en el JSON
-}
-
-// ==========================================
-// ARRANQUE AUTOMÁTICO CON FILTROS
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    aplicarFiltrosEnUI(); // Rellena buscador y radio si hay filtros
-
-    const filtros = leerFiltrosMapa();
-    if (!filtros || !filtros.tipo) return; // solo auto-busca si vienes de filtros.html
-
-    const buscador = document.getElementById('txtBusqueda');
-    if (!buscador) return;
-
-    const texto = buscador.value.trim();
-    if (!texto) return;
-
-    const distanciaSelect = document.getElementById('selDistancia');
-    const radio = distanciaSelect ? parseInt(distanciaSelect.value) || 0 : 0;
-
-    if (radio > 0 && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-            const latUser = pos.coords.latitude;
-            const lngUser = pos.coords.longitude;
-            map.setView([latUser, lngUser], 15);
-            filtrarDatos(texto, radio, latUser, lngUser);
-        }, err => {
-            console.warn("No se pudo obtener ubicación para búsqueda inicial:", err);
-            filtrarDatos(texto, 0, 0, 0);
-        });
-    } else {
-        filtrarDatos(texto, 0, 0, 0);
-    }
-});
-
-
-// ==========================================
-// BOTÓN PARA ABRIR filtros.html
-// ==========================================
-const btnFiltrarAvanzado = document.getElementById('btn-filtrar-avanzado');
-if (btnFiltrarAvanzado) {
-    btnFiltrarAvanzado.addEventListener('click', () => {
-        window.location.href = "filtros.html";
-    });
-}
 
