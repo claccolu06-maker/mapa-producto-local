@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filtros avanzados</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .container { max-width: 520px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; }
+        label { display: block; margin-top: 12px; font-weight: 600; }
+        input, select, button { width: 100%; padding: 9px; margin-top: 6px; }
+        button { background: #007bff; color: #fff; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+        .row { display: flex; gap: 10px; }
+        .row > div { flex: 1; }
+        a { display:block; text-align:center; margin-top:15px; color:#007bff; text-decoration:none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔍 Filtros avanzados</h2>
+        <form id="form-filtros">
+            <label for="tipo">¿Qué quieres ver?</label>
+            <select id="tipo">
+                <option value="">Todo</option>
+                <option value="comer">Comer / Bares / Restaurantes</option>
+                <option value="super">Supermercados / Alimentación</option>
+                <option value="ropa">Ropa / Moda</option>
+                <option value="salud">Salud (farmacias, médicos)</option>
+            </select>
+
+            <div class="row">
+                <div>
+                    <label for="radio">Radio máximo (metros)</label>
+                    <select id="radio">
+                        <option value="0">Toda Sevilla</option>
+                        <option value="500">500 m</option>
+                        <option value="1000">1 km</option>
+                        <option value="2000">2 km</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="soloAbiertos">Opcional</label>
+                    <select id="soloAbiertos">
+                        <option value="todos">Cualquier horario</option>
+                        <option value="abiertos">Solo sitios abiertos ahora</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Sitio para más filtros en el futuro: precio, barrio, etc. -->
+
+            <button type="submit" style="margin-top:18px;">Aplicar filtros</button>
+        </form>
+
+        <a href="index.html">Volver sin aplicar cambios</a>
+    </div>
+
+    <script>
+        // Cargar filtros guardados (si los hay)
+        function cargarFiltrosPrevios() {
+            try {
+                const raw = localStorage.getItem('filtros_mapa');
+                if (!raw) return;
+                const f = JSON.parse(raw);
+                if (f.tipo) document.getElementById('tipo').value = f.tipo;
+                if (typeof f.radio === "number" || typeof f.radio === "string") {
+                    document.getElementById('radio').value = String(f.radio);
+                }
+                if (f.soloAbiertos) document.getElementById('soloAbiertos').value = f.soloAbiertos;
+            } catch(e) {
+                console.warn("No se pudieron leer los filtros previos:", e);
+            }
+        }
+
+        cargarFiltrosPrevios();
+
+        document.getElementById('form-filtros').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const filtros = {
+                tipo: document.getElementById('tipo').value,           // "comer", "super", "ropa", "salud" o ""
+                radio: parseInt(document.getElementById('radio').value), // número en metros o 0
+                soloAbiertos: document.getElementById('soloAbiertos').value // "todos" o "abiertos"
+            };
+
+            localStorage.setItem('filtros_mapa', JSON.stringify(filtros));
+
+            // Volver al mapa
+            window.location.href = "index.html";
+        });
+    </script>
+</body>
+</html>
