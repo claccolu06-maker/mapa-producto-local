@@ -188,6 +188,43 @@ function resetMapa() {
     pintarMapa(todosLosLocales);
     map.setView([37.3891, -5.9845], 13);
 }
+function leerPreferenciasUsuario() {
+    try {
+        const raw = localStorage.getItem('preferencias_mapa');
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch (e) {
+        console.warn("No se pudieron leer las preferencias:", e);
+        return null;
+    }
+}
+
+function aplicarPreferenciasEnUI() {
+    const pref = leerPreferenciasUsuario();
+    if (!pref) return;
+
+    // Convertimos tu categoría del formulario a algo útil para el buscador
+    // Alimentación -> "super", Hostelería -> "comer", Moda -> "ropa", Otros -> nada
+    let textoBuscador = "";
+    switch (pref.categoriaFavorita) {
+        case "Alimentación":
+            textoBuscador = "super";
+            break;
+        case "Hostelería":
+            textoBuscador = "comer";
+            break;
+        case "Moda":
+            textoBuscador = "ropa";
+            break;
+        default:
+            textoBuscador = "";
+    }
+
+    if (textoBuscador) {
+        document.getElementById('buscador').value = textoBuscador;
+    }
+}
+
 // --- AUTO-LOCALIZACIÓN AL INICIO ---
 
 // Intentar localizar al usuario nada más entrar
@@ -233,6 +270,26 @@ if (navigator.geolocation) {
     console.log("Este navegador no tiene GPS.");
 }
 document.addEventListener('DOMContentLoaded', aplicarPreferenciasEnUI);
+
+document.addEventListener('DOMContentLoaded', () => {
+    aplicarPreferenciasEnUI();
+
+    const texto = document.getElementById('buscador').value;
+    const radio = parseInt(document.getElementById('distancia').value) || 0;
+
+    if (!texto) return; // si no hay preferencia, no hacemos nada
+
+    if (radio > 0 && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            const latUser = pos.coords.latitude;
+            const lngUser = pos.coords.longitude;
+            map.setView([latUser, lngUser], 15);
+            filtrarDatos(texto, radio, latUser, lngUser);
+        });
+    } else {
+        filtrarDatos(texto, 0, 0, 0);
+    }
+});
 
 
 
