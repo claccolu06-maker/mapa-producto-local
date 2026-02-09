@@ -39,6 +39,7 @@ var marcadoresActuales = L.layerGroup().addTo(map);
 // ==========================================
 // 2. CARGAR DATOS (locales.json en la raíz)
 // ==========================================
+console.log("Cargando datos...");
 fetch('./locales.json')
     .then(response => {
         if (!response.ok) {
@@ -101,12 +102,8 @@ function filtrarDatos(texto, radio, latUser, lngUser) {
         return coincide && dentroDelRadio;
     });
 
-    console.log(`Buscando: "${inputUsuario}" | Encontrados: ${resultados.length}`);
+    console.log(`Buscando: "${inputUsuario}" | Resultados: ${resultados.length}`);
     pintarMapa(resultados);
-
-    if(resultados.length === 0) {
-        console.log("No se encontraron resultados cercanos.");
-    }
 }
 
 function pintarMapa(locales) {
@@ -143,55 +140,12 @@ function pintarMapa(locales) {
 }
 
 // ==========================================
-// 4. PREFERENCIAS DE USUARIO (localStorage)
+// 4. EVENTOS (BOTÓN BUSCAR + ENTER)
 // ==========================================
-
-function leerPreferenciasUsuario() {
-    try {
-        const raw = localStorage.getItem('preferencias_mapa');
-        if (!raw) return null;
-        return JSON.parse(raw);
-    } catch (e) {
-        console.warn("No se pudieron leer las preferencias:", e);
-        return null;
-    }
-}
-
-function aplicarPreferenciasEnUI() {
-    const pref = leerPreferenciasUsuario();
-    if (!pref) return;
-
-    // Tu formulario guarda: Alimentación, Hostelería, Moda, Otros
-    let textoBuscador = "";
-    switch (pref.categoriaFavorita) {
-        case "Alimentación":
-            textoBuscador = "super";  // buscar supermercados y alimentación
-            break;
-        case "Hostelería":
-            textoBuscador = "comer";  // bares + restaurantes
-            break;
-        case "Moda":
-            textoBuscador = "ropa";   // tiendas de ropa
-            break;
-        default:
-            textoBuscador = "";
-    }
-
-    if (textoBuscador) {
-        document.getElementById('buscador').value = textoBuscador;
-    }
-}
-
-// ==========================================
-// 5. EVENTOS (BOTÓN BUSCAR + ENTER)
-// ==========================================
-
 const btnBuscar = document.getElementById('btn-buscar');
 const inputBuscador = document.getElementById('buscador');
 
-// Solo añadimos eventos si los elementos existen (evita errores en otras páginas)
 if (btnBuscar && inputBuscador) {
-
     btnBuscar.addEventListener('click', function() {
         const texto = inputBuscador.value;
         const distanciaSelect = document.getElementById('distancia');
@@ -222,11 +176,12 @@ if (btnBuscar && inputBuscador) {
         }
     });
 }
+
 // ==========================================
-// 6. AUTO-LOCALIZACIÓN AL INICIO
+// 5. AUTO-LOCALIZACIÓN AL INICIO
 // ==========================================
 if (navigator.geolocation) {
-    console.log("Pidiendo ubicación inicial...");
+    console.log("Pidiendo ubicación...");
     
     navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -260,34 +215,3 @@ if (navigator.geolocation) {
         }
     );
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    aplicarPreferenciasEnUI();
-
-    const buscadorInput = document.getElementById('buscador');
-    if (!buscadorInput) return;  // si esta página no tiene buscador, salimos
-
-    const texto = buscadorInput.value;
-    const distanciaSelect = document.getElementById('distancia');
-    const radio = distanciaSelect ? parseInt(distanciaSelect.value) || 0 : 0;
-
-    if (!texto) return;
-
-    if (radio > 0 && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-            const latUser = pos.coords.latitude;
-            const lngUser = pos.coords.longitude;
-            map.setView([latUser, lngUser], 15);
-            filtrarDatos(texto, radio, latUser, lngUser);
-        }, err => {
-            console.warn("No se pudo obtener ubicación para búsqueda inicial:", err);
-            filtrarDatos(texto, 0, 0, 0);
-        });
-    } else {
-        filtrarDatos(texto, 0, 0, 0);
-    }
-});
-
-
-
-
