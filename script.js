@@ -1,3 +1,6 @@
+// ==========================================
+// MAPA BASE + CLUSTER
+// ==========================================
 var map = L.map('map').setView([37.3891, -5.9845], 13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -22,7 +25,9 @@ fetch('https://claccolu06-maker.github.io/mapa-producto-local/locales.json')
     })
     .catch(e => console.error(e));
 
-// Función para pintar una lista de locales en el mapa
+// ==========================================
+// PINTAR LOCALES
+// ==========================================
 function pintarMapa(listaLocales) {
     clusterGroup.clearLayers(); // Borrar lo que haya
 
@@ -50,7 +55,9 @@ function pintarMapa(listaLocales) {
     });
 }
 
-// LÓGICA DEL BUSCADOR
+// ==========================================
+// BUSCADOR
+// ==========================================
 function buscarLocales() {
     var texto = document.getElementById("txtBusqueda").value.toLowerCase();
     var distancia = parseInt(document.getElementById("selDistancia").value);
@@ -132,94 +139,16 @@ function filtrarDatos(texto, radio, latUser, lngUser) {
         alert(`No encontrado 😢. Prueba con "bar", "tapas" o "comida".`);
     }
 }
-// ================================
-// PREFERENCIAS DE USUARIO (MAPA)
-// ================================
-function leerPreferenciasUsuario() {
-    try {
-        const raw = localStorage.getItem('preferencias_mapa');
-        if (!raw) return null;
-        return JSON.parse(raw);
-    } catch (e) {
-        console.warn("No se pudieron leer las preferencias:", e);
-        return null;
-    }
-}
-
-function aplicarPreferenciasEnBuscador() {
-    const pref = leerPreferenciasUsuario();
-    if (!pref) return;
-
-    // Tu formulario guarda: Alimentación, Hostelería, Moda, Otros
-    let textoBuscador = "";
-    switch (pref.categoriaFavorita) {
-        case "Alimentación":
-            textoBuscador = "super";  // supermercados / alimentación
-            break;
-        case "Hostelería":
-            textoBuscador = "comer";  // bares + restaurantes
-            break;
-        case "Moda":
-            textoBuscador = "ropa";   // tiendas de ropa
-            break;
-        default:
-            textoBuscador = "";
-    }
-
-    if (textoBuscador) {
-        const input = document.getElementById('buscador');
-        if (input) {
-            input.value = textoBuscador;
-        }
-    }
-}
-// ================================
-// FILTROS AVANZADOS (desde filtros.html)
-// ================================
-function leerFiltrosMapa() {
-    try {
-        const raw = localStorage.getItem('filtros_mapa');
-        if (!raw) return null;
-        return JSON.parse(raw);
-    } catch (e) {
-        console.warn("No se pudieron leer los filtros del mapa:", e);
-        return null;
-    }
-}
-
-// Aplica tipo y radio a la UI del mapa
-function aplicarFiltrosEnUI() {
-    const filtros = leerFiltrosMapa();
-    if (!filtros) return;
-
-    // 1) Tipo -> texto del buscador
-    if (filtros.tipo) {
-        const buscador = document.getElementById('buscador');
-        if (buscador) {
-            buscador.value = filtros.tipo; // "comer", "super", "ropa", "salud"
-        }
-    }
-
-    // 2) Radio -> select de distancia (si existe)
-    const distanciaSelect = document.getElementById('distancia');
-    if (distanciaSelect && typeof filtros.radio !== "undefined") {
-        const valor = String(filtros.radio);
-        // Solo cambiamos si existe esa opción
-        const optionExiste = Array.from(distanciaSelect.options).some(opt => opt.value === valor);
-        if (optionExiste) {
-            distanciaSelect.value = valor;
-        }
-    }
-
-    // 3) En el futuro podríamos usar filtros.soloAbiertos cuando tengas horarios en el JSON
-}
 
 function resetMapa() {
     document.getElementById("txtBusqueda").value = "";
     pintarMapa(todosLosLocales);
     map.setView([37.3891, -5.9845], 13);
 }
-// --- AUTO-LOCALIZACIÓN AL INICIO ---
+
+// ==========================================
+// AUTO-LOCALIZACIÓN AL INICIO
+// ==========================================
 
 // Intentar localizar al usuario nada más entrar
 if (navigator.geolocation) {
@@ -257,63 +186,66 @@ if (navigator.geolocation) {
         },
         (error) => {
             console.warn("El usuario denegó la ubicación o hubo error:", error.message);
-            // No pasa nada, se queda centrado en la Giralda (por defecto)
+            // No pasa nada, se queda centrado en Sevilla por defecto
         }
     );
 } else {
     console.log("Este navegador no tiene GPS.");
 }
-// ================================
-// ARRANQUE AUTOMÁTICO CON PREFERENCIA
-// ================================
-document.addEventListener('DOMContentLoaded', () => {
-    aplicarPreferenciasEnBuscador();
 
-    const inputBuscador = document.getElementById('buscador');
-    if (!inputBuscador) return;
-
-    const texto = inputBuscador.value;
-    if (!texto) return; // si no hay preferencia, no hacemos nada
-
-    // Opcional: si quieres que además busque solo, copia la lógica de tu botón:
-    const distanciaSelect = document.getElementById('distancia');
-    const radio = distanciaSelect ? parseInt(distanciaSelect.value) || 0 : 0;
-
-    if (radio > 0 && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-            const latUser = pos.coords.latitude;
-            const lngUser = pos.coords.longitude;
-            map.setView([latUser, lngUser], 15);
-            filtrarDatos(texto, radio, latUser, lngUser);
-        }, err => {
-            console.warn("No se pudo obtener ubicación para búsqueda inicial:", err);
-            filtrarDatos(texto, 0, 0, 0);
-        });
-    } else {
-        filtrarDatos(texto, 0, 0, 0);
+// ==========================================
+// FILTROS AVANZADOS (desde filtros.html)
+// ==========================================
+function leerFiltrosMapa() {
+    try {
+        const raw = localStorage.getItem('filtros_mapa');
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch (e) {
+        console.warn("No se pudieron leer los filtros del mapa:", e);
+        return null;
     }
-});
-
-// Botón que abre la página de filtros avanzados
-const btnFiltrarAvanzado = document.getElementById('btn-filtrar-avanzado');
-if (btnFiltrarAvanzado) {
-    btnFiltrarAvanzado.addEventListener('click', () => {
-        window.location.href = "filtros.html"; // nueva página de filtros
-    });
 }
-// ================================
+
+// Aplica tipo y radio a la UI del mapa
+function aplicarFiltrosEnUI() {
+    const filtros = leerFiltrosMapa();
+    if (!filtros) return;
+
+    // 1) Tipo -> caja de texto del buscador
+    if (filtros.tipo) {
+        const buscador = document.getElementById('txtBusqueda');
+        if (buscador) {
+            buscador.value = filtros.tipo; // "comer", "super", "ropa", "salud"
+        }
+    }
+
+    // 2) Radio -> select de distancia
+    const distanciaSelect = document.getElementById('selDistancia');
+    if (distanciaSelect && typeof filtros.radio !== "undefined") {
+        const valor = String(filtros.radio);
+        const optionExiste = Array.from(distanciaSelect.options).some(opt => opt.value === valor);
+        if (optionExiste) {
+            distanciaSelect.value = valor;
+        }
+    }
+
+    // 3) En el futuro: filtros.soloAbiertos cuando tengas horarios en el JSON
+}
+
+// ==========================================
 // ARRANQUE AUTOMÁTICO CON FILTROS
-// ================================
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     aplicarFiltrosEnUI(); // Rellena buscador y radio si hay filtros
 
-    const buscador = document.getElementById('buscador');
+    const buscador = document.getElementById('txtBusqueda');
     if (!buscador) return;
 
     const texto = buscador.value.trim();
     if (!texto) return; // si no hay tipo elegido, no hacemos nada
 
-    const distanciaSelect = document.getElementById('distancia');
+    const distanciaSelect = document.getElementById('selDistancia');
     const radio = distanciaSelect ? parseInt(distanciaSelect.value) || 0 : 0;
 
     // Igual que al pulsar el botón Buscar:
@@ -332,8 +264,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-
-
-
-
-
+// ==========================================
+// BOTÓN PARA ABRIR filtros.html
+// ==========================================
+const btnFiltrarAvanzado = document.getElementById('btn-filtrar-avanzado');
+if (btnFiltrarAvanzado) {
+    btnFiltrarAvanzado.addEventListener('click', () => {
+        window.location.href = "filtros.html";
+    });
+}
