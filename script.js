@@ -49,7 +49,36 @@ function pintarMapa(listaLocales) {
         }
     });
 }
+function leerPreferenciasUsuario() {
+    try {
+        const raw = localStorage.getItem('preferencias_mapa');
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch (e) {
+        console.warn("No se pudieron leer las preferencias:", e);
+        return null;
+    }
+}
 
+function aplicarPreferenciasEnUI() {
+    const pref = leerPreferenciasUsuario();
+    if (!pref) return;
+
+    // Rellenar buscador con la categoría favorita
+    if (pref.categoriaFavorita) {
+        document.getElementById('buscador').value = pref.categoriaFavorita;
+    }
+
+    // Rellenar radio de distancia si existe ese select
+    if (pref.radio && document.getElementById('distancia')) {
+        document.getElementById('distancia').value = pref.radio.toString();
+    }
+
+    // Si tienes un filtro de barrio en el mapa, lo ajustas aquí
+    if (pref.barrio && document.getElementById('filtro-barrio')) {
+        document.getElementById('filtro-barrio').value = pref.barrio;
+    }
+}
 // LÓGICA DEL BUSCADOR
 function buscarLocales() {
     var texto = document.getElementById("txtBusqueda").value.toLowerCase();
@@ -182,6 +211,7 @@ if (navigator.geolocation) {
 } else {
     console.log("Este navegador no tiene GPS.");
 }
+
 
 
 
