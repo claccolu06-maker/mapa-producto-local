@@ -331,6 +331,13 @@ document.addEventListener('DOMContentLoaded', () => {
         filtrarDatos(texto, 0, 0, 0);
     }
 });
+const btnFiltrarAvanzado = document.getElementById('btn-filtrar-avanzado');
+if (btnFiltrarAvanzado) {
+    btnFiltrarAvanzado.addEventListener('click', () => {
+        window.location.href = "filtros.html";
+    });
+}
+
 
 
 
