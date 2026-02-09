@@ -9,48 +9,52 @@
         .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         input, select, button { width: 100%; padding: 10px; margin-top: 10px; }
         button { background: #28a745; color: white; border: none; cursor: pointer; }
+        a { text-decoration: none; color: #007bff; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>📍 Añadir Local</h2>
+
         <form id="form">
             <input type="text" id="nombre" placeholder="Nombre del sitio" required>
+
             <select id="categoria">
                 <option value="Alimentación">🛒 Alimentación</option>
                 <option value="Hostelería">☕ Hostelería</option>
                 <option value="Moda">👕 Moda</option>
                 <option value="Otros">📍 Otros</option>
             </select>
+
             <input type="text" id="lat" placeholder="Latitud" required readonly>
             <input type="text" id="lng" placeholder="Longitud" required readonly>
+
             <button type="submit">Guardar (Simulado)</button>
         </form>
+
         <a href="index.html" style="display:block; text-align:center; margin-top:15px;">Volver al mapa</a>
     </div>
-   <script>
-    const p = new URLSearchParams(window.location.search);
-    document.getElementById('lat').value = p.get('lat');
-    document.getElementById('lng').value = p.get('lng');
 
-    document.getElementById('form').onsubmit = (e) => {
-        e.preventDefault();
+    <script>
+        // Rellenar lat / lng desde la URL (?lat=...&lng=...)
+        const p = new URLSearchParams(window.location.search);
+        document.getElementById('lat').value = p.get('lat');
+        document.getElementById('lng').value = p.get('lng');
 
-        // 1) Leemos la categoría elegida
-        const categoriaElegida = document.getElementById('categoria').value; 
-        // Alimentación, Hostelería, Moda, Otros
+        // Guardar preferencia y volver al mapa
+        document.getElementById('form').onsubmit = (e) => {
+            e.preventDefault();
 
-        // 2) La guardamos como preferencia de mapa
-        const pref = {
-            categoriaFavorita: categoriaElegida  // la usaremos luego en el mapa
+            const categoriaElegida = document.getElementById('categoria').value; 
+            // Guardamos la preferencia sencilla para el mapa
+            const pref = {
+                categoriaFavorita: categoriaElegida   // "Alimentación", "Hostelería", "Moda", "Otros"
+            };
+            localStorage.setItem('preferencias_mapa', JSON.stringify(pref));
+
+            alert("¡Guardado! (En una app real, esto iría a la base de datos)");
+            window.location.href = "index.html"; // vuelve al mapa
         };
-        localStorage.setItem('preferencias_mapa', JSON.stringify(pref));
-
-        alert("¡Guardado! (En una app real, esto iría a la base de datos)");
-        window.location.href = "index.html";
-    };
-</script>
+    </script>
 </body>
 </html>
-
-
