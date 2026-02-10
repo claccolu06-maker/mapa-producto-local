@@ -185,7 +185,7 @@
       puntos.push(punto);
 
       try {
-        localStorage.setItem("puntosLocalSeville", JSON.stringify(puntos));
+        localStorage.setItem("localesNuevos", JSON.stringify(puntos));
         successEl.textContent = "Punto guardado correctamente. Recuerda exportarlo a puntos.json.";
         document.getElementById("formularioPunto").reset();
       } catch (err) {
@@ -196,4 +196,5 @@
 <script src="exportar.js"></script>
 </body>
 </html>
+
 
