@@ -50,6 +50,35 @@ function pintarMapa(listaLocales) {
         }
     });
 }
+// Cargar puntos desde puntos.json
+fetch("puntos.json")
+  .then(res => res.json())
+  .then(puntos => {
+    puntos.forEach(p => {
+      if (!p.nombre || isNaN(p.lat) || isNaN(p.lng)) return;
+
+      // Aquí puedes usar tus iconos personalizados por categoría si ya los tienes
+      const marker = L.marker([p.lat, p.lng]).addTo(map);
+
+      // Generar estrellas según el precio
+      const precioStr = "★".repeat(p.precio);
+
+      const popup = `
+        <strong>${p.nombre}</strong><br>
+        Categoría: ${p.categoria}<br>
+        Tipo: ${p.tipo_detalle}<br>
+        Precio: ${precioStr}<br>
+        Barrio: ${p.barrio}<br>
+        Dirección: ${p.direccion}<br>
+        Horario abierto: ${p.horario_abierto ? "Sí" : "No"}
+      `;
+
+      marker.bindPopup(popup);
+    });
+  })
+  .catch(err => {
+    console.error("Error al cargar los puntos", err);
+  });
 
 // LÓGICA DEL BUSCADOR
 function buscarLocales() {
@@ -183,6 +212,7 @@ if (navigator.geolocation) {
 } else {
     console.log("Este navegador no tiene GPS.");
 }
+
 
 
 
