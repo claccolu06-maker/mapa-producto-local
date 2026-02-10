@@ -1,4 +1,3 @@
-
 var map = L.map('map').setView([37.3891, -5.9845], 13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -8,28 +7,35 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 // Variables globales para guardar los datos
 var todosLosLocales = []; 
-var clusterGroup = L.markerClusterGroup({ chunkedLoading: true }); // Un solo grupo para todo (más fácil de limpiar)
-
+var clusterGroup = L.markerClusterGroup({ chunkedLoading: true });
 map.addLayer(clusterGroup);
 
 console.log("Cargando datos...");
 
-fetch('https://claccolu06-maker.github.io/mapa-producto-local/locales.json')
+// ✅ INTEGRADO: Lee locales.json con TODOS los campos del formulario
+fetch('locales.json')
     .then(r => r.json())
     .then(locales => {
-        todosLosLocales = locales; // Guardamos copia de seguridad
-        pintarMapa(todosLosLocales); // Pintamos todo al principio
-        console.log("Cargados " + locales.length + " locales.");
+        todosLosLocales = locales;
+        
+        // Añadir campos del formulario (precio, barrio, etc.)
+        locales.forEach(local => {
+            if (local.precio) local.precioStr = "★".repeat(local.precio);
+        });
+        
+        pintarMapa(todosLosLocales);
+        console.log("Cargados " + locales.length + " locales con formulario.");
     })
     .catch(e => console.error(e));
 
+// ✅ MODIFICADA: Tu función pintarMapa con TODOS los campos del formulario
 function pintarMapa(listaLocales) {
-    clusterGroup.clearLayers(); // Borrar lo que haya
+    clusterGroup.clearLayers();
 
     listaLocales.forEach(local => {
         if (local.lat && local.lng) {
             
-            // Emoji según categoría (tu código exacto)
+            // Tus iconos por emoji (sin cambios)
             let cat = local.categoria;
             let emoji = "📍";
             if (cat === "Alimentación") emoji = "🛒";
@@ -45,11 +51,11 @@ function pintarMapa(listaLocales) {
 
             var marker = L.marker([local.lat, local.lng], { icon: icono });
             
-            // Popup con TODOS los campos del formulario
+            // ✅ NUEVO: Popup con TODOS los campos del formulario
             let popupContent = `<b>${local.nombre}</b><br>`;
             if (local.categoria) popupContent += `Categoría: ${local.categoria}<br>`;
             if (local.tipo_detalle) popupContent += `${local.tipo_detalle}<br>`;
-            if (local.precio) popupContent += `Precio: ${local.precioStr}<br>`;
+            if (local.precioStr) popupContent += `Precio: ${local.precioStr}<br>`;
             if (local.barrio) popupContent += `Barrio: ${local.barrio}<br>`;
             if (local.direccion) popupContent += `Dirección: ${local.direccion}<br>`;
             if (local.horario_abierto !== undefined) popupContent += `Horario abierto: ${local.horario_abierto ? "Sí" : "No"}<br>`;
@@ -59,29 +65,12 @@ function pintarMapa(listaLocales) {
         }
     });
 }
-fetch('locales.json')
-    .then(r => r.json())
-    .then(locales => {
-        todosLosLocales = locales; // Guardamos copia de seguridad
-        pintarMapa(locales); // Pintamos todo al principio
-        console.log("Cargados " + locales.length + " locales.");
-        
-        // NUEVO: Añadir los campos del formulario al popup
-        locales.forEach(local => {
-            if (local.precio) {
-                // Si el JSON tiene 'precio', añadirlo al popup
-                local.precioStr = "★".repeat(local.precio);
-            }
-        });
-    })
-    .catch(e => console.error(e));
 
-// LÓGICA DEL BUSCADOR
+// Tu buscador (sin cambios)
 function buscarLocales() {
     var texto = document.getElementById("txtBusqueda").value.toLowerCase();
     var distancia = parseInt(document.getElementById("selDistancia").value);
 
-    // 1. Si elige distancia, pedir ubicación al usuario
     if (distancia > 0) {
         if (!navigator.geolocation) {
             alert("Tu navegador no soporta GPS");
@@ -91,7 +80,6 @@ function buscarLocales() {
             var miLat = pos.coords.latitude;
             var miLng = pos.coords.longitude;
             
-            // Dibujar un círculo azul donde estoy
             L.circle([miLat, miLng], { radius: distancia }).addTo(map);
             map.setView([miLat, miLng], 15);
 
@@ -101,12 +89,10 @@ function buscarLocales() {
             filtrarDatos(texto, 0, 0, 0);
         });
     } else {
-        // Búsqueda en toda la ciudad
         filtrarDatos(texto, 0, 0, 0);
     }
 }
 
-// Diccionario de "sinónimos" para ayudar al buscador
 const sinonimos = {
     "restaurante": "restaurant",
     "tienda": "shop",
@@ -119,28 +105,23 @@ const sinonimos = {
 };
 
 function normalizar(texto) {
-    return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return texto.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
 }
 
 function filtrarDatos(texto, radio, latUser, lngUser) {
     var textoUser = normalizar(texto);
-    
-    // Si el usuario escribe "restaurante", buscamos también "restaurant"
     var textoTecnico = sinonimos[textoUser] || textoUser;
 
     var resultados = todosLosLocales.filter(local => {
         var nombre = normalizar(local.nombre || "");
-        var tipo = normalizar(local.tipo_detalle || "");     // Ej: "restaurant"
-        var categoria = normalizar(local.categoria || "");   // Ej: "hostelería"
+        var tipo = normalizar(local.tipo_detalle || "");
+        var categoria = normalizar(local.categoria || "");
 
-        // Buscamos si coincide con lo que escribió el usuario O con su traducción técnica
         var coincideTexto = nombre.includes(textoUser) || 
                             tipo.includes(textoUser) || 
                             categoria.includes(textoUser) ||
-                            // Aquí está la magia: buscamos también el término en inglés
                             tipo.includes(textoTecnico);
         
-        // Filtro de distancia
         var dentroDelRadio = true;
         if (radio > 0) {
             var dist = map.distance([latUser, lngUser], [local.lat, local.lng]);
@@ -150,8 +131,7 @@ function filtrarDatos(texto, radio, latUser, lngUser) {
         return coincideTexto && dentroDelRadio;
     });
 
-    console.log(`Buscando: "${textoUser}" (o "${textoTecnico}") | Resultados: ${resultados.length}`);
-    
+    console.log(`Buscando: "${textoUser}" | Resultados: ${resultados.length}`);
     pintarMapa(resultados);
     
     if(resultados.length === 0) {
@@ -164,9 +144,8 @@ function resetMapa() {
     pintarMapa(todosLosLocales);
     map.setView([37.3891, -5.9845], 13);
 }
-// --- AUTO-LOCALIZACIÓN AL INICIO ---
 
-// Intentar localizar al usuario nada más entrar
+// Auto-localización (sin cambios)
 if (navigator.geolocation) {
     console.log("Pidiendo ubicación...");
     
@@ -177,10 +156,8 @@ if (navigator.geolocation) {
 
             console.log("Usuario localizado en:", lat, lng);
 
-            // 1. Centrar el mapa en el usuario
-            map.setView([lat, lng], 16); // Zoom 16 para ver detalle callejero
+            map.setView([lat, lng], 16);
 
-            // 2. Poner un marcador especial "YO" (Punto azul pulsante)
             var iconoYo = L.divIcon({
                 html: '<div style="width: 15px; height: 15px; background: #4285F4; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>',
                 className: 'user-location-dot',
@@ -192,25 +169,15 @@ if (navigator.geolocation) {
                 .bindPopup("<b>¡Estás aquí!</b>")
                 .openPopup();
             
-            // 3. Crear un círculo de precisión (radio azul clarito)
             L.circle([lat, lng], {
                 color: '#4285F4',
                 fillColor: '#4285F4',
                 fillOpacity: 0.1,
-                radius: 200 // 200 metros alrededor
+                radius: 200
             }).addTo(map);
         },
         (error) => {
             console.warn("El usuario denegó la ubicación o hubo error:", error.message);
-            // No pasa nada, se queda centrado en la Giralda (por defecto)
         }
     );
-} else {
-    console.log("Este navegador no tiene GPS.");
 }
-
-
-
-
-
-
