@@ -2,26 +2,35 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Añadir nuevo punto al mapa</title>
+  <title>Añadir nuevo punto - Producto Local Sevilla</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Formulario para añadir comercios y puntos de producto local en Sevilla" />
   <style>
     body {
       font-family: "Segoe UI", sans-serif;
-      margin: 30px;
-      background-color: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+      background-color: #f7f7f7;
     }
     .container {
       max-width: 600px;
       margin: auto;
       background: white;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 28px 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
     }
     h1 {
       text-align: center;
+      margin-bottom: 20px;
+      color: #2c3e50;
+      font-size: 1.3rem;
+    }
+    .subtitle {
+      text-align: center;
       margin-bottom: 24px;
-      color: #333;
+      color: #555;
+      font-size: 0.9rem;
     }
     label {
       display: block;
@@ -29,53 +38,65 @@
       font-weight: 500;
       color: #333;
     }
-    input, select {
+    input[type="text"],
+    input[type="number"] {
       width: 100%;
       padding: 8px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       border: 1px solid #ccc;
       border-radius: 4px;
       box-sizing: border-box;
     }
     .precio-group {
-      margin-bottom: 16px;
+      margin: 12px 0;
     }
     .precio-group label {
       display: inline-block;
       margin-right: 12px;
     }
     .checkbox-group {
-      margin-bottom: 16px;
+      margin: 12px 0;
     }
-    .checkbox-group input {
-      margin-right: 4px;
+    .checkbox-group label {
+      margin-right: 8px;
     }
     button {
       width: 100%;
       padding: 10px;
-      background-color: #007bff;
+      background-color: #2c3e50;
       color: white;
       border: none;
       border-radius: 4px;
       font-size: 1rem;
       cursor: pointer;
+      transition: background-color 0.2s;
     }
     button:hover {
-      background-color: #0056b3;
+      background-color: #1a252f;
     }
     .error {
-      color: #dc3545;
+      color: #d32f2f;
       font-size: 0.85rem;
+      margin-bottom: 10px;
+    }
+    .success {
+      color: #2e7d32;
+      font-size: 0.9rem;
       margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Añadir nuevo punto al mapa</h1>
-    <form id="formularioPunto">
-      <div class="error" id="errorGeneral"></div>
+    <h1>Producto Local - Sevilla</h1>
+    <p class="subtitle">
+      Completa el formulario para añadir un nuevo punto al mapa
+    </p>
 
+    <div class="error" id="errorGeneral"></div>
+    <div class="success" id="success"></div>
+
+    <form id="formularioPunto">
       <label for="nombre">Nombre *</label>
       <input type="text" id="nombre" required />
 
@@ -91,19 +112,19 @@
       <label for="tipo_detalle">Tipo de detalle *</label>
       <input type="text" id="tipo_detalle" required />
 
-      <label for="precio">Precio (1-3) *</label>
+      <label>Precio (1–3) *</label>
       <div class="precio-group">
         <label><input type="radio" name="precio" value="1" required /> 1</label>
         <label><input type="radio" name="precio" value="2" /> 2</label>
         <label><input type="radio" name="precio" value="3" /> 3</label>
       </div>
 
-      <label>
-        <div class="checkbox-group">
+      <div class="checkbox-group">
+        <label>
           <input type="checkbox" id="horario_abierto" />
           Horario abierto
-        </div>
-      </label>
+        </label>
+      </div>
 
       <label for="barrio">Barrio *</label>
       <input type="text" id="barrio" required />
@@ -111,7 +132,7 @@
       <label for="direccion">Dirección *</label>
       <input type="text" id="direccion" required />
 
-      <button type="submit">Guardar punto</button>
+      <button type="submit">Añadir punto</button>
     </form>
   </div>
 
@@ -120,7 +141,9 @@
       e.preventDefault();
 
       const errorEl = document.getElementById("errorGeneral");
+      const successEl = document.getElementById("success");
       errorEl.textContent = "";
+      successEl.textContent = "";
 
       const punto = {
         nombre: document.getElementById("nombre").value.trim(),
@@ -134,7 +157,7 @@
         direccion: document.getElementById("direccion").value.trim(),
       };
 
-      // validación básica
+      // Validación básica
       if (!punto.nombre || !punto.categoria || !punto.barrio || !punto.direccion) {
         errorEl.textContent = "Todos los campos obligatorios deben estar rellenos.";
         return;
@@ -148,23 +171,26 @@
         return;
       }
 
-      // Envía el punto al servidor (p.ej. Node.js)
-      fetch("/api/guardar-punto", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(punto),
-      })
-        .then(async (res) => {
-          if (!res.ok) {
-            const data = await res.json();
-            throw new Error(data?.error || "Error al guardar");
-          }
-          alert("Punto guardado correctamente.");
-          document.getElementById("formularioPunto").reset();
-        })
-        .catch((err) => {
-          errorEl.textContent = err.message;
-        });
+      // Guardar en localStorage (se puede exportar luego a puntos.json)
+      let puntos = [];
+      try {
+        const puntosStr = localStorage.getItem("puntosLocalSeville");
+        if (puntosStr) {
+          puntos = JSON.parse(puntosStr);
+        }
+      } catch (err) {
+        console.error("No se pudo leer puntos de localStorage", err);
+      }
+
+      puntos.push(punto);
+
+      try {
+        localStorage.setItem("puntosLocalSeville", JSON.stringify(puntos));
+        successEl.textContent = "Punto guardado correctamente. Recuerda exportarlo a puntos.json.";
+        document.getElementById("formularioPunto").reset();
+      } catch (err) {
+        errorEl.textContent = "No se pudo guardar el punto en el navegador.";
+      }
     });
   </script>
 </body>
