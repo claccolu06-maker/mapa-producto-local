@@ -23,14 +23,13 @@ fetch('https://claccolu06-maker.github.io/mapa-producto-local/locales.json')
     })
     .catch(e => console.error(e));
 
-// Función para pintar una lista de locales en el mapa
 function pintarMapa(listaLocales) {
     clusterGroup.clearLayers(); // Borrar lo que haya
 
     listaLocales.forEach(local => {
         if (local.lat && local.lng) {
             
-            // Emoji según categoría
+            // Emoji según categoría (tu código exacto)
             let cat = local.categoria;
             let emoji = "📍";
             if (cat === "Alimentación") emoji = "🛒";
@@ -45,42 +44,37 @@ function pintarMapa(listaLocales) {
             });
 
             var marker = L.marker([local.lat, local.lng], { icon: icono });
-            marker.bindPopup(`<b>${local.nombre}</b><br>${local.tipo_detalle || ''}`);
+            
+            // Popup con TODOS los campos del formulario
+            let popupContent = `<b>${local.nombre}</b><br>`;
+            if (local.categoria) popupContent += `Categoría: ${local.categoria}<br>`;
+            if (local.tipo_detalle) popupContent += `${local.tipo_detalle}<br>`;
+            if (local.precio) popupContent += `Precio: ${local.precioStr}<br>`;
+            if (local.barrio) popupContent += `Barrio: ${local.barrio}<br>`;
+            if (local.direccion) popupContent += `Dirección: ${local.direccion}<br>`;
+            if (local.horario_abierto !== undefined) popupContent += `Horario abierto: ${local.horario_abierto ? "Sí" : "No"}<br>`;
+            
+            marker.bindPopup(popupContent);
             clusterGroup.addLayer(marker);
         }
     });
 }
-// Cargar puntos desde puntos.json
-const iconos = {
-  "Alimentacion": L.icon({ iconUrl: "images/food-icon.png", iconSize: [25, 40] }),
-  "Artesania": L.icon({ iconUrl: "images/craft-icon.png", iconSize: [25, 40] }),
-  "Moda": L.icon({ iconUrl: "images/fashion-icon.png", iconSize: [25, 40] })
-};
-
-fetch("puntos.json")
-  .then(res => res.json())
-  .then(puntos => {
-    puntos.forEach(p => {
-      if (!p.nombre || isNaN(p.lat) || isNaN(p.lng)) return;
-
-      const icon = iconos[p.categoria] || L.icon({ iconUrl: "images/default-icon.png", iconSize: [25, 40] });
-      const marker = L.marker([p.lat, p.lng], { icon }).addTo(map);
-
-      const precioStr = "★".repeat(p.precio);
-
-      const popup = `
-        <strong>${p.nombre}</strong><br>
-        Categoría: ${p.categoria}<br>
-        Tipo: ${p.tipo_detalle}<br>
-        Precio: ${precioStr}<br>
-        Barrio: ${p.barrio}<br>
-        Dirección: ${p.direccion}<br>
-        Horario abierto: ${p.horario_abierto ? "Sí" : "No"}
-      `;
-
-      marker.bindPopup(popup);
-    });
-  });
+fetch('locales.json')
+    .then(r => r.json())
+    .then(locales => {
+        todosLosLocales = locales; // Guardamos copia de seguridad
+        pintarMapa(locales); // Pintamos todo al principio
+        console.log("Cargados " + locales.length + " locales.");
+        
+        // NUEVO: Añadir los campos del formulario al popup
+        locales.forEach(local => {
+            if (local.precio) {
+                // Si el JSON tiene 'precio', añadirlo al popup
+                local.precioStr = "★".repeat(local.precio);
+            }
+        });
+    })
+    .catch(e => console.error(e));
 
 // LÓGICA DEL BUSCADOR
 function buscarLocales() {
@@ -214,6 +208,7 @@ if (navigator.geolocation) {
 } else {
     console.log("Este navegador no tiene GPS.");
 }
+
 
 
 
