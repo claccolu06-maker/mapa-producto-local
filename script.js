@@ -51,16 +51,21 @@ function pintarMapa(listaLocales) {
     });
 }
 // Cargar puntos desde puntos.json
+const iconos = {
+  "Alimentacion": L.icon({ iconUrl: "images/food-icon.png", iconSize: [25, 40] }),
+  "Artesania": L.icon({ iconUrl: "images/craft-icon.png", iconSize: [25, 40] }),
+  "Moda": L.icon({ iconUrl: "images/fashion-icon.png", iconSize: [25, 40] })
+};
+
 fetch("puntos.json")
   .then(res => res.json())
   .then(puntos => {
     puntos.forEach(p => {
       if (!p.nombre || isNaN(p.lat) || isNaN(p.lng)) return;
 
-      // Aquí puedes usar tus iconos personalizados por categoría si ya los tienes
-      const marker = L.marker([p.lat, p.lng]).addTo(map);
+      const icon = iconos[p.categoria] || L.icon({ iconUrl: "images/default-icon.png", iconSize: [25, 40] });
+      const marker = L.marker([p.lat, p.lng], { icon }).addTo(map);
 
-      // Generar estrellas según el precio
       const precioStr = "★".repeat(p.precio);
 
       const popup = `
@@ -75,9 +80,6 @@ fetch("puntos.json")
 
       marker.bindPopup(popup);
     });
-  })
-  .catch(err => {
-    console.error("Error al cargar los puntos", err);
   });
 
 // LÓGICA DEL BUSCADOR
@@ -212,6 +214,7 @@ if (navigator.geolocation) {
 } else {
     console.log("Este navegador no tiene GPS.");
 }
+
 
 
 
