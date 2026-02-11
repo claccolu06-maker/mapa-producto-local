@@ -4,6 +4,28 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
+// Control personalizado arriba a la derecha: botón Filtro
+const filtroControl = L.control({ position: 'topright' });
+
+filtroControl.onAdd = function(map) {
+    const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+
+    div.innerHTML = `
+      <a href="#" id="btnFiltroMapa" title="Buscar local"
+         style="display:flex;align-items:center;justify-content:center;
+                width:32px;height:32px;font-size:18px;text-decoration:none;">
+        🔍
+      </a>
+    `;
+
+    // Evitar que el mapa se mueva al hacer click
+    L.DomEvent.disableClickPropagation(div);
+
+    return div;
+};
+
+filtroControl.addTo(map);
+
 
 // Variables globales para guardar los datos
 var todosLosLocales = []; 
@@ -212,4 +234,5 @@ if (navigator.geolocation) {
         }
     );
 }
+
 
