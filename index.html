@@ -36,6 +36,7 @@
             height: 100vh;
         }
 
+        /* Caja de búsqueda flotante arriba a la izquierda */
         .search-box {
             position: fixed;
             top: 20px;
@@ -91,6 +92,7 @@
 </head>
 <body>
 
+    <!-- Caja de búsqueda principal -->
     <div class="search-box">
         <h3>¿Qué buscas hoy?</h3>
         <input
@@ -107,8 +109,8 @@
                 <option value="2000">2 km</option>
             </select>
 
-            <button id="btnBuscar" onclick="buscarLocales()">Buscar</button>
-            <button id="btnReset" onclick="resetMapa()">✕</button>
+            <button id="btnBuscar">Buscar</button>
+            <button id="btnReset">✕</button>
         </div>
 
         <small style="display:block; margin-top:4px; font-size:11px; color:#666;">
@@ -116,6 +118,7 @@
         </small>
     </div>
 
+    <!-- Panel flotante de filtro avanzado -->
     <div id="panelFiltro"
          style="
             position: fixed;
@@ -171,13 +174,13 @@
         </select>
       </div>
 
-     <div style="margin-bottom:6px;">
-  <label for="fBarrio">Barrio (texto)</label>
-  <input id="fBarrio" type="text" list="listaBarrios"
-         placeholder="Triana, Centro..."
-         style="width:100%;padding:4px;border:1px solid #ccc;border-radius:4px;">
-  <datalist id="listaBarrios"></datalist>
-</div>
+      <div style="margin-bottom:6px;">
+        <label for="fBarrio">Barrio (texto)</label>
+        <input id="fBarrio" type="text" list="listaBarrios"
+               placeholder="Triana, Centro..."
+               style="width:100%;padding:4px;border:1px solid #ccc;border-radius:4px;">
+        <datalist id="listaBarrios"></datalist>
+      </div>
 
       <div style="margin-bottom:8px;">
         <label>
@@ -192,6 +195,7 @@
       </button>
     </div>
 
+    <!-- Contenedor del mapa -->
     <div id="map"></div>
 
     <!-- Leaflet JS -->
@@ -204,6 +208,7 @@
     <!-- MarkerCluster JS -->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
+    <!-- Mostrar / ocultar panel al pulsar el botón del mapa -->
     <script>
       document.addEventListener("click", (e) => {
         if (e.target && e.target.id === "btnFiltroMapa") {
@@ -219,7 +224,7 @@
       });
     </script>
 
+    <!-- Tu script principal -->
     <script src="script.js"></script>
 </body>
 </html>
-
