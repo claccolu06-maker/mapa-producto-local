@@ -295,5 +295,20 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.addEventListener("click", aplicarFiltroMapa);
     }
 });
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("btnAplicarFiltro");
+    if (btn) btn.addEventListener("click", aplicarFiltroMapa);
+
+    const btnQuitar = document.getElementById("btnQuitarFiltro");
+    if (btnQuitar) btnQuitar.addEventListener("click", () => {
+        document.getElementById("fCategoria").value = "";
+        document.getElementById("fPrecioMin").value = "";
+        document.getElementById("fPrecioMax").value = "";
+        document.getElementById("fBarrio").value = "";
+        document.getElementById("fSoloAbiertos").checked = false;
+        mostrarTodosLocales();
+    });
+});
+
 
 
