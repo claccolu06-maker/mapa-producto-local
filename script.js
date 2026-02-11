@@ -58,6 +58,7 @@ function pintarMapa(listaLocales) {
             if (cat === "Alimentación") emoji = "🛒";
             else if (cat === "Hostelería") emoji = "☕";
             else if (cat === "Moda") emoji = "👕";
+            else if (cat === "Salud") emoji = "💊";  // NUEVO
 
             var icono = L.divIcon({
                 html: `<div style="font-size: 25px; text-shadow: 0 0 2px white;">${emoji}</div>`,
@@ -309,6 +310,7 @@ document.addEventListener("DOMContentLoaded", () => {
         mostrarTodosLocales();
     });
 });
+
 
 
 
