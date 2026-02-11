@@ -1,3 +1,10 @@
+function normalizarTexto(str) {
+  return (str || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // quita tildes
+    .toLowerCase()
+    .trim();
+}
 var map = L.map('map').setView([37.3891, -5.9845], 13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -46,7 +53,8 @@ fetch('locales.json')
         console.log("Cargados " + locales.length + " locales con formulario.");
     })
     .catch(e => console.error(e));
-
+rellenarBarrios(); // <- añadir aquí
+  });
 // Pintar lista de locales
 function pintarMapa(listaLocales) {
     clusterGroup.clearLayers();
@@ -126,9 +134,10 @@ function aplicarFiltroMapa() {
         if (precioMax !== null && (local.precio || 0) > precioMax) return false;
 
         if (barrioTxt) {
-            const b = (local.barrio || "").toLowerCase();
-            if (!b.includes(barrioTxt)) return false;
-        }
+    const bNorm = normalizarTexto(local.barrio);
+    const filtroNorm = normalizarTexto(barrioTxt);
+    if (!bNorm.includes(filtroNorm)) return false;
+}
 
         if (soloAbiertos && local.horario_abierto === false) return false;
 
@@ -318,6 +327,25 @@ document.addEventListener("DOMContentLoaded", () => {
         mostrarTodosLocales();
     });
 });
+function rellenarBarrios() {
+  const setBarrios = new Set();
+
+  todosLosLocales.forEach(l => {
+    if (l.barrio) {
+      setBarrios.add(l.barrio.trim());
+    }
+  });
+
+  const datalist = document.getElementById("listaBarrios");
+  datalist.innerHTML = "";
+
+  Array.from(setBarrios).sort().forEach(b => {
+    const opt = document.createElement("option");
+    opt.value = b;
+    datalist.appendChild(opt);
+  });
+}
+
 
 
 
