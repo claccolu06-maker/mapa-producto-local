@@ -171,12 +171,13 @@
         </select>
       </div>
 
-      <div style="margin-bottom:6px;">
-        <label for="fBarrio">Barrio (texto)</label>
-        <input id="fBarrio" type="text"
-               placeholder="Triana, Centro..."
-               style="width:100%;padding:4px;border:1px solid #ccc;border-radius:4px;">
-      </div>
+     <div style="margin-bottom:6px;">
+  <label for="fBarrio">Barrio (texto)</label>
+  <input id="fBarrio" type="text" list="listaBarrios"
+         placeholder="Triana, Centro..."
+         style="width:100%;padding:4px;border:1px solid #ccc;border-radius:4px;">
+  <datalist id="listaBarrios"></datalist>
+</div>
 
       <div style="margin-bottom:8px;">
         <label>
@@ -221,3 +222,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
