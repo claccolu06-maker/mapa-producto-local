@@ -112,7 +112,6 @@ clusterGroup.addLayer(marker);
     });
 }
 
-// Filtro desde el panel pequeño
 function aplicarFiltroMapa() {
     const cat = document.getElementById("fCategoria").value;
     const precioMin = parseInt(document.getElementById("fPrecioMin").value) || null;
@@ -120,57 +119,66 @@ function aplicarFiltroMapa() {
     const barrioTxt = document.getElementById("fBarrio").value.trim().toLowerCase();
     const soloAbiertos = document.getElementById("fSoloAbiertos").checked;
 
-    const filtraBase = (local) => {
+    // 1) Filtrar POR CRITERIOS en toda Sevilla (sin distancia aún)
+    let filtrados = todosLosLocales.filter(local => {
         if (cat && local.categoria !== cat) return false;
         if (precioMin !== null && (local.precio || 0) < precioMin) return false;
         if (precioMax !== null && (local.precio || 0) > precioMax) return false;
+
         if (barrioTxt) {
             const b = (local.barrio || "").toLowerCase();
             if (!b.includes(barrioTxt)) return false;
         }
+
         if (soloAbiertos && local.horario_abierto === false) return false;
+
         return true;
-    };
+    });
 
+    // Si no hay ningún local que cumpla los criterios, avisamos y salimos
+    if (filtrados.length === 0) {
+        alert("No se han encontrado locales con esos criterios.");
+        return;
+    }
+
+    // 2) Si TENEMOS geolocalización, ordenamos por cercanía
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-            const latUser = pos.coords.latitude;
-            const lngUser = pos.coords.longitude;
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                const latUser = pos.coords.latitude;
+                const lngUser = pos.coords.longitude;
 
-            let filtrados = todosLosLocales.filter(filtraBase);
+                filtrados.forEach(l => {
+                    if (l.lat && l.lng) {
+                        l._dist = map.distance([latUser, lngUser], [l.lat, l.lng]);
+                    } else {
+                        l._dist = Infinity;
+                    }
+                });
 
-            filtrados.forEach(l => {
-                if (l.lat && l.lng) {
-                    l._dist = map.distance([latUser, lngUser], [l.lat, l.lng]);
-                } else {
-                    l._dist = Infinity;
+                filtrados.sort((a, b) => a._dist - b._dist);
+
+                // Nos quedamos con los 200 más cercanos como máximo
+                if (filtrados.length > 200) {
+                    filtrados = filtrados.slice(0, 200);
                 }
-            });
-            filtrados.sort((a, b) => a._dist - b._dist);
-            filtrados = filtrados.slice(0, 30);
 
-            pintarMapa(filtrados);
+                pintarMapa(filtrados);
 
-            if (filtrados.length > 0) {
                 const primero = filtrados[0];
-                map.setView([primero.lat, primero.lng], 15);
-            } else {
-                alert("No se han encontrado locales con esos criterios.");
+                if (primero && primero.lat && primero.lng) {
+                    map.setView([primero.lat, primero.lng], 15);
+                }
+            },
+            // Si falla la geolocalización, simplemente mostramos todos los filtrados sin ordenar
+            () => {
+                pintarMapa(filtrados);
             }
-        }, () => {
-            alert("No se pudo obtener tu ubicación. Se aplican filtros sin cercanía.");
-            let filtrados = todosLosLocales.filter(filtraBase);
-            pintarMapa(filtrados);
-        });
+        );
     } else {
-        alert("Tu navegador no permite localizarte. Se aplican filtros sin cercanía.");
-        let filtrados = todosLosLocales.filter(filtraBase);
+        // 3) Navegador sin geolocalización: solo filtramos
         pintarMapa(filtrados);
     }
-}
-function mostrarTodosLocales() {
-    pintarMapa(todosLosLocales);
-    map.setView([37.3891, -5.9845], 13);
 }
 
 // Buscador antiguo (igual que antes)
@@ -310,6 +318,7 @@ document.addEventListener("DOMContentLoaded", () => {
         mostrarTodosLocales();
     });
 });
+
 
 
 
