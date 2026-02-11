@@ -50,16 +50,47 @@ function pintarMapa(listaLocales) {
             });
 
             var marker = L.marker([local.lat, local.lng], { icon: icono });
-            
-            // ✅ NUEVO: Popup con TODOS los campos del formulario
-            let popupContent = `<b>${local.nombre}</b><br>`;
-            if (local.categoria) popupContent += `Categoría: ${local.categoria}<br>`;
-            if (local.tipo_detalle) popupContent += `${local.tipo_detalle}<br>`;
-            if (local.precioStr) popupContent += `Precio: ${local.precioStr}<br>`;
-            if (local.barrio) popupContent += `Barrio: ${local.barrio}<br>`;
-            if (local.direccion) popupContent += `Dirección: ${local.direccion}<br>`;
-            if (local.horario_abierto !== undefined) popupContent += `Horario abierto: ${local.horario_abierto ? "Sí" : "No"}<br>`;
-            
+            // ✅ NUEVO: Popup con diseño más limpio
+let precioTexto = local.precioStr ? local.precioStr : "Sin datos";
+let horarioTexto = (local.horario_abierto === true) ? "Abierto ahora" :
+                   (local.horario_abierto === false) ? "Cerrado" : "Sin datos";
+let linkGM = "";
+if (local.lat && local.lng) {
+  const q = encodeURIComponent(`${local.nombre || ""} ${local.direccion || ""}`);
+  linkGM = `<a href="https://www.google.com/maps/search/?api=1&query=${local.lat},${local.lng} (${q})" target="_blank" style="color:#1a73e8;">Ver en Google Maps</a>`;
+}
+
+let popupContent = `
+  <div style="min-width: 180px; font-size: 0.9rem;">
+    ...
+    <div style="margin-top: 6px;">
+      ${linkGM}
+    </div>
+  </div>
+`;
+
+let popupContent = `
+  <div style="min-width: 180px; font-size: 0.9rem;">
+    <div style="font-weight: 600; font-size: 1rem; margin-bottom: 4px;">
+      ${local.nombre || "Sin nombre"}
+    </div>
+    <div style="color:#555; margin-bottom: 6px;">
+      ${local.categoria ? local.categoria + " · " : ""}${local.tipo_detalle || ""}
+    </div>
+    <div style="margin-bottom: 4px;">
+      <strong>Precio:</strong> ${precioTexto}
+    </div>
+    <div style="margin-bottom: 4px;">
+      <strong>Barrio:</strong> ${local.barrio || "Sin datos"}
+    </div>
+    <div style="margin-bottom: 4px;">
+      <strong>Dirección:</strong> ${local.direccion || "Sin datos"}
+    </div>
+    <div style="margin-bottom: 6px;">
+      <strong>Horario:</strong> ${horarioTexto}
+    </div>
+  </div>
+`;         
             marker.bindPopup(popupContent);
             clusterGroup.addLayer(marker);
         }
@@ -181,3 +212,4 @@ if (navigator.geolocation) {
         }
     );
 }
+
