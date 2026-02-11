@@ -167,6 +167,10 @@ function aplicarFiltroMapa() {
         pintarMapa(filtrados);
     }
 }
+function mostrarTodosLocales() {
+    pintarMapa(todosLosLocales);
+    map.setView([37.3891, -5.9845], 13);
+}
 
 // Buscador antiguo (igual que antes)
 function buscarLocales() {
@@ -291,4 +295,5 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.addEventListener("click", aplicarFiltroMapa);
     }
 });
+
 
