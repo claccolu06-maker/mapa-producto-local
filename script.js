@@ -4,6 +4,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
+
 // Control personalizado arriba a la derecha: botón Filtro
 const filtroControl = L.control({ position: 'topright' });
 
@@ -18,46 +19,40 @@ filtroControl.onAdd = function(map) {
       </a>
     `;
 
-    // Evitar que el mapa se mueva al hacer click
     L.DomEvent.disableClickPropagation(div);
-
     return div;
 };
 
 filtroControl.addTo(map);
 
-
-// Variables globales para guardar los datos
-var todosLosLocales = []; 
+// Variables globales
+var todosLosLocales = [];
 var clusterGroup = L.markerClusterGroup({ chunkedLoading: true });
 map.addLayer(clusterGroup);
 
 console.log("Cargando datos...");
 
-// ✅ INTEGRADO: Lee locales.json con TODOS los campos del formulario
+// Leer locales.json
 fetch('locales.json')
     .then(r => r.json())
     .then(locales => {
         todosLosLocales = locales;
-        
-        // Añadir campos del formulario (precio, barrio, etc.)
+
         locales.forEach(local => {
             if (local.precio) local.precioStr = "★".repeat(local.precio);
         });
-        
+
         pintarMapa(todosLosLocales);
         console.log("Cargados " + locales.length + " locales con formulario.");
     })
     .catch(e => console.error(e));
 
-// ✅ MODIFICADA: Tu función pintarMapa con TODOS los campos del formulario
+// Pintar lista de locales
 function pintarMapa(listaLocales) {
     clusterGroup.clearLayers();
 
     listaLocales.forEach(local => {
         if (local.lat && local.lng) {
-            
-            // Tus iconos por emoji (sin cambios)
             let cat = local.categoria;
             let emoji = "📍";
             if (cat === "Alimentación") emoji = "🛒";
@@ -72,53 +67,51 @@ function pintarMapa(listaLocales) {
             });
 
             var marker = L.marker([local.lat, local.lng], { icon: icono });
-            // ✅ NUEVO: Popup con diseño más limpio
-let precioTexto = local.precioStr ? local.precioStr : "Sin datos";
-let horarioTexto = (local.horario_abierto === true) ? "Abierto ahora" :
-                   (local.horario_abierto === false) ? "Cerrado" : "Sin datos";
-let linkGM = "";
-if (local.lat && local.lng) {
-  const q = encodeURIComponent(`${local.nombre || ""} ${local.direccion || ""}`);
-  linkGM = `<a href="https://www.google.com/maps/search/?api=1&query=${local.lat},${local.lng} (${q})" target="_blank" style="color:#1a73e8;">Ver en Google Maps</a>`;
-}
 
-let popupContent = `
-  <div style="min-width: 180px; font-size: 0.9rem;">
-    ...
-    <div style="margin-top: 6px;">
-      ${linkGM}
-    </div>
-  </div>
-`;
+            // Popup limpio + enlace a Google Maps
+            let precioTexto = local.precioStr ? local.precioStr : "Sin datos";
+            let horarioTexto = (local.horario_abierto === true) ? "Abierto ahora" :
+                               (local.horario_abierto === false) ? "Cerrado" : "Sin datos";
 
-let popupContent = `
-  <div style="min-width: 180px; font-size: 0.9rem;">
-    <div style="font-weight: 600; font-size: 1rem; margin-bottom: 4px;">
-      ${local.nombre || "Sin nombre"}
-    </div>
-    <div style="color:#555; margin-bottom: 6px;">
-      ${local.categoria ? local.categoria + " · " : ""}${local.tipo_detalle || ""}
-    </div>
-    <div style="margin-bottom: 4px;">
-      <strong>Precio:</strong> ${precioTexto}
-    </div>
-    <div style="margin-bottom: 4px;">
-      <strong>Barrio:</strong> ${local.barrio || "Sin datos"}
-    </div>
-    <div style="margin-bottom: 4px;">
-      <strong>Dirección:</strong> ${local.direccion || "Sin datos"}
-    </div>
-    <div style="margin-bottom: 6px;">
-      <strong>Horario:</strong> ${horarioTexto}
-    </div>
-  </div>
-`;         
+            let linkGM = "";
+            if (local.lat && local.lng) {
+                const q = encodeURIComponent(`${local.nombre || ""} ${local.direccion || ""}`);
+                linkGM = `<a href="https://www.google.com/maps/search/?api=1&query=${local.lat},${local.lng} (${q})" target="_blank" style="color:#1a73e8;">Ver en Google Maps</a>`;
+            }
+
+            let popupContent = `
+              <div style="min-width: 180px; font-size: 0.9rem;">
+                <div style="font-weight: 600; font-size: 1rem; margin-bottom: 4px;">
+                  ${local.nombre || "Sin nombre"}
+                </div>
+                <div style="color:#555; margin-bottom: 6px;">
+                  ${local.categoria ? local.categoria + " · " : ""}${local.tipo_detalle || ""}
+                </div>
+                <div style="margin-bottom: 4px;">
+                  <strong>Precio:</strong> ${precioTexto}
+                </div>
+                <div style="margin-bottom: 4px;">
+                  <strong>Barrio:</strong> ${local.barrio || "Sin datos"}
+                </div>
+                <div style="margin-bottom: 4px;">
+                  <strong>Dirección:</strong> ${local.direccion || "Sin datos"}
+                </div>
+                <div style="margin-bottom: 6px;">
+                  <strong>Horario:</strong> ${horarioTexto}
+                </div>
+                <div style="margin-top: 6px;">
+                  ${linkGM}
+                </div>
+              </div>
+            `;
+
             marker.bindPopup(popupContent);
             clusterGroup.addLayer(marker);
         }
     });
 }
-// Función para aplicar filtros desde el panel pequeño
+
+// Filtro desde el panel pequeño
 function aplicarFiltroMapa() {
     const cat = document.getElementById("fCategoria").value;
     const precioMin = parseInt(document.getElementById("fPrecioMin").value) || null;
@@ -126,34 +119,25 @@ function aplicarFiltroMapa() {
     const barrioTxt = document.getElementById("fBarrio").value.trim().toLowerCase();
     const soloAbiertos = document.getElementById("fSoloAbiertos").checked;
 
-    // Si pide distancia, usamos la ubicación del usuario si está disponible
+    const filtraBase = (local) => {
+        if (cat && local.categoria !== cat) return false;
+        if (precioMin !== null && (local.precio || 0) < precioMin) return false;
+        if (precioMax !== null && (local.precio || 0) > precioMax) return false;
+        if (barrioTxt) {
+            const b = (local.barrio || "").toLowerCase();
+            if (!b.includes(barrioTxt)) return false;
+        }
+        if (soloAbiertos && local.horario_abierto === false) return false;
+        return true;
+    };
+
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(pos => {
             const latUser = pos.coords.latitude;
             const lngUser = pos.coords.longitude;
 
-            // Filtrar por criterios
-            let filtrados = todosLosLocales.filter(local => {
-                // Categoría
-                if (cat && local.categoria !== cat) return false;
+            let filtrados = todosLosLocales.filter(filtraBase);
 
-                // Precio
-                if (precioMin !== null && (local.precio || 0) < precioMin) return false;
-                if (precioMax !== null && (local.precio || 0) > precioMax) return false;
-
-                // Barrio (contiene texto)
-                if (barrioTxt) {
-                    const b = (local.barrio || "").toLowerCase();
-                    if (!b.includes(barrioTxt)) return false;
-                }
-
-                // Solo abiertos
-                if (soloAbiertos && local.horario_abierto === false) return false;
-
-                return true;
-            });
-
-            // Ordenar por cercanía
             filtrados.forEach(l => {
                 if (l.lat && l.lng) {
                     l._dist = map.distance([latUser, lngUser], [l.lat, l.lng]);
@@ -162,11 +146,8 @@ function aplicarFiltroMapa() {
                 }
             });
             filtrados.sort((a, b) => a._dist - b._dist);
-
-            // Nos quedamos, por ejemplo, con los 30 más cercanos
             filtrados = filtrados.slice(0, 30);
 
-            // Pintar en el mapa
             pintarMapa(filtrados);
 
             if (filtrados.length > 0) {
@@ -177,37 +158,17 @@ function aplicarFiltroMapa() {
             }
         }, () => {
             alert("No se pudo obtener tu ubicación. Se aplican filtros sin cercanía.");
-            // Sin distancia: solo filtrar por criterios
-            let filtrados = todosLosLocales.filter(local => {
-                if (cat && local.categoria !== cat) return false;
-                if (precioMin !== null && (local.precio || 0) < precioMin) return false;
-                if (precioMax !== null && (local.precio || 0) > precioMax) return false;
-                if (barrioTxt) {
-                    const b = (local.barrio || "").toLowerCase();
-                    if (!b.includes(barrioTxt)) return false;
-                }
-                if (soloAbiertos && local.horario_abierto === false) return false;
-                return true;
-            });
+            let filtrados = todosLosLocales.filter(filtraBase);
             pintarMapa(filtrados);
         });
     } else {
         alert("Tu navegador no permite localizarte. Se aplican filtros sin cercanía.");
-        let filtrados = todosLosLocales.filter(local => {
-            if (cat && local.categoria !== cat) return false;
-            if (precioMin !== null && (local.precio || 0) < precioMin) return false;
-            if (precioMax !== null && (local.precio || 0) > precioMax) return false;
-            if (barrioTxt) {
-                const b = (local.barrio || "").toLowerCase();
-                if (!b.includes(barrioTxt)) return false;
-            }
-            if (soloAbiertos && local.horario_abierto === false) return false;
-            return true;
-        });
+        let filtrados = todosLosLocales.filter(filtraBase);
         pintarMapa(filtrados);
     }
 }
-// Tu buscador (sin cambios)
+
+// Buscador antiguo (igual que antes)
 function buscarLocales() {
     var texto = document.getElementById("txtBusqueda").value.toLowerCase();
     var distancia = parseInt(document.getElementById("selDistancia").value);
@@ -220,7 +181,7 @@ function buscarLocales() {
         navigator.geolocation.getCurrentPosition(pos => {
             var miLat = pos.coords.latitude;
             var miLng = pos.coords.longitude;
-            
+
             L.circle([miLat, miLng], { radius: distancia }).addTo(map);
             map.setView([miLat, miLng], 15);
 
@@ -258,11 +219,11 @@ function filtrarDatos(texto, radio, latUser, lngUser) {
         var tipo = normalizar(local.tipo_detalle || "");
         var categoria = normalizar(local.categoria || "");
 
-        var coincideTexto = nombre.includes(textoUser) || 
-                            tipo.includes(textoUser) || 
+        var coincideTexto = nombre.includes(textoUser) ||
+                            tipo.includes(textoUser) ||
                             categoria.includes(textoUser) ||
                             tipo.includes(textoTecnico);
-        
+
         var dentroDelRadio = true;
         if (radio > 0) {
             var dist = map.distance([latUser, lngUser], [local.lat, local.lng]);
@@ -274,8 +235,8 @@ function filtrarDatos(texto, radio, latUser, lngUser) {
 
     console.log(`Buscando: "${textoUser}" | Resultados: ${resultados.length}`);
     pintarMapa(resultados);
-    
-    if(resultados.length === 0) {
+
+    if (resultados.length === 0) {
         alert(`No encontrado 😢. Prueba con "bar", "tapas" o "comida".`);
     }
 }
@@ -286,10 +247,10 @@ function resetMapa() {
     map.setView([37.3891, -5.9845], 13);
 }
 
-// Auto-localización (sin cambios)
+// Auto-localización
 if (navigator.geolocation) {
     console.log("Pidiendo ubicación...");
-    
+
     navigator.geolocation.getCurrentPosition(
         (position) => {
             var lat = position.coords.latitude;
@@ -309,7 +270,7 @@ if (navigator.geolocation) {
                 .addTo(map)
                 .bindPopup("<b>¡Estás aquí!</b>")
                 .openPopup();
-            
+
             L.circle([lat, lng], {
                 color: '#4285F4',
                 fillColor: '#4285F4',
@@ -322,6 +283,7 @@ if (navigator.geolocation) {
         }
     );
 }
+
 // Conectar botón del panel con la función de filtro
 document.addEventListener("DOMContentLoaded", () => {
     const btn = document.getElementById("btnAplicarFiltro");
@@ -329,6 +291,3 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.addEventListener("click", aplicarFiltroMapa);
     }
 });
-
-
-
