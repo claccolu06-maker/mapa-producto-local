@@ -8,26 +8,26 @@ let todosLosLocales = [];
 // =============================
 // ICONOS POR CATEGORÍA / TIPO
 // =============================
-const iconBasePath = "img/"; // carpeta donde tienes los PNG/SVG
+// Cambia "img/" por la ruta real de tus iconos
+const iconBasePath = "img/";
 
+// Ajusta los nombres de archivo a los que tengas en tu proyecto
 function iconoPorLocal(local) {
   const cat = (local.categoria || "").toLowerCase();
   const tipo = (local.tipodetalle || "").toLowerCase();
 
-  let iconFile = "marker-default.png"; // icono genérico
+  let iconFile = "marker-default.png"; // genérico
 
-  // Ejemplos, cambia nombres de archivos por los tuyos reales
   if (cat === "alimentación") iconFile = "marker-alimentacion.png";
   else if (cat === "hostelería") iconFile = "marker-hosteleria.png";
   else if (cat === "comercio") iconFile = "marker-comercio.png";
   else if (cat === "moda") iconFile = "marker-moda.png";
   else if (cat === "salud") iconFile = "marker-salud.png";
 
-  // Si quieres afinar más por tipodetalle:
+  // Ejemplo extra por tipo
   if (tipo.includes("bar") || tipo.includes("cafe")) {
     iconFile = "marker-bar.png";
-  }
-  if (tipo.includes("restaurant")) {
+  } else if (tipo.includes("restaurant")) {
     iconFile = "marker-restaurante.png";
   }
 
@@ -132,8 +132,8 @@ function pintarMapa(lista) {
     if (!local.lat || !local.lng) return;
 
     const marker = L.marker([local.lat, local.lng], {
-  icon: iconoPorLocal(local)
-});
+      icon: iconoPorLocal(local)
+    });
 
     const categoria = local.categoria || "";
     const nombre = local.nombre || "Sin nombre";
@@ -378,4 +378,3 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-
