@@ -19,7 +19,7 @@ function initMapa() {
   markersCluster = L.markerClusterGroup();
   map.addLayer(markersCluster);
 
-  // Botón para abrir el panel de filtro
+  // Botón filtro (🔍)
   L.Control.Filtro = L.Control.extend({
     onAdd: function () {
       const btn = L.DomUtil.create("button", "leaflet-bar");
@@ -31,12 +31,47 @@ function initMapa() {
       return btn;
     }
   });
-
   L.control.filtro = function (opts) {
     return new L.Control.Filtro(opts);
   };
-
   L.control.filtro({ position: "topright" }).addTo(map);
+
+  // Botón mi ubicación (📍)
+  L.Control.MiUbicacion = L.Control.extend({
+    onAdd: function () {
+      const btn = L.DomUtil.create("button", "leaflet-bar");
+      btn.id = "btnMiUbicacion";
+      btn.innerHTML = "📍";
+      btn.title = "Ir a mi ubicación";
+      btn.style.background = "#fff";
+      btn.style.cursor = "pointer";
+      return btn;
+    }
+  });
+  L.control.miUbicacion = function (opts) {
+    return new L.Control.MiUbicacion(opts);
+  };
+  L.control.miUbicacion({ position: "topright" }).addTo(map);
+
+  // Intentar localizar al cargar
+  if (navigator.geolocation) {
+    map.locate({ setView: true, maxZoom: 15 });
+  }
+
+  // Círculo alrededor de tu posición
+  map.on("locationfound", function (e) {
+    const radius = e.accuracy || 80;
+    L.circle(e.latlng, {
+      radius,
+      color: "#0066ff",
+      fillColor: "#3388ff",
+      fillOpacity: 0.2
+    }).addTo(map);
+  });
+
+  map.on("locationerror", function () {
+    console.warn("No se pudo obtener la ubicación del usuario");
+  });
 }
 
 // =============================
@@ -45,7 +80,7 @@ function initMapa() {
 function normalizarTexto(str) {
   return (str || "")
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // quita tildes
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
 }
@@ -127,7 +162,6 @@ function buscarLocales() {
 
   const textoNorm = normalizarTexto(texto);
 
-  // Filtrado por texto sobre nombre + tipodetalle + categoria + barrio
   let filtrados = todosLosLocales.filter(local => {
     if (!textoNorm) return true;
     const campo = normalizarTexto(
@@ -142,14 +176,13 @@ function buscarLocales() {
     return campo.includes(textoNorm);
   });
 
-  // Si distancia = 0 -> toda Sevilla
   if (!distancia || isNaN(distancia) || distancia === 0) {
     if (filtrados.length === 0) {
       alert("No se han encontrado locales con esos criterios.");
       return;
     }
     pintarMapa(filtrados);
-    // Ajustar vista al conjunto
+
     const group = L.featureGroup(
       filtrados
         .filter(l => l.lat && l.lng)
@@ -161,7 +194,6 @@ function buscarLocales() {
     return;
   }
 
-  // Si hay distancia, intentamos usar geolocalización
   if (!navigator.geolocation) {
     alert("Tu navegador no permite geolocalización.");
     return;
@@ -236,7 +268,6 @@ function aplicarFiltroMapa() {
     return;
   }
 
-  // Ordenar por cercanía si hay geolocalización, pero sin dejar la lista vacía
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       pos => {
@@ -253,7 +284,6 @@ function aplicarFiltroMapa() {
 
         filtrados.sort((a, b) => a._dist - b._dist);
 
-        // recorte suave
         if (filtrados.length > 200) {
           filtrados = filtrados.slice(0, 200);
         }
@@ -266,7 +296,6 @@ function aplicarFiltroMapa() {
         }
       },
       () => {
-        // Si falla geo, solo pintamos filtrados
         pintarMapa(filtrados);
       }
     );
@@ -282,13 +311,31 @@ document.addEventListener("DOMContentLoaded", () => {
   initMapa();
   cargarLocales();
 
-  // Botones búsqueda rápida
   document.getElementById("btnBuscar").addEventListener("click", buscarLocales);
   document.getElementById("btnReset").addEventListener("click", resetMapa);
 
-  // Botón aplicar filtro avanzado
   const btnFiltro = document.getElementById("btnAplicarFiltro");
   if (btnFiltro) {
     btnFiltro.addEventListener("click", aplicarFiltroMapa);
   }
+
+  // Botón 📍 mi ubicación
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "btnMiUbicacion") {
+      if (!navigator.geolocation) {
+        alert("Tu navegador no permite geolocalización.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          map.setView([lat, lng], 15);
+        },
+        () => {
+          alert("No se ha podido obtener tu ubicación.");
+        }
+      );
+    }
+  });
 });
