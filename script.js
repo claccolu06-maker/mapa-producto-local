@@ -118,7 +118,95 @@ let popupContent = `
         }
     });
 }
+// Función para aplicar filtros desde el panel pequeño
+function aplicarFiltroMapa() {
+    const cat = document.getElementById("fCategoria").value;
+    const precioMin = parseInt(document.getElementById("fPrecioMin").value) || null;
+    const precioMax = parseInt(document.getElementById("fPrecioMax").value) || null;
+    const barrioTxt = document.getElementById("fBarrio").value.trim().toLowerCase();
+    const soloAbiertos = document.getElementById("fSoloAbiertos").checked;
 
+    // Si pide distancia, usamos la ubicación del usuario si está disponible
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            const latUser = pos.coords.latitude;
+            const lngUser = pos.coords.longitude;
+
+            // Filtrar por criterios
+            let filtrados = todosLosLocales.filter(local => {
+                // Categoría
+                if (cat && local.categoria !== cat) return false;
+
+                // Precio
+                if (precioMin !== null && (local.precio || 0) < precioMin) return false;
+                if (precioMax !== null && (local.precio || 0) > precioMax) return false;
+
+                // Barrio (contiene texto)
+                if (barrioTxt) {
+                    const b = (local.barrio || "").toLowerCase();
+                    if (!b.includes(barrioTxt)) return false;
+                }
+
+                // Solo abiertos
+                if (soloAbiertos && local.horario_abierto === false) return false;
+
+                return true;
+            });
+
+            // Ordenar por cercanía
+            filtrados.forEach(l => {
+                if (l.lat && l.lng) {
+                    l._dist = map.distance([latUser, lngUser], [l.lat, l.lng]);
+                } else {
+                    l._dist = Infinity;
+                }
+            });
+            filtrados.sort((a, b) => a._dist - b._dist);
+
+            // Nos quedamos, por ejemplo, con los 30 más cercanos
+            filtrados = filtrados.slice(0, 30);
+
+            // Pintar en el mapa
+            pintarMapa(filtrados);
+
+            if (filtrados.length > 0) {
+                const primero = filtrados[0];
+                map.setView([primero.lat, primero.lng], 15);
+            } else {
+                alert("No se han encontrado locales con esos criterios.");
+            }
+        }, () => {
+            alert("No se pudo obtener tu ubicación. Se aplican filtros sin cercanía.");
+            // Sin distancia: solo filtrar por criterios
+            let filtrados = todosLosLocales.filter(local => {
+                if (cat && local.categoria !== cat) return false;
+                if (precioMin !== null && (local.precio || 0) < precioMin) return false;
+                if (precioMax !== null && (local.precio || 0) > precioMax) return false;
+                if (barrioTxt) {
+                    const b = (local.barrio || "").toLowerCase();
+                    if (!b.includes(barrioTxt)) return false;
+                }
+                if (soloAbiertos && local.horario_abierto === false) return false;
+                return true;
+            });
+            pintarMapa(filtrados);
+        });
+    } else {
+        alert("Tu navegador no permite localizarte. Se aplican filtros sin cercanía.");
+        let filtrados = todosLosLocales.filter(local => {
+            if (cat && local.categoria !== cat) return false;
+            if (precioMin !== null && (local.precio || 0) < precioMin) return false;
+            if (precioMax !== null && (local.precio || 0) > precioMax) return false;
+            if (barrioTxt) {
+                const b = (local.barrio || "").toLowerCase();
+                if (!b.includes(barrioTxt)) return false;
+            }
+            if (soloAbiertos && local.horario_abierto === false) return false;
+            return true;
+        });
+        pintarMapa(filtrados);
+    }
+}
 // Tu buscador (sin cambios)
 function buscarLocales() {
     var texto = document.getElementById("txtBusqueda").value.toLowerCase();
@@ -234,5 +322,13 @@ if (navigator.geolocation) {
         }
     );
 }
+// Conectar botón del panel con la función de filtro
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("btnAplicarFiltro");
+    if (btn) {
+        btn.addEventListener("click", aplicarFiltroMapa);
+    }
+});
+
 
 
