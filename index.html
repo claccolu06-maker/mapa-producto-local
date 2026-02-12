@@ -236,5 +236,30 @@
 
   <!-- Script principal -->
   <script src="script.js"></script>
+  <script>
+  // Abrir/cerrar panel de filtros al pulsar la lupa 🔍 del mapa
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "btnFiltroMapa") {
+      e.preventDefault();
+      const panel = document.getElementById("panelFiltro");
+      if (!panel) return;
+      panel.style.display =
+        (panel.style.display === "none" || panel.style.display === "") ? "block" : "none";
+    }
+  });
+
+  // Botón ✕ dentro del panel para cerrarlo
+  document.addEventListener("DOMContentLoaded", () => {
+    const cerrar = document.getElementById("cerrarFiltro");
+    if (cerrar) {
+      cerrar.addEventListener("click", () => {
+        const panel = document.getElementById("panelFiltro");
+        if (panel) panel.style.display = "none";
+      });
+    }
+  });
+</script>
+<script src="script.js"></script>
 </body>
 </html>
+
