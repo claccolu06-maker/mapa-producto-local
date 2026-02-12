@@ -19,7 +19,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// Botón Filtro arriba a la derecha (solo una vez)
+// Botón Filtro arriba a la derecha
 const filtroControl = L.control({ position: 'topright' });
 
 filtroControl.onAdd = function (map) {
@@ -39,7 +39,7 @@ filtroControl.onAdd = function (map) {
 
 filtroControl.addTo(map);
 
-// Mostrar / ocultar panel de filtros
+// Mostrar / ocultar panel de filtros (index.html tiene #panelFiltro)
 document.addEventListener("click", (e) => {
   if (e.target && e.target.id === "btnFiltroMapa") {
     e.preventDefault();
@@ -62,6 +62,8 @@ var clusterGroup = L.markerClusterGroup({
 });
 map.addLayer(clusterGroup);
 
+// localesFiltrados = salida de filtros/búsquedas
+// localesVisibles   = filtrados que están dentro de los bounds del mapa
 var localesFiltrados = [];
 var localesVisibles = [];
 
@@ -166,6 +168,7 @@ function pintarMapa(listaLocales) {
   clusterGroup.addLayers(markers);
 }
 
+// Recalcular qué locales de localesFiltrados están dentro de la vista
 function recalcularLocalesVisibles() {
   if (!localesFiltrados.length) {
     localesVisibles = [];
