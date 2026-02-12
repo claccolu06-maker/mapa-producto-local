@@ -44,10 +44,9 @@ document.addEventListener("click", (e) => {
   if (e.target && e.target.id === "btnFiltroMapa") {
     e.preventDefault();
     const panel = document.getElementById("panelFiltro");
-    if (panel) {
-      panel.style.display =
-        (panel.style.display === "none" || panel.style.display === "") ? "block" : "none";
-    }
+    if (!panel) return;
+    panel.style.display =
+      (panel.style.display === "none" || panel.style.display === "") ? "block" : "none";
   }
 });
 
@@ -63,6 +62,11 @@ var clusterGroup = L.markerClusterGroup({
 });
 map.addLayer(clusterGroup);
 
+// localesFiltrados = salida de filtros/búsquedas
+// localesVisibles   = filtrados que están dentro de los bounds del mapa
+var localesFiltrados = [];
+var localesVisibles = [];
+
 // =============================
 // CARGAR LOCALES
 // =============================
@@ -77,14 +81,21 @@ fetch('locales.json')
       if (local.precio) local.precioStr = "★".repeat(local.precio);
     });
 
-    pintarMapa(todosLosLocales);
+    localesFiltrados = todosLosLocales; // al inicio, todos
+    recalcularLocalesVisibles();
+
     rellenarBarrios();
     console.log("Cargados " + locales.length + " locales con formulario.");
   })
   .catch(e => console.error(e));
 
+// Al mover / hacer zoom, recalcular visibles
+map.on("moveend", () => {
+  recalcularLocalesVisibles();
+});
+
 // =============================
-// PINTAR MAPA (OPTIMIZADO)
+// PINTAR MAPA (HARDCORE)
 // =============================
 function crearMarkerDesdeLocal(local) {
   let cat = local.categoria;
@@ -146,10 +157,6 @@ function crearMarkerDesdeLocal(local) {
 function pintarMapa(listaLocales) {
   clusterGroup.clearLayers();
 
-  // Opcional: pintar solo lo dentro de bounds si lista es enorme
-  // const bounds = map.getBounds();
-  // listaLocales = listaLocales.filter(l => l.lat && l.lng && bounds.contains([l.lat, l.lng]));
-
   const markers = [];
 
   listaLocales.forEach(local => {
@@ -158,8 +165,24 @@ function pintarMapa(listaLocales) {
     markers.push(marker);
   });
 
-  // Añadir en bloque, más rápido que uno a uno
   clusterGroup.addLayers(markers);
+}
+
+// Recalcular qué locales de localesFiltrados están dentro de la vista
+function recalcularLocalesVisibles() {
+  if (!localesFiltrados.length) {
+    localesVisibles = [];
+    clusterGroup.clearLayers();
+    return;
+  }
+
+  const bounds = map.getBounds();
+
+  localesVisibles = localesFiltrados.filter(l =>
+    l.lat && l.lng && bounds.contains([l.lat, l.lng])
+  );
+
+  pintarMapa(localesVisibles);
 }
 
 // =============================
@@ -237,7 +260,8 @@ function aplicarFiltroMapa() {
           filtrados = filtrados.slice(0, 200);
         }
 
-        pintarMapa(filtrados);
+        localesFiltrados = filtrados;
+        recalcularLocalesVisibles();
 
         const primero = filtrados[0];
         if (primero && primero.lat && primero.lng) {
@@ -245,11 +269,13 @@ function aplicarFiltroMapa() {
         }
       },
       () => {
-        pintarMapa(filtrados);
+        localesFiltrados = filtrados;
+        recalcularLocalesVisibles();
       }
     );
   } else {
-    pintarMapa(filtrados);
+    localesFiltrados = filtrados;
+    recalcularLocalesVisibles();
   }
 }
 
@@ -298,7 +324,9 @@ function filtrarDatos(texto, radio, latUser, lngUser) {
   });
 
   console.log(`Buscando: "${textoUser}" | Resultados: ${resultados.length}`);
-  pintarMapa(resultados);
+
+  localesFiltrados = resultados;
+  recalcularLocalesVisibles();
 
   if (resultados.length === 0) {
     alert(`No encontrado 😢. Prueba con "bar", "tapas" o "comida".`);
@@ -334,7 +362,8 @@ function buscarLocales() {
 function resetMapa() {
   document.getElementById("txtBusqueda").value = "";
   document.getElementById("selDistancia").value = "0";
-  pintarMapa(todosLosLocales);
+  localesFiltrados = todosLosLocales;
+  recalcularLocalesVisibles();
   map.setView([37.3891, -5.9845], 13);
 }
 
@@ -391,6 +420,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("fPrecioMax").value = "";
     document.getElementById("fBarrio").value = "";
     document.getElementById("fSoloAbiertos").checked = false;
-    pintarMapa(todosLosLocales);
+    localesFiltrados = todosLosLocales;
+    recalcularLocalesVisibles();
   });
 });
