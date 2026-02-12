@@ -39,11 +39,28 @@ filtroControl.onAdd = function (map) {
 
 filtroControl.addTo(map);
 
+// Mostrar / ocultar panel de filtros (index.html tiene #panelFiltro)
+document.addEventListener("click", (e) => {
+  if (e.target && e.target.id === "btnFiltroMapa") {
+    e.preventDefault();
+    const panel = document.getElementById("panelFiltro");
+    if (panel) {
+      panel.style.display =
+        (panel.style.display === "none" || panel.style.display === "") ? "block" : "none";
+    }
+  }
+});
+
 // =============================
 // VARIABLES GLOBALES
 // =============================
 var todosLosLocales = [];
-var clusterGroup = L.markerClusterGroup({ chunkedLoading: true });
+var clusterGroup = L.markerClusterGroup({
+  chunkedLoading: true,
+  removeOutsideVisibleBounds: true,
+  disableClusteringAtZoom: 17,
+  showCoverageOnHover: false
+});
 map.addLayer(clusterGroup);
 
 // =============================
@@ -67,69 +84,82 @@ fetch('locales.json')
   .catch(e => console.error(e));
 
 // =============================
-// PINTAR MAPA
+// PINTAR MAPA (OPTIMIZADO)
 // =============================
+function crearMarkerDesdeLocal(local) {
+  let cat = local.categoria;
+  let emoji = "📍";
+  if (cat === "Alimentación") emoji = "🛒";
+  else if (cat === "Hostelería") emoji = "☕";
+  else if (cat === "Moda") emoji = "👕";
+  else if (cat === "Salud") emoji = "💊";
+
+  var icono = L.divIcon({
+    html: `<div style="font-size: 25px; text-shadow: 0 0 2px white;">${emoji}</div>`,
+    className: 'dummy-class',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  });
+
+  var marker = L.marker([local.lat, local.lng], { icon: icono });
+
+  let precioTexto = local.precioStr ? local.precioStr : "Sin datos";
+  let horarioTexto = (local.horario_abierto === true) ? "Abierto ahora" :
+    (local.horario_abierto === false) ? "Cerrado" : "Sin datos";
+
+  let linkGM = "";
+  if (local.lat && local.lng) {
+    const q = encodeURIComponent(`${local.nombre || ""} ${local.direccion || ""}`);
+    linkGM = `<a href="https://www.google.com/maps/search/?api=1&query=${local.lat},${local.lng} (${q})" target="_blank" style="color:#1a73e8;">Ver en Google Maps</a>`;
+  }
+
+  let popupContent = `
+    <div style="min-width: 180px; font-size: 0.9rem;">
+      <div style="font-weight: 600; font-size: 1rem; margin-bottom: 4px;">
+        ${local.nombre || "Sin nombre"}
+      </div>
+      <div style="color:#555; margin-bottom: 6px;">
+        ${local.categoria ? local.categoria + " · " : ""}${local.tipo_detalle || ""}
+      </div>
+      <div style="margin-bottom: 4px;">
+        <strong>Precio:</strong> ${precioTexto}
+      </div>
+      <div style="margin-bottom: 4px;">
+        <strong>Barrio:</strong> ${local.barrio || "Sin datos"}
+      </div>
+      <div style="margin-bottom: 4px;">
+        <strong>Dirección:</strong> ${local.direccion || "Sin datos"}
+      </div>
+      <div style="margin-bottom: 6px;">
+        <strong>Horario:</strong> ${horarioTexto}
+      </div>
+      <div style="margin-top: 6px;">
+        ${linkGM}
+      </div>
+    </div>
+  `;
+
+  marker.bindPopup(popupContent);
+  return marker;
+}
+
 function pintarMapa(listaLocales) {
   clusterGroup.clearLayers();
 
+  // Opcional: pintar solo lo dentro de bounds si lista es enorme
+  // const bounds = map.getBounds();
+  // listaLocales = listaLocales.filter(l => l.lat && l.lng && bounds.contains([l.lat, l.lng]));
+
+  const markers = [];
+
   listaLocales.forEach(local => {
-    if (local.lat && local.lng) {
-      let cat = local.categoria;
-      let emoji = "📍";
-      if (cat === "Alimentación") emoji = "🛒";
-      else if (cat === "Hostelería") emoji = "☕";
-      else if (cat === "Moda") emoji = "👕";
-      else if (cat === "Salud") emoji = "💊";
-
-      var icono = L.divIcon({
-        html: `<div style="font-size: 25px; text-shadow: 0 0 2px white;">${emoji}</div>`,
-        className: 'dummy-class',
-        iconSize: [30, 30],
-        iconAnchor: [15, 15]
-      });
-
-      var marker = L.marker([local.lat, local.lng], { icon: icono });
-
-      let precioTexto = local.precioStr ? local.precioStr : "Sin datos";
-      let horarioTexto = (local.horario_abierto === true) ? "Abierto ahora" :
-        (local.horario_abierto === false) ? "Cerrado" : "Sin datos";
-
-      let linkGM = "";
-      if (local.lat && local.lng) {
-        const q = encodeURIComponent(`${local.nombre || ""} ${local.direccion || ""}`);
-        linkGM = `<a href="https://www.google.com/maps/search/?api=1&query=${local.lat},${local.lng} (${q})" target="_blank" style="color:#1a73e8;">Ver en Google Maps</a>`;
-      }
-
-      let popupContent = `
-        <div style="min-width: 180px; font-size: 0.9rem;">
-          <div style="font-weight: 600; font-size: 1rem; margin-bottom: 4px;">
-            ${local.nombre || "Sin nombre"}
-          </div>
-          <div style="color:#555; margin-bottom: 6px;">
-            ${local.categoria ? local.categoria + " · " : ""}${local.tipo_detalle || ""}
-          </div>
-          <div style="margin-bottom: 4px;">
-            <strong>Precio:</strong> ${precioTexto}
-          </div>
-          <div style="margin-bottom: 4px;">
-            <strong>Barrio:</strong> ${local.barrio || "Sin datos"}
-          </div>
-          <div style="margin-bottom: 4px;">
-            <strong>Dirección:</strong> ${local.direccion || "Sin datos"}
-          </div>
-          <div style="margin-bottom: 6px;">
-            <strong>Horario:</strong> ${horarioTexto}
-          </div>
-          <div style="margin-top: 6px;">
-            ${linkGM}
-          </div>
-        </div>
-      `;
-
-      marker.bindPopup(popupContent);
-      clusterGroup.addLayer(marker);
-    }
+    if (!local.lat || !local.lng) return;
+    const marker = crearMarkerDesdeLocal(local);
+    markers.push(marker);
   });
+
+  // Añadir en bloque, más rápido que uno a uno
+  clusterGroup.addLayers(markers);
 }
 
 // =============================
