@@ -63,7 +63,7 @@ var clusterGroup = L.markerClusterGroup({
 map.addLayer(clusterGroup);
 
 // localesFiltrados = salida de filtros/búsquedas
-// localesVisibles   = filtrados que están dentro de los bounds del mapa
+// localesVisibles   = filtrados que se pintan (de momento, todos)
 var localesFiltrados = [];
 var localesVisibles = [];
 
@@ -74,9 +74,10 @@ console.log("Cargando datos...");
 
 fetch('locales.json')
   .then(r => r.json())
-  .then(data => {
-    // asegurar que siempre trabajamos con un array
-    const locales = Array.isArray(data) ? data : Object.values(data);
+  .then(locales => {
+    if (!Array.isArray(locales)) {
+      throw new Error("locales.json debe ser un array []");
+    }
 
     todosLosLocales = locales;
 
@@ -84,13 +85,14 @@ fetch('locales.json')
       if (local.precio) local.precioStr = "★".repeat(local.precio);
     });
 
+    // Al inicio, mostrar todos
     localesFiltrados = todosLosLocales;
     recalcularLocalesVisibles();
 
     rellenarBarrios();
     console.log("Cargados " + todosLosLocales.length + " locales con formulario.");
   })
-  .catch(e => console.error(e));
+  .catch(e => console.error("Error cargando locales:", e));
 
 // Al mover / hacer zoom, recalcular visibles
 map.on("moveend", () => {
@@ -98,7 +100,7 @@ map.on("moveend", () => {
 });
 
 // =============================
-// PINTAR MAPA (HARDCORE)
+// PINTAR MAPA
 // =============================
 function crearMarkerDesdeLocal(local) {
   let cat = local.categoria;
@@ -156,17 +158,7 @@ function crearMarkerDesdeLocal(local) {
   marker.bindPopup(popupContent);
   return marker;
 }
-function recalcularLocalesVisibles() {
-  if (!localesFiltrados.length) {
-    localesVisibles = [];
-    clusterGroup.clearLayers();
-    return;
-  }
 
-  // Mientras ajustamos, pintamos TODO sin filtrar por bounds
-  localesVisibles = localesFiltrados;
-  pintarMapa(localesVisibles);
-}
 function pintarMapa(listaLocales) {
   console.log("pintarMapa, nº listaLocales:", listaLocales.length);
 
@@ -175,22 +167,26 @@ function pintarMapa(listaLocales) {
   const markers = [];
 
   listaLocales.forEach(local => {
-    console.log("Local:", local.nombre, "lat:", local.lat, "lng:", local.lng);
-
     if (!local.lat || !local.lng) {
       console.log("Sin coords, se salta:", local.nombre);
       return;
     }
-
     const marker = crearMarkerDesdeLocal(local);
     markers.push(marker);
   });
 
   console.log("Marcadores que se van a añadir:", markers.length);
   clusterGroup.addLayers(markers);
+
+  // Ajustar vista una sola vez al inicio
+  if (markers.length > 0 && !pintarMapa._fitDone) {
+    const group = L.featureGroup(markers);
+    map.fitBounds(group.getBounds(), { padding: [40, 40] });
+    pintarMapa._fitDone = true;
+  }
 }
 
-// Recalcular qué locales de localesFiltrados están dentro de la vista
+// Recalcular visibles (de momento, sin filtrar por bounds)
 function recalcularLocalesVisibles() {
   if (!localesFiltrados.length) {
     localesVisibles = [];
@@ -198,12 +194,8 @@ function recalcularLocalesVisibles() {
     return;
   }
 
-  const bounds = map.getBounds();
-
-  localesVisibles = localesFiltrados.filter(l =>
-    l.lat && l.lng && bounds.contains([l.lat, l.lng])
-  );
-
+  // MOSTRAR TODOS los filtrados (sin bounds)
+  localesVisibles = localesFiltrados;
   pintarMapa(localesVisibles);
 }
 
@@ -329,7 +321,7 @@ function filtrarDatos(texto, radio, latUser, lngUser) {
   var resultados = todosLosLocales.filter(local => {
     var nombre = normalizar(local.nombre || "");
     var tipo = normalizar(local.tipo_detalle || "");
-    var categoria = normalizar(local.categoria || "");
+    var categoria = normalizar(local.categoria || "";
 
     var coincideTexto = nombre.includes(textoUser) ||
       tipo.includes(textoUser) ||
@@ -446,7 +438,3 @@ document.addEventListener("DOMContentLoaded", () => {
     recalcularLocalesVisibles();
   });
 });
-
-
-
-
