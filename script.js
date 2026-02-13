@@ -74,18 +74,21 @@ console.log("Cargando datos...");
 
 fetch('locales.json')
   .then(r => r.json())
-  .then(locales => {
+  .then(data => {
+    // asegurar que siempre trabajamos con un array
+    const locales = Array.isArray(data) ? data : Object.values(data);
+
     todosLosLocales = locales;
 
-    locales.forEach(local => {
+    todosLosLocales.forEach(local => {
       if (local.precio) local.precioStr = "★".repeat(local.precio);
     });
 
-    localesFiltrados = todosLosLocales; // al inicio, todos
+    localesFiltrados = todosLosLocales;
     recalcularLocalesVisibles();
 
     rellenarBarrios();
-    console.log("Cargados " + locales.length + " locales con formulario.");
+    console.log("Cargados " + todosLosLocales.length + " locales con formulario.");
   })
   .catch(e => console.error(e));
 
@@ -424,3 +427,4 @@ document.addEventListener("DOMContentLoaded", () => {
     recalcularLocalesVisibles();
   });
 });
+
