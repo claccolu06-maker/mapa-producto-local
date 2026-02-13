@@ -156,7 +156,17 @@ function crearMarkerDesdeLocal(local) {
   marker.bindPopup(popupContent);
   return marker;
 }
+function recalcularLocalesVisibles() {
+  if (!localesFiltrados.length) {
+    localesVisibles = [];
+    clusterGroup.clearLayers();
+    return;
+  }
 
+  // Mientras ajustamos, pintamos TODO sin filtrar por bounds
+  localesVisibles = localesFiltrados;
+  pintarMapa(localesVisibles);
+}
 function pintarMapa(listaLocales) {
   console.log("pintarMapa, nº listaLocales:", listaLocales.length);
 
@@ -436,6 +446,7 @@ document.addEventListener("DOMContentLoaded", () => {
     recalcularLocalesVisibles();
   });
 });
+
 
 
 
