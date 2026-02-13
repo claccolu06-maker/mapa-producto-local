@@ -158,16 +158,23 @@ function crearMarkerDesdeLocal(local) {
 }
 
 function pintarMapa(listaLocales) {
+  console.log("pintarMapa, nº listaLocales:", listaLocales.length);
+  console.log("Ejemplo local:", listaLocales[0]);
+
   clusterGroup.clearLayers();
 
   const markers = [];
 
   listaLocales.forEach(local => {
-    if (!local.lat || !local.lng) return;
+    if (!local.lat || !local.lng) {
+      console.log("Sin coords:", local.nombre, local.lat, local.lng);
+      return;
+    }
     const marker = crearMarkerDesdeLocal(local);
     markers.push(marker);
   });
 
+  console.log("Marcadores añadidos:", markers.length);
   clusterGroup.addLayers(markers);
 }
 
@@ -427,4 +434,5 @@ document.addEventListener("DOMContentLoaded", () => {
     recalcularLocalesVisibles();
   });
 });
+
 
