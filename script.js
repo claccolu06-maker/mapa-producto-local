@@ -1,3 +1,5 @@
+// script.js DEFINITIVO
+
 alert("¡Script INDITEX cargado!");
 
 var map = L.map('map').setView([37.3891, -5.9845], 13);
@@ -18,25 +20,16 @@ fetch('locales.json')
     if (!r.ok) throw new Error("No se pudo cargar locales.json: " + r.statusText);
     return r.json();
   })
-  .then(data => {
-    // data puede ser array directamente o un objeto con una propiedad que contiene el array
-    let locales;
-
-    if (Array.isArray(data)) {
-      locales = data;
-    } else if (Array.isArray(data.locales)) {
-      locales = data.locales;      // si tu JSON es { "locales": [ ... ] }
-    } else {
-      throw new Error("Formato de locales.json no reconocido");
-    }
-
+  .then(locales => {
     console.log("Array.isArray(locales):", Array.isArray(locales));
     console.log("Total locales:", locales.length);
 
-    todosLosLocales = locales;     // AQUÍ ya es array
+    if (!Array.isArray(locales)) {
+      throw new Error("locales.json no es un array");
+    }
 
-    // Preprocesar precio -> estrellas
-    todosLosLocales = todosLosLocales.map(local => ({
+    // aquí locales YA es un array
+    todosLosLocales = locales.map(local => ({
       ...local,
       precioStr: typeof local.precio === "number" ? "★".repeat(local.precio) : ""
     }));
@@ -48,16 +41,12 @@ fetch('locales.json')
     console.error("Error cargando locales:", err);
   });
 
-
-
 function pintarMarcadores() {
   console.log("pintarMarcadores, nº locales:", localesFiltrados.length);
 
   grupoMarcadores.clearLayers();
 
   localesFiltrados.forEach(local => {
-    console.log("Pintando local:", local.nombre, local.lat, local.lng);
-
     if (!local.lat || !local.lng) return;
 
     const marker = L.marker([local.lat, local.lng]);
@@ -82,5 +71,3 @@ function pintarMarcadores() {
     console.warn("No hay marcadores para mostrar.");
   }
 }
-
-
