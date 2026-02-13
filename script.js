@@ -321,7 +321,7 @@ function filtrarDatos(texto, radio, latUser, lngUser) {
   var resultados = todosLosLocales.filter(local => {
     var nombre = normalizar(local.nombre || "");
     var tipo = normalizar(local.tipo_detalle || "");
-    var categoria = normalizar(local.categoria || "";
+    var categoria = normalizar(local.categoria || "");  // ← AQUÍ faltaba el )
 
     var coincideTexto = nombre.includes(textoUser) ||
       tipo.includes(textoUser) ||
@@ -438,3 +438,4 @@ document.addEventListener("DOMContentLoaded", () => {
     recalcularLocalesVisibles();
   });
 });
+
