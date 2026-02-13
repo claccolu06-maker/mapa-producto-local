@@ -159,22 +159,24 @@ function crearMarkerDesdeLocal(local) {
 
 function pintarMapa(listaLocales) {
   console.log("pintarMapa, nº listaLocales:", listaLocales.length);
-  console.log("Ejemplo local:", listaLocales[0]);
 
   clusterGroup.clearLayers();
 
   const markers = [];
 
   listaLocales.forEach(local => {
+    console.log("Local:", local.nombre, "lat:", local.lat, "lng:", local.lng);
+
     if (!local.lat || !local.lng) {
-      console.log("Sin coords:", local.nombre, local.lat, local.lng);
+      console.log("Sin coords, se salta:", local.nombre);
       return;
     }
+
     const marker = crearMarkerDesdeLocal(local);
     markers.push(marker);
   });
 
-  console.log("Marcadores añadidos:", markers.length);
+  console.log("Marcadores que se van a añadir:", markers.length);
   clusterGroup.addLayers(markers);
 }
 
@@ -434,5 +436,6 @@ document.addEventListener("DOMContentLoaded", () => {
     recalcularLocalesVisibles();
   });
 });
+
 
 
