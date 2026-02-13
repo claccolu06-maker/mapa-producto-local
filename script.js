@@ -12,27 +12,34 @@ let localesFiltrados = [];
 let grupoMarcadores = L.featureGroup().addTo(map);
 
 console.log("Iniciando carga de locales...");
+
 fetch('locales.json')
   .then(r => {
     if (!r.ok) throw new Error("No se pudo cargar locales.json: " + r.statusText);
     return r.json();
   })
   .then(data => {
-    // data es el objeto raíz, saca el array correcto:
-    const locales = data.locales || data;  // por si se llama "locales"
+    // data puede ser array directamente o un objeto con una propiedad que contiene el array
+    let locales;
+
+    if (Array.isArray(data)) {
+      locales = data;
+    } else if (Array.isArray(data.locales)) {
+      locales = data.locales;      // si tu JSON es { "locales": [ ... ] }
+    } else {
+      throw new Error("Formato de locales.json no reconocido");
+    }
 
     console.log("Array.isArray(locales):", Array.isArray(locales));
     console.log("Total locales:", locales.length);
 
-    todosLosLocales = locales;
+    todosLosLocales = locales;     // AQUÍ ya es array
 
-    todosLosLocales.forEach(local => {
-      if (typeof local.precio === "number") {
-        local.precioStr = "★".repeat(local.precio);
-      } else {
-        local.precioStr = "";
-      }
-    });
+    // Preprocesar precio -> estrellas
+    todosLosLocales = todosLosLocales.map(local => ({
+      ...local,
+      precioStr: typeof local.precio === "number" ? "★".repeat(local.precio) : ""
+    }));
 
     localesFiltrados = todosLosLocales;
     pintarMarcadores();
@@ -40,6 +47,7 @@ fetch('locales.json')
   .catch(err => {
     console.error("Error cargando locales:", err);
   });
+
 
 
 function pintarMarcadores() {
@@ -74,4 +82,5 @@ function pintarMarcadores() {
     console.warn("No hay marcadores para mostrar.");
   }
 }
+
 
