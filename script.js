@@ -1,8 +1,5 @@
-// script.js NUEVO
-
 alert("¡Script INDITEX cargado!");
 
-// 1. Crear mapa centrado en Sevilla
 var map = L.map('map').setView([37.3891, -5.9845], 13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -10,14 +7,12 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// 2. Estado global
 let todosLosLocales = [];
 let localesFiltrados = [];
 let grupoMarcadores = L.featureGroup().addTo(map);
 
 console.log("Iniciando carga de locales...");
 
-// 3. Cargar locales.json (nuevo formato)
 fetch('locales.json')
   .then(r => {
     if (!r.ok) throw new Error("No se pudo cargar locales.json: " + r.statusText);
@@ -29,7 +24,6 @@ fetch('locales.json')
 
     todosLosLocales = locales;
 
-    // Preprocesar precio -> estrellas
     todosLosLocales.forEach(local => {
       if (typeof local.precio === "number") {
         local.precioStr = "★".repeat(local.precio);
@@ -38,7 +32,6 @@ fetch('locales.json')
       }
     });
 
-    // Mostrar todos al inicio
     localesFiltrados = todosLosLocales;
     pintarMarcadores();
   })
@@ -46,7 +39,6 @@ fetch('locales.json')
     console.error("Error cargando locales:", err);
   });
 
-// 4. Función para pintar marcadores
 function pintarMarcadores() {
   console.log("pintarMarcadores, nº locales:", localesFiltrados.length);
 
@@ -76,6 +68,6 @@ function pintarMarcadores() {
   if (grupoMarcadores.getLayers().length > 0) {
     map.fitBounds(grupoMarcadores.getBounds(), { padding: [40, 40] });
   } else {
-    console.warn("No hay marcadores para mostrar (revisa lat/lng o filtros).");
+    console.warn("No hay marcadores para mostrar.");
   }
 }
