@@ -126,7 +126,10 @@
         </label>
       </div>
 
-      <label for="barrio">Barrio *</label>
+      <label for="fBarrio">Barrio (texto)</label>
+<select id="fBarrio">
+  <!-- El JS rellenará las opciones -->
+</select>
       <input type="text" id="barrio" required />
 
       <label for="direccion">Dirección *</label>
@@ -196,5 +199,6 @@
 <script src="exportar.js"></script>
 </body>
 </html>
+
 
 
