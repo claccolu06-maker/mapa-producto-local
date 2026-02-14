@@ -1,427 +1,303 @@
-
 // =============================
 // UTIL: NORMALIZAR TEXTO
 // =============================
 function normalizarTexto(str) {
   return (str || "")
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // quita tildes
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
 }
 
 // =============================
-// MAPA Y CONTROLES
+// MAPA Y CLUSTERS
 // =============================
-var map = L.map('map').setView([37.3891, -5.9845], 13);
+var map = L.map('map').setView([37.3891, -5.9845], 14);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
   attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// Botón Filtro arriba a la derecha
-const filtroControl = L.control({ position: 'topright' });
-
-filtroControl.onAdd = function (map) {
-  const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-
-  div.innerHTML = `
-    <a href="#" id="btnFiltroMapa" title="Buscar local"
-       style="display:flex;align-items:center;justify-content:center;
-              width:32px;height:32px;font-size:18px;text-decoration:none;">
-      🔍
-    </a>
-  `;
-
-  L.DomEvent.disableClickPropagation(div);
-  return div;
-};
-
-filtroControl.addTo(map);
-
-// Mostrar / ocultar panel de filtros (index.html tiene #panelFiltro)
-document.addEventListener("click", (e) => {
-  if (e.target && e.target.id === "btnFiltroMapa") {
-    e.preventDefault();
-    const panel = document.getElementById("panelFiltro");
-    if (!panel) return;
-    panel.style.display =
-      (panel.style.display === "none" || panel.style.display === "") ? "block" : "none";
-  }
-});
-
-// =============================
-// VARIABLES GLOBALES
-// =============================
-var todosLosLocales = [];
-var clusterGroup = L.markerClusterGroup({
-  chunkedLoading: true,
-  removeOutsideVisibleBounds: true,
-  disableClusteringAtZoom: 17,
-  showCoverageOnHover: false
-});
+var clusterGroup = L.markerClusterGroup();
 map.addLayer(clusterGroup);
 
-// localesFiltrados = salida de filtros/búsquedas
-// localesVisibles   = filtrados que están dentro de los bounds del mapa
-var localesFiltrados = [];
-var localesVisibles = [];
+// Marcar ubicación del usuario
+function localizarUsuario() {
+  if (!navigator.geolocation) {
+    console.warn("Geolocalización no soportada");
+    return;
+  }
+
+  console.log("Pidiendo ubicación...");
+  navigator.geolocation.getCurrentPosition(
+    function (pos) {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      console.log("Usuario localizado en:", lat, lng);
+
+      const marker = L.marker([lat, lng], {
+        title: "Estás aquí",
+        icon: L.icon({
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+          shadowSize: [41, 41]
+        })
+      }).addTo(map);
+      marker.bindPopup("Estás aquí").openPopup();
+    },
+    function (err) {
+      console.warn("No se pudo obtener ubicación:", err);
+    }
+  );
+}
 
 // =============================
-// CARGAR LOCALES
+// ESTADO GLOBAL
 // =============================
-console.log("Cargando datos...");
+let todosLosLocales = [];
+let localesFiltrados = [];
+let barriosUnicos = new Set();
+let primerPintado = true;
 
-fetch('locales.json')
-  .then(r => r.json())
-  .then(locales => {
-    todosLosLocales = locales;
-
-    locales.forEach(local => {
-      if (local.precio) local.precioStr = "★".repeat(local.precio);
-    });
-
-    localesFiltrados = todosLosLocales; // al inicio, todos
-    recalcularLocalesVisibles();
-
-    rellenarBarrios();
-    console.log("Cargados " + locales.length + " locales con formulario.");
+// =============================
+// ICONOS CON DIBUJOS POR CATEGORÍA
+// (pon aquí tus PNG propios en /img si quieres)
+// =============================
+const iconosCategoria = {
+  "Comida": L.icon({
+    iconUrl: "img/icon-comida.png",
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -28]
+  }),
+  "Alimentación": L.icon({
+    iconUrl: "img/icon-alimentacion.png",
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -28]
+  }),
+  "Moda": L.icon({
+    iconUrl: "img/icon-moda.png",
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -28]
+  }),
+  "Belleza": L.icon({
+    iconUrl: "img/icon-belleza.png",
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -28]
   })
-  .catch(e => console.error(e));
+};
 
-// Al mover / hacer zoom, recalcular visibles
-map.on("moveend", () => {
-  recalcularLocalesVisibles();
+const iconoPorDefecto = L.icon({
+  iconUrl: "img/icon-generico.png",
+  iconSize: [24, 24],
+  iconAnchor: [12, 24],
+  popupAnchor: [0, -20]
 });
 
 // =============================
-// PINTAR MAPA (HARDCORE)
+// CREAR MARCADOR DESDE LOCAL
 // =============================
 function crearMarkerDesdeLocal(local) {
-  let cat = local.categoria;
-  let emoji = "📍";
-  if (cat === "Alimentación") emoji = "🛒";
-  else if (cat === "Hostelería") emoji = "☕";
-  else if (cat === "Moda") emoji = "👕";
-  else if (cat === "Salud") emoji = "💊";
+  const cat = local.categoria || "Otros";
+  const icono = iconosCategoria[cat] || iconoPorDefecto;
 
-  var icono = L.divIcon({
-    html: `<div style="font-size: 25px; text-shadow: 0 0 2px white;">${emoji}</div>`,
-    className: 'dummy-class',
-    iconSize: [30, 30],
-    iconAnchor: [15, 15]
+  const marker = L.marker([local.lat, local.lng], {
+    title: local.nombre || "",
+    icon: icono
   });
 
-  var marker = L.marker([local.lat, local.lng], { icon: icono });
-
-  let precioTexto = local.precioStr ? local.precioStr : "Sin datos";
-  let horarioTexto = (local.horario_abierto === true) ? "Abierto ahora" :
-    (local.horario_abierto === false) ? "Cerrado" : "Sin datos";
-
-  let linkGM = "";
-  if (local.lat && local.lng) {
-    const q = encodeURIComponent(`${local.nombre || ""} ${local.direccion || ""}`);
-    linkGM = `<a href="https://www.google.com/maps/search/?api=1&query=${local.lat},${local.lng} (${q})" target="_blank" style="color:#1a73e8;">Ver en Google Maps</a>`;
-  }
-
-  let popupContent = `
-    <div style="min-width: 180px; font-size: 0.9rem;">
-      <div style="font-weight: 600; font-size: 1rem; margin-bottom: 4px;">
-        ${local.nombre || "Sin nombre"}
-      </div>
-      <div style="color:#555; margin-bottom: 6px;">
-        ${local.categoria ? local.categoria + " · " : ""}${local.tipo_detalle || ""}
-      </div>
-      <div style="margin-bottom: 4px;">
-        <strong>Precio:</strong> ${precioTexto}
-      </div>
-      <div style="margin-bottom: 4px;">
-        <strong>Barrio:</strong> ${local.barrio || "Sin datos"}
-      </div>
-      <div style="margin-bottom: 4px;">
-        <strong>Dirección:</strong> ${local.direccion || "Sin datos"}
-      </div>
-      <div style="margin-bottom: 6px;">
-        <strong>Horario:</strong> ${horarioTexto}
-      </div>
-      <div style="margin-top: 6px;">
-        ${linkGM}
-      </div>
-    </div>
+  const popupHtml = `
+    <b>${local.nombre || "Sin nombre"}</b><br>
+    Categoría: ${local.categoria || "Sin categoría"}<br>
+    Tipo: ${local.tipo_detalle || "-"}<br>
+    Barrio: ${local.barrio || "-"}<br>
+    Precio: ${local.precio ? "★".repeat(local.precio) : "Sin datos"}<br>
+    Abierto ahora: ${local.horario_abierto ? "Sí" : "No"}<br>
+    Dirección: ${local.direccion || "-"}
   `;
 
-  marker.bindPopup(popupContent);
+  marker.bindPopup(popupHtml);
   return marker;
 }
 
+// =============================
+// PINTAR MAPA
+// =============================
 function pintarMapa(listaLocales) {
+  console.log("pintarMapa, nº listaLocales:", listaLocales.length);
+
   clusterGroup.clearLayers();
 
   const markers = [];
 
   listaLocales.forEach(local => {
-    if (!local.lat || !local.lng) return;
+    if (!local.lat || !local.lng) {
+      console.warn("Sin coords:", local.nombre);
+      return;
+    }
     const marker = crearMarkerDesdeLocal(local);
     markers.push(marker);
   });
 
+  console.log("Marcadores que se van a añadir:", markers.length);
   clusterGroup.addLayers(markers);
-}
 
-// Recalcular qué locales de localesFiltrados están dentro de la vista
-function recalcularLocalesVisibles() {
-  if (!localesFiltrados.length) {
-    localesVisibles = [];
-    clusterGroup.clearLayers();
-    return;
+  if (primerPintado && markers.length > 0) {
+    primerPintado = false;
+
+    const group = L.featureGroup(markers);
+    const bounds = group.getBounds();
+    const center = bounds.getCenter();
+    const sevilla = L.latLng(37.3891, -5.9845);
+
+    const distancia = sevilla.distanceTo(center); // metros
+    if (distancia > 50000) {
+      map.setView(sevilla, 13);
+    } else {
+      map.fitBounds(bounds, { padding: [40, 40] });
+    }
   }
-
-  const bounds = map.getBounds();
-
-  localesVisibles = localesFiltrados.filter(l =>
-    l.lat && l.lng && bounds.contains([l.lat, l.lng])
-  );
-
-  pintarMapa(localesVisibles);
 }
 
 // =============================
-// AUTOCOMPLETAR BARRIOS
+// RELLENAR SELECT DE BARRIOS
 // =============================
 function rellenarBarrios() {
-  const setBarrios = new Set();
-
+  barriosUnicos.clear();
   todosLosLocales.forEach(l => {
-    if (l.barrio) {
-      setBarrios.add(l.barrio.trim());
-    }
+    if (l.barrio) barriosUnicos.add(l.barrio);
   });
 
-  const datalist = document.getElementById("listaBarrios");
-  if (!datalist) return;
+  const select = document.getElementById("fBarrio");
+  if (!select) return;
 
-  datalist.innerHTML = "";
+  select.innerHTML = "";
 
-  Array.from(setBarrios).sort().forEach(b => {
-    const opt = document.createElement("option");
-    opt.value = b;
-    datalist.appendChild(opt);
-  });
+  const optTodos = document.createElement("option");
+  optTodos.value = "";
+  optTodos.textContent = "Todos los barrios";
+  select.appendChild(optTodos);
+
+  Array.from(barriosUnicos)
+    .sort((a, b) => a.localeCompare(b, "es"))
+    .forEach(barrio => {
+      const opt = document.createElement("option");
+      opt.value = barrio;
+      opt.textContent = barrio;
+      select.appendChild(opt);
+    });
 }
 
 // =============================
-// FILTRO AVANZADO (PANEL)
+// APLICAR FILTROS
 // =============================
-function aplicarFiltroMapa() {
-  const cat = document.getElementById("fCategoria").value;
-  const precioMin = parseInt(document.getElementById("fPrecioMin").value) || null;
-  const precioMax = parseInt(document.getElementById("fPrecioMax").value) || null;
-  const barrioTxt = document.getElementById("fBarrio").value;
-  const soloAbiertos = document.getElementById("fSoloAbiertos").checked;
+function aplicarFiltros() {
+  const categoria = document.getElementById("fCategoria")?.value || "";
+  const precioMin = parseInt(document.getElementById("fPrecioMin")?.value || "1", 10);
+  const precioMax = parseInt(document.getElementById("fPrecioMax")?.value || "3", 10);
+  const barrio = document.getElementById("fBarrio")?.value || "";
+  const soloAbiertos = document.getElementById("fSoloAbiertos")?.checked || false;
+  const textoLibre = normalizarTexto(document.getElementById("fTextoLibre")?.value || "");
 
-  let filtrados = todosLosLocales.filter(local => {
-    if (cat && local.categoria !== cat) return false;
-    if (precioMin !== null && (local.precio || 0) < precioMin) return false;
-    if (precioMax !== null && (local.precio || 0) > precioMax) return false;
+  localesFiltrados = todosLosLocales.filter(local => {
+    if (categoria && local.categoria !== categoria) return false;
 
-    if (barrioTxt) {
-      const bNorm = normalizarTexto(local.barrio);
-      const filtroNorm = normalizarTexto(barrioTxt);
-      if (!bNorm.includes(filtroNorm)) return false;
+    const p = local.precio ?? 2;
+    if (p < precioMin || p > precioMax) return false;
+
+    if (barrio && local.barrio !== barrio) return false;
+
+    if (soloAbiertos && !local.horario_abierto) return false;
+
+    if (textoLibre) {
+      const campo = normalizarTexto(
+        (local.nombre || "") + " " +
+        (local.categoria || "") + " " +
+        (local.tipo_detalle || "") + " " +
+        (local.barrio || "")
+      );
+      if (!campo.includes(textoLibre)) return false;
     }
-
-    if (soloAbiertos && local.horario_abierto === false) return false;
 
     return true;
   });
 
-  if (filtrados.length === 0) {
-    alert("No se han encontrado locales con esos criterios.");
-    return;
-  }
+  pintarMapa(localesFiltrados);
+}
 
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        const latUser = pos.coords.latitude;
-        const lngUser = pos.coords.longitude;
+// =============================
+// CARGAR LOCALES
+// =============================
+function cargarLocales() {
+  console.log("Cargando locales.json...");
 
-        filtrados.forEach(l => {
-          if (l.lat && l.lng) {
-            l._dist = map.distance([latUser, lngUser], [l.lat, l.lng]);
-          } else {
-            l._dist = Infinity;
-          }
-        });
-
-        filtrados.sort((a, b) => a._dist - b._dist);
-
-        if (filtrados.length > 200) {
-          filtrados = filtrados.slice(0, 200);
-        }
-
-        localesFiltrados = filtrados;
-        recalcularLocalesVisibles();
-
-        const primero = filtrados[0];
-        if (primero && primero.lat && primero.lng) {
-          map.setView([primero.lat, primero.lng], 15);
-        }
-      },
-      () => {
-        localesFiltrados = filtrados;
-        recalcularLocalesVisibles();
+  fetch('locales.json')
+    .then(r => r.json())
+    .then(locales => {
+      if (!Array.isArray(locales)) {
+        throw new Error("locales.json debe ser un array []");
       }
-    );
-  } else {
-    localesFiltrados = filtrados;
-    recalcularLocalesVisibles();
-  }
-}
 
-// =============================
-// BUSCADOR RÁPIDO (CAJA IZQ)
-// =============================
-const sinonimos = {
-  "restaurante": "restaurant",
-  "tienda": "shop",
-  "cafeteria": "cafe",
-  "fruteria": "greengrocer",
-  "panaderia": "bakery",
-  "carniceria": "butcher",
-  "ropa": "clothes",
-  "super": "supermarket"
-};
-
-function normalizar(texto) {
-  return texto
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-}
-
-function filtrarDatos(texto, radio, latUser, lngUser) {
-  var textoUser = normalizar(texto);
-  var textoTecnico = sinonimos[textoUser] || textoUser;
-
-  var resultados = todosLosLocales.filter(local => {
-    var nombre = normalizar(local.nombre || "");
-    var tipo = normalizar(local.tipo_detalle || "");
-    var categoria = normalizar(local.categoria || "");
-
-    var coincideTexto = nombre.includes(textoUser) ||
-      tipo.includes(textoUser) ||
-      categoria.includes(textoUser) ||
-      tipo.includes(textoTecnico);
-
-    var dentroDelRadio = true;
-    if (radio > 0) {
-      var dist = map.distance([latUser, lngUser], [local.lat, local.lng]);
-      dentroDelRadio = dist <= radio;
-    }
-
-    return coincideTexto && dentroDelRadio;
-  });
-
-  console.log(`Buscando: "${textoUser}" | Resultados: ${resultados.length}`);
-
-  localesFiltrados = resultados;
-  recalcularLocalesVisibles();
-
-  if (resultados.length === 0) {
-    alert(`No encontrado 😢. Prueba con "bar", "tapas" o "comida".`);
-  }
-}
-
-function buscarLocales() {
-  var texto = document.getElementById("txtBusqueda").value;
-  var distancia = parseInt(document.getElementById("selDistancia").value);
-
-  if (distancia > 0) {
-    if (!navigator.geolocation) {
-      alert("Tu navegador no soporta GPS");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(pos => {
-      var miLat = pos.coords.latitude;
-      var miLng = pos.coords.longitude;
-
-      L.circle([miLat, miLng], { radius: distancia }).addTo(map);
-      map.setView([miLat, miLng], 15);
-
-      filtrarDatos(texto, distancia, miLat, miLng);
-    }, () => {
-      alert("No pudimos localizarte. Buscando en todo Sevilla...");
-      filtrarDatos(texto, 0, 0, 0);
-    });
-  } else {
-    filtrarDatos(texto, 0, 0, 0);
-  }
-}
-
-function resetMapa() {
-  document.getElementById("txtBusqueda").value = "";
-  document.getElementById("selDistancia").value = "0";
-  localesFiltrados = todosLosLocales;
-  recalcularLocalesVisibles();
-  map.setView([37.3891, -5.9845], 13);
-}
-
-// =============================
-// AUTO-LOCALIZACIÓN INICIAL
-// =============================
-if (navigator.geolocation) {
-  console.log("Pidiendo ubicación...");
-
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      var lat = position.coords.latitude;
-      var lng = position.coords.longitude;
-
-      console.log("Usuario localizado en:", lat, lng);
-
-      map.setView([lat, lng], 16);
-
-      var iconoYo = L.divIcon({
-        html: '<div style="width: 15px; height: 15px; background: #4285F4; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>',
-        className: 'user-location-dot',
-        iconSize: [20, 20]
+      todosLosLocales = locales.map(l => {
+        if (!l.precio) l.precio = 2;
+        if (typeof l.horario_abierto === "undefined") l.horario_abierto = true;
+        return l;
       });
 
-      L.marker([lat, lng], { icon: iconoYo })
-        .addTo(map)
-        .bindPopup("<b>¡Estás aquí!</b>")
-        .openPopup();
+      console.log("Cargados", todosLosLocales.length, "locales.");
+      localesFiltrados = todosLosLocales;
 
-      L.circle([lat, lng], {
-        color: '#4285F4',
-        fillColor: '#4285F4',
-        fillOpacity: 0.1,
-        radius: 200
-      }).addTo(map);
-    },
-    (error) => {
-      console.warn("El usuario denegó la ubicación o hubo error:", error.message);
-    }
-  );
+      rellenarBarrios();
+      pintarMapa(localesFiltrados);
+    })
+    .catch(e => {
+      console.error("Error cargando locales:", e);
+      alert("Error cargando locales. Mira la consola.");
+    });
 }
 
 // =============================
-// EVENTOS DOM
+// EVENTOS
 // =============================
-document.addEventListener("DOMContentLoaded", () => {
-  const btnFiltro = document.getElementById("btnAplicarFiltro");
-  if (btnFiltro) btnFiltro.addEventListener("click", aplicarFiltroMapa);
+document.addEventListener("DOMContentLoaded", function () {
+  const btnAplicar = document.getElementById("btnAplicarFiltros");
+  if (btnAplicar) {
+    btnAplicar.addEventListener("click", function (e) {
+      e.preventDefault();
+      aplicarFiltros();
+    });
+  }
 
-  const btnQuitar = document.getElementById("btnQuitarFiltro");
-  if (btnQuitar) btnQuitar.addEventListener("click", () => {
-    document.getElementById("fCategoria").value = "";
-    document.getElementById("fPrecioMin").value = "";
-    document.getElementById("fPrecioMax").value = "";
-    document.getElementById("fBarrio").value = "";
-    document.getElementById("fSoloAbiertos").checked = false;
-    localesFiltrados = todosLosLocales;
-    recalcularLocalesVisibles();
-  });
+  const btnReset = document.getElementById("btnQuitarFiltros");
+  if (btnReset) {
+    btnReset.addEventListener("click", function (e) {
+      e.preventDefault();
+      document.getElementById("fCategoria").value = "";
+      document.getElementById("fPrecioMin").value = "1";
+      document.getElementById("fPrecioMax").value = "3";
+      document.getElementById("fBarrio").value = "";
+      document.getElementById("fSoloAbiertos").checked = false;
+      document.getElementById("fTextoLibre").value = "";
+      localesFiltrados = todosLosLocales;
+      pintarMapa(localesFiltrados);
+    });
+  }
+
+  const btnBuscarRapido = document.getElementById("btnBuscarRapido");
+  if (btnBuscarRapido) {
+    btnBuscarRapido.addEventListener("click", function (e) {
+      e.preventDefault();
+      aplicarFiltros(); // usa el texto libre + resto filtros
+    });
+  }
+
+  localizarUsuario();
+  cargarLocales();
 });
