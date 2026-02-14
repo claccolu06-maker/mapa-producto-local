@@ -65,7 +65,7 @@ let primerPintado = true;
 
 // =============================
 // ICONOS CON DIBUJOS POR CATEGORÍA
-// (pon aquí tus PNG propios en /img si quieres)
+// (pon tus PNG en /img o cambia las rutas)
 // =============================
 const iconosCategoria = {
   "Comida": L.icon({
@@ -154,20 +154,17 @@ function pintarMapa(listaLocales) {
 
     const group = L.featureGroup(markers);
     const bounds = group.getBounds();
-    const center = bounds.getCenter();
-    const sevilla = L.latLng(37.3891, -5.9845);
+    map.fitBounds(bounds, { padding: [40, 40] });
 
-    const distancia = sevilla.distanceTo(center); // metros
-    if (distancia > 50000) {
-      map.setView(sevilla, 13);
-    } else {
-      map.fitBounds(bounds, { padding: [40, 40] });
-    }
+    // y recentramos en Sevilla para evitar irnos a América
+    map.setView([37.3891, -5.9845], 13);
   }
 }
 
 // =============================
 // RELLENAR SELECT DE BARRIOS
+// (ahora todos son "Desconocido",
+// pero esto ya queda listo para cuando los tengas reales)
 // =============================
 function rellenarBarrios() {
   barriosUnicos.clear();
@@ -248,6 +245,7 @@ function cargarLocales() {
       todosLosLocales = locales.map(l => {
         if (!l.precio) l.precio = 2;
         if (typeof l.horario_abierto === "undefined") l.horario_abierto = true;
+        // de momento todos los barrios te vienen como "Desconocido"
         return l;
       });
 
@@ -294,7 +292,19 @@ document.addEventListener("DOMContentLoaded", function () {
   if (btnBuscarRapido) {
     btnBuscarRapido.addEventListener("click", function (e) {
       e.preventDefault();
-      aplicarFiltros(); // usa el texto libre + resto filtros
+      aplicarFiltros();
+    });
+  }
+
+  const btnToggle = document.getElementById("btnToggleFiltros");
+  const panelFiltros = document.getElementById("panelFiltros");
+  if (btnToggle && panelFiltros) {
+    btnToggle.addEventListener("click", function () {
+      if (panelFiltros.style.display === "none" || panelFiltros.style.display === "") {
+        panelFiltros.style.display = "block";
+      } else {
+        panelFiltros.style.display = "none";
+      }
     });
   }
 
