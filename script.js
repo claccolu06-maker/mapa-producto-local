@@ -65,37 +65,53 @@ let primerPintado = true;
 
 // =============================
 // ICONOS CON DIBUJOS POR CATEGORÍA
-// (pon tus PNG en /img o cambia las rutas)
 // =============================
+
+// Comida: restaurante (cuchillo y tenedor)
 const iconosCategoria = {
   "Comida": L.icon({
-    iconUrl: "img/icon-comida.png",
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
     iconSize: [32, 32],
     iconAnchor: [16, 32],
     popupAnchor: [0, -28]
   }),
+
+  // Alimentación: carrito de la compra
   "Alimentación": L.icon({
-    iconUrl: "img/icon-alimentacion.png",
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/3144/3144456.png",
     iconSize: [32, 32],
     iconAnchor: [16, 32],
     popupAnchor: [0, -28]
   }),
+
+  // Moda (ropa): camiseta
   "Moda": L.icon({
-    iconUrl: "img/icon-moda.png",
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/892/892458.png",
     iconSize: [32, 32],
     iconAnchor: [16, 32],
     popupAnchor: [0, -28]
   }),
+
+  // Belleza / peluquería: secador de pelo
   "Belleza": L.icon({
-    iconUrl: "img/icon-belleza.png",
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/3461/3461869.png",
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -28]
+  }),
+
+  // Salud: pastilla
+  "Salud": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/2966/2966327.png",
     iconSize: [32, 32],
     iconAnchor: [16, 32],
     popupAnchor: [0, -28]
   })
 };
 
+// Icono por defecto para otras categorías
 const iconoPorDefecto = L.icon({
-  iconUrl: "img/icon-generico.png",
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/252/252025.png",
   iconSize: [24, 24],
   iconAnchor: [12, 24],
   popupAnchor: [0, -20]
@@ -311,3 +327,4 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuario();
   cargarLocales();
 });
+
