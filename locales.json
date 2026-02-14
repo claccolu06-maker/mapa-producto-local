@@ -2,8 +2,8 @@
   "version": 0.6,
   "generator": "Overpass API 0.7.61.8 b1080abd",
   "osm3s": {
-    "timestamp_osm_base": "2026-02-12T09:33:55Z",
-    "timestamp_areas_base": "2026-02-12T07:16:43Z",
+    "timestamp_osm_base": "2026-02-14T08:53:54Z",
+    "timestamp_areas_base": "2026-02-14T07:36:15Z",
     "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
   },
   "elements": [
@@ -55725,8 +55725,6 @@
     "name": "Tienda",
     "opening_hours": "Mo-Su 08:00-18:00; Apr 10-15 off; Jun 08:00-14:00; Aug off; Dec 25 off",
     "payment:coins": "yes",
-    "payment:cryptocurrencies": "IOTA",
-    "payment:litecoin": "yes",
     "payment:notes": "yes",
     "shop": "convenience",
     "smoking": "yes",
@@ -55750,8 +55748,6 @@
     "name": "Vive Digital",
     "opening_hours": "Mo-Su 08:00-18:00; Apr 10-15 off; Jun 08:00-14:00; Aug off; Dec 25 off",
     "payment:coins": "yes",
-    "payment:cryptocurrencies": "IOTA",
-    "payment:litecoin": "yes",
     "payment:notes": "yes",
     "smoking": "yes",
     "wheelchair": "limited"
@@ -55773,8 +55769,6 @@
     "name": "Rapitienda La Sevillana",
     "opening_hours": "Mo-Su 08:00-18:00; Apr 10-15 off; Jun 08:00-14:00; Aug off; Dec 25 off",
     "payment:coins": "yes",
-    "payment:cryptocurrencies": "IOTA",
-    "payment:litecoin": "yes",
     "payment:notes": "yes",
     "shop": "convenience",
     "smoking": "yes",
