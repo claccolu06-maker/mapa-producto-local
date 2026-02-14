@@ -74,10 +74,28 @@
       cursor: pointer;
     }
 
+    /* Botón lupa */
+    #btnToggleFiltros {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1100;
+      background: white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      cursor: pointer;
+      font-size: 20px;
+    }
+
     /* Panel de filtros (derecha) */
     .panel-filtros {
       position: absolute;
-      top: 10px;
+      top: 60px;
       right: 10px;
       width: 280px;
       background: white;
@@ -155,8 +173,11 @@
   <button id="btnBuscarRapido">Buscar</button>
 </div>
 
-<!-- Panel filtros detallados -->
-<div class="panel-filtros">
+<!-- Botón lupa para abrir/cerrar filtros -->
+<div id="btnToggleFiltros">🔍</div>
+
+<!-- Panel filtros detallados (oculto por defecto) -->
+<div class="panel-filtros" id="panelFiltros" style="display:none;">
   <h3>Buscar local</h3>
 
   <label for="fCategoria">Categoría</label>
@@ -184,7 +205,7 @@
 
   <label for="fBarrio">Barrio</label>
   <select id="fBarrio">
-    <!-- Se rellena por JS -->
+    <!-- se rellenará por JS -->
   </select>
 
   <div class="checkbox-linea">
