@@ -19,9 +19,41 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// Grupo de clusters
 var clusterGroup = L.markerClusterGroup();
 map.addLayer(clusterGroup);
+
+// Marcar ubicación del usuario
+function localizarUsuario() {
+  if (!navigator.geolocation) {
+    console.warn("Geolocalización no soportada");
+    return;
+  }
+
+  console.log("Pidiendo ubicación...");
+  navigator.geolocation.getCurrentPosition(
+    function (pos) {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      console.log("Usuario localizado en:", lat, lng);
+
+      const marker = L.marker([lat, lng], {
+        title: "Estás aquí",
+        icon: L.icon({
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+          shadowSize: [41, 41]
+        })
+      }).addTo(map);
+      marker.bindPopup("Estás aquí").openPopup();
+    },
+    function (err) {
+      console.warn("No se pudo obtener ubicación:", err);
+    }
+  );
+}
 
 // =============================
 // ESTADO GLOBAL
@@ -31,11 +63,53 @@ let localesFiltrados = [];
 let barriosUnicos = new Set();
 
 // =============================
+// ICONOS CON DIBUJOS POR CATEGORÍA
+// (usa tus URLs de imágenes si quieres cambiarlos)
+// =============================
+const iconosCategoria = {
+  "Comida": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png", // taza de café
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -28]
+  }),
+  "Alimentación": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png", // carrito
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -28]
+  }),
+  "Moda": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/892/892458.png", // camiseta
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -28]
+  }),
+  "Belleza": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/3534/3534033.png", // cosméticos
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -28]
+  })
+};
+
+const iconoPorDefecto = L.icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/252/252025.png", // punto genérico
+  iconSize: [24, 24],
+  iconAnchor: [12, 24],
+  popupAnchor: [0, -20]
+});
+
+// =============================
 // CREAR MARCADOR DESDE LOCAL
 // =============================
 function crearMarkerDesdeLocal(local) {
+  const cat = local.categoria || "Otros";
+  const icono = iconosCategoria[cat] || iconoPorDefecto;
+
   const marker = L.marker([local.lat, local.lng], {
-    title: local.nombre || ""
+    title: local.nombre || "",
+    icon: icono
   });
 
   const popupHtml = `
@@ -161,7 +235,6 @@ function cargarLocales() {
         throw new Error("locales.json debe ser un array []");
       }
 
-      // Preprocesar campos
       todosLosLocales = locales.map(l => {
         if (!l.precio) l.precio = 2;
         if (typeof l.horario_abierto === "undefined") l.horario_abierto = true;
@@ -184,7 +257,6 @@ function cargarLocales() {
 // EVENTOS DE FORMULARIO
 // =============================
 document.addEventListener("DOMContentLoaded", function () {
-  // Botón aplicar filtros
   const btnAplicar = document.getElementById("btnAplicarFiltros");
   if (btnAplicar) {
     btnAplicar.addEventListener("click", function (e) {
@@ -193,7 +265,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Botón quitar filtros
   const btnReset = document.getElementById("btnQuitarFiltros");
   if (btnReset) {
     btnReset.addEventListener("click", function (e) {
@@ -209,6 +280,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Cargar datos al inicio
+  localizarUsuario();
   cargarLocales();
 });
