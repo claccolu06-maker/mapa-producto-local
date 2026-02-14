@@ -2,10 +2,11 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mapa Comercial de Sevilla</title>
+  <title>Mapa Producto Local Sevilla</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Leaflet CSS -->
+  <!-- Leaflet -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -25,240 +26,188 @@
 
   <style>
     html, body {
+      height: 100%;
       margin: 0;
       padding: 0;
-      height: 100%;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     #map {
-      width: 100%;
-      height: 100vh;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1;
     }
 
-    .search-box {
-      position: fixed;
-      top: 20px;
-      left: 20px;
+    /* Panel de búsqueda (arriba izquierda) */
+    .panel-busqueda {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
       z-index: 1000;
-      background: #ffffff;
-      padding: 12px 14px;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      min-width: 260px;
+      max-width: 260px;
     }
 
-    .search-box h3 {
-      margin: 0 0 6px 0;
-      font-size: 15px;
+    .panel-busqueda h2 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
     }
 
-    .search-box input,
-    .search-box select,
-    .search-box button {
+    .panel-busqueda input[type="text"],
+    .panel-busqueda select {
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 6px;
+      padding: 6px 8px;
       font-size: 14px;
     }
 
-    .search-row {
-      display: flex;
-      gap: 6px;
-      margin-top: 6px;
-    }
-
-    .search-row > * {
-      flex: 1;
-    }
-
-    .search-box button {
+    .panel-busqueda button {
+      padding: 6px 10px;
+      font-size: 14px;
       cursor: pointer;
-      border: none;
-      border-radius: 6px;
-      padding: 8px;
     }
 
-    #btnBuscar {
-      background: #0d6efd;
-      color: white;
+    /* Panel de filtros (derecha) */
+    .panel-filtros {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 280px;
+      background: white;
+      padding: 10px 12px 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      z-index: 1000;
+      font-size: 14px;
     }
 
-    #btnReset {
-      background: #e0e0e0;
-      color: #333;
-      flex: 0 0 auto;
-      width: 34px;
+    .panel-filtros h3 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .panel-filtros label {
+      display: block;
+      margin-top: 6px;
+      margin-bottom: 2px;
+      font-weight: 500;
+    }
+
+    .panel-filtros select,
+    .panel-filtros input[type="text"],
+    .panel-filtros input[type="number"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 5px 7px;
+      font-size: 13px;
+    }
+
+    .panel-filtros .fila-botones {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .panel-filtros button {
+      flex: 1;
+      padding: 6px 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .checkbox-linea {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    @media (max-width: 768px) {
+      .panel-filtros {
+        width: 90%;
+        right: 5%;
+      }
+      .panel-busqueda {
+        max-width: 200px;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Caja búsqueda rápida -->
-  <div class="search-box">
-    <h3>¿Qué buscas hoy?</h3>
-    <input
-      type="text"
-      id="txtBusqueda"
-      placeholder="Ej: bar, pan, ropa, restaurante..."
-    />
+<div id="map"></div>
 
-    <div class="search-row" style="margin-top:8px;">
-      <select id="selDistancia">
-        <option value="0">Toda Sevilla</option>
-        <option value="500">500 m</option>
-        <option value="1000">1 km</option>
-        <option value="2000">2 km</option>
-      </select>
+<!-- Panel búsqueda rápida -->
+<div class="panel-busqueda">
+  <h2>¿Qué buscas hoy?</h2>
+  <input id="fTextoLibre" type="text" placeholder="Ej: bar, pan, ropa, restaurante">
+  <select id="fAmbito">
+    <option value="sevilla">Toda Sevilla</option>
+  </select>
+  <button id="btnBuscarRapido">Buscar</button>
+</div>
 
-      <button id="btnBuscar" onclick="buscarLocales()">Buscar</button>
-      <button id="btnReset" onclick="resetMapa()">✕</button>
-    </div>
+<!-- Panel filtros detallados -->
+<div class="panel-filtros">
+  <h3>Buscar local</h3>
 
-    <small style="display:block; margin-top:4px; font-size:11px; color:#666;">
-      * Si eliges distancia, haremos zoom a tu posición.
-    </small>
+  <label for="fCategoria">Categoría</label>
+  <select id="fCategoria">
+    <option value="">Todas</option>
+    <option value="Comida">Comida</option>
+    <option value="Alimentación">Alimentación</option>
+    <option value="Moda">Moda</option>
+    <option value="Belleza">Belleza</option>
+  </select>
+
+  <label for="fPrecioMin">Precio mínimo</label>
+  <select id="fPrecioMin">
+    <option value="1">1 ★</option>
+    <option value="2" selected>2 ★</option>
+    <option value="3">3 ★</option>
+  </select>
+
+  <label for="fPrecioMax">Precio máximo</label>
+  <select id="fPrecioMax">
+    <option value="1">1 ★</option>
+    <option value="2">2 ★</option>
+    <option value="3" selected>3 ★</option>
+  </select>
+
+  <label for="fBarrio">Barrio</label>
+  <select id="fBarrio">
+    <!-- Se rellena por JS -->
+  </select>
+
+  <div class="checkbox-linea">
+    <input type="checkbox" id="fSoloAbiertos">
+    <label for="fSoloAbiertos">Solo abiertos</label>
   </div>
 
-  <!-- Panel de filtros avanzados -->
-  <div id="panelFiltro"
-       style="
-          position: fixed;
-          top: 60px;
-          right: 10px;
-          width: 260px;
-          max-width: 80vw;
-          background: white;
-          border-radius: 8px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-          padding: 12px 12px 10px;
-          font-size: 13px;
-          z-index: 1000;
-          display: none;
-       ">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <strong style="font-size:13px;">Buscar local</strong>
-      <button type="button" id="cerrarFiltro"
-              style="border:none;background:none;font-size:16px;cursor:pointer;line-height:1;">
-        ✕
-      </button>
-    </div>
-
-    <div style="margin-bottom:6px;">
-      <label for="fCategoria">Categoría</label>
-      <select id="fCategoria" style="width:100%;padding:4px;border:1px solid #ccc;border-radius:4px;">
-        <option value="">Cualquiera</option>
-        <option value="Alimentación">Alimentación</option>
-        <option value="Hostelería">Hostelería</option>
-        <option value="Comercio">Comercio</option>
-        <option value="Moda">Moda</option>
-        <option value="Salud">Salud</option>
-      </select>
-    </div>
-
-    <div style="margin-bottom:6px;">
-      <label for="fPrecioMin">Precio mínimo</label>
-      <select id="fPrecioMin" style="width:100%;padding:4px;border:1px solid #ccc;border-radius:4px;">
-        <option value="">Sin mínimo</option>
-        <option value="1">1 ★</option>
-        <option value="2">2 ★</option>
-        <option value="3">3 ★</option>
-      </select>
-    </div>
-
-    <div style="margin-bottom:6px;">
-      <label for="fPrecioMax">Precio máximo</label>
-      <select id="fPrecioMax" style="width:100%;padding:4px;border:1px solid #ccc;border-radius:4px;">
-        <option value="">Sin máximo</option>
-        <option value="1">1 ★</option>
-        <option value="2">2 ★</option>
-        <option value="3">3 ★</option>
-      </select>
-    </div>
-
-    <div style="margin-bottom:6px;">
-      <label for="fBarrio">Barrio (texto)</label>
-      <input id="fBarrio" type="text" list="listaBarrios"
-             placeholder="Triana, Centro..."
-             style="width:100%;padding:4px;border:1px solid #ccc;border-radius:4px;">
-      <datalist id="listaBarrios"></datalist>
-    </div>
-
-    <div style="margin-bottom:8px;">
-      <label>
-        <input id="fSoloAbiertos" type="checkbox"> Solo abiertos
-      </label>
-    </div>
-
-    <button type="button" id="btnAplicarFiltro"
-            style="width:100%;padding:6px 0;border:none;border-radius:4px;
-                   background:#2c3e50;color:white;font-size:13px;cursor:pointer;">
-      Aplicar filtros
-    </button>
-
-    <button type="button" id="btnQuitarFiltro"
-            style="width:100%;margin-top:6px;padding:6px 0;border:1px solid #ccc;
-                   border-radius:4px;background:#f5f5f5;font-size:13px;cursor:pointer;">
-      Quitar filtros
-    </button>
+  <div class="fila-botones">
+    <button id="btnAplicarFiltros">Aplicar filtros</button>
+    <button id="btnQuitarFiltros">Quitar filtros</button>
   </div>
+</div>
 
-  <!-- Mapa -->
-  <div id="map"></div>
+<!-- Leaflet JS -->
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+></script>
 
-  <!-- Leaflet JS -->
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin="">
-  </script>
+<!-- MarkerCluster JS -->
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
-  <!-- MarkerCluster JS -->
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-
-  <!-- Mostrar / ocultar panel filtros al pulsar el botón 🔍 -->
-  <script>
-    document.addEventListener("click", (e) => {
-      if (e.target && e.target.id === "btnFiltroMapa") {
-        e.preventDefault();
-        const panel = document.getElementById("panelFiltro");
-        panel.style.display =
-          (panel.style.display === "none" || panel.style.display === "") ? "block" : "none";
-      }
-    });
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const cerrar = document.getElementById("cerrarFiltro");
-      if (cerrar) {
-        cerrar.addEventListener("click", () => {
-          document.getElementById("panelFiltro").style.display = "none";
-        });
-      }
-    });
-  </script>
-
-  <script>
-  // Abrir/cerrar panel de filtros al pulsar la lupa 🔍 del mapa
-  document.addEventListener("click", (e) => {
-    if (e.target && e.target.id === "btnFiltroMapa") {
-      e.preventDefault();
-      const panel = document.getElementById("panelFiltro");
-      if (!panel) return;
-      panel.style.display =
-        (panel.style.display === "none" || panel.style.display === "") ? "block" : "none";
-    }
-  });
-
-  // Botón ✕ dentro del panel para cerrarlo
-  document.addEventListener("DOMContentLoaded", () => {
-    const cerrar = document.getElementById("cerrarFiltro");
-    if (cerrar) {
-      cerrar.addEventListener("click", () => {
-        const panel = document.getElementById("panelFiltro");
-        if (panel) panel.style.display = "none";
-      });
-    }
-  });
-</script>
 <script src="script.js"></script>
 </body>
 </html>
-
-
