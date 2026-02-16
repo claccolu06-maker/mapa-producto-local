@@ -70,41 +70,29 @@ let puntoReferencia = null; // ubicación elegida por el cliente
 const iconosCategoria = {
   "Comida": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -28]
+    ...
   }),
   "Alimentación": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/3144/3144456.png",
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -28]
+    ...
   }),
   "Moda": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/892/892458.png",
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -28]
+    ...
   }),
   "Belleza": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/3461/3461869.png",
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -28]
+    ...
   }),
   "Salud": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/2966/2966327.png",
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -28]
+    ...
   })
 };
 
 const iconoPorDefecto = L.icon({
   iconUrl: "https://cdn-icons-png.flaticon.com/512/252/252025.png",
-  iconSize: [24, 24],
-  iconAnchor: [12, 24],
-  popupAnchor: [0, -20]
+  ...
 });
 
 // =============================
@@ -385,3 +373,4 @@ document.addEventListener("DOMContentLoaded", function () {
   // localizarUsuario();
   cargarLocales();
 });
+
