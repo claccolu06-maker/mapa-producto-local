@@ -133,20 +133,29 @@ function crearMarkerDesdeLocal(local) {
     icon: icono
   });
 
+  // Construimos URL a Google Maps (usar nombre + coords ayuda a la precisión)
+  const nombre = local.nombre || "Local sin nombre";
+  const query = encodeURIComponent(nombre + " Sevilla");
+  const lat = local.lat;
+  const lng = local.lng;
+  const urlMaps = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}&query_place_id=${query}`;
+
   const popupHtml = `
-    <b>${local.nombre || "Sin nombre"}</b><br>
+    <b>${nombre}</b><br>
     Categoría: ${local.categoria || "Sin categoría"}<br>
     Tipo: ${local.tipo_detalle || "-"}<br>
     Barrio: ${local.barrio || "-"}<br>
     Precio: ${local.precio ? "★".repeat(local.precio) : "Sin datos"}<br>
     Abierto ahora: ${local.horario_abierto ? "Sí" : "No"}<br>
-    Dirección: ${local.direccion || "-"}
+    Dirección: ${local.direccion || "-"}<br>
+    <a href="${urlMaps}" target="_blank" rel="noopener noreferrer">
+      Ver en Google Maps
+    </a>
   `;
 
   marker.bindPopup(popupHtml);
   return marker;
 }
-
 // =============================
 // PINTAR MAPA
 // =============================
@@ -399,5 +408,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // localizarUsuario();
   cargarLocales();
 });
+
 
 
