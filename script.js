@@ -62,12 +62,11 @@ let todosLosLocales = [];
 let localesFiltrados = [];
 let barriosUnicos = new Set();
 let primerPintado = true;
+let puntoReferencia = null; // ubicación elegida por el cliente
 
 // =============================
 // ICONOS CON DIBUJOS POR CATEGORÍA
 // =============================
-
-// Comida: restaurante (cuchillo y tenedor)
 const iconosCategoria = {
   "Comida": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png", // restaurante
@@ -133,7 +132,6 @@ function crearMarkerDesdeLocal(local) {
   marker.bindPopup(popupHtml);
   return marker;
 }
-let puntoReferencia = null; // { lat, lng } elegido por el cliente
 
 // =============================
 // PINTAR MAPA
@@ -163,16 +161,12 @@ function pintarMapa(listaLocales) {
     const group = L.featureGroup(markers);
     const bounds = group.getBounds();
     map.fitBounds(bounds, { padding: [40, 40] });
-
-    // y recentramos en Sevilla para evitar irnos a América
-    map.setView([37.3891, -5.9845], 13);
+    map.setView([37.3891, -5.9845], 13); // forzar Sevilla
   }
 }
 
 // =============================
 // RELLENAR SELECT DE BARRIOS
-// (ahora todos son "Desconocido",
-// pero esto ya queda listo para cuando los tengas reales)
 // =============================
 function rellenarBarrios() {
   barriosUnicos.clear();
@@ -197,6 +191,31 @@ function rellenarBarrios() {
       opt.value = barrio;
       opt.textContent = barrio;
       select.appendChild(opt);
+    });
+}
+
+// =============================
+// GEOLOCALIZAR TEXTO (UBICACIÓN CLIENTE)
+// =============================
+function geocodificarDireccion(texto) {
+  const url =
+    "https://nominatim.openstreetmap.org/search?format=json&q=" +
+    encodeURIComponent(texto) +
+    "&limit=1";
+
+  return fetch(url, {
+    headers: { "Accept-Language": "es" }
+  })
+    .then(r => r.json())
+    .then(resultados => {
+      if (!Array.isArray(resultados) || resultados.length === 0) {
+        throw new Error("No se ha encontrado esa ubicación");
+      }
+      const r = resultados[0];
+      return {
+        lat: parseFloat(r.lat),
+        lng: parseFloat(r.lon)
+      };
     });
 }
 
@@ -248,7 +267,6 @@ function aplicarFiltros() {
   pintarMapa(localesFiltrados);
 }
 
-
 // =============================
 // CARGAR LOCALES
 // =============================
@@ -265,7 +283,6 @@ function cargarLocales() {
       todosLosLocales = locales.map(l => {
         if (!l.precio) l.precio = 2;
         if (typeof l.horario_abierto === "undefined") l.horario_abierto = true;
-        // de momento todos los barrios te vienen como "Desconocido"
         return l;
       });
 
@@ -303,12 +320,15 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById("fBarrio").value = "";
       document.getElementById("fSoloAbiertos").checked = false;
       document.getElementById("fTextoLibre").value = "";
+      document.getElementById("fUbicacionCliente").value = "";
+      document.getElementById("fRadioDistancia").value = "";
+      puntoReferencia = null;
       localesFiltrados = todosLosLocales;
       pintarMapa(localesFiltrados);
     });
   }
 
-   const btnBuscarRapido = document.getElementById("btnBuscarRapido");
+  const btnBuscarRapido = document.getElementById("btnBuscarRapido");
   if (btnBuscarRapido) {
     btnBuscarRapido.addEventListener("click", function (e) {
       e.preventDefault();
@@ -319,7 +339,7 @@ document.addEventListener("DOMContentLoaded", function () {
         geocodificarDireccion(textoUbicacion)
           .then(coords => {
             console.log("Ubicación cliente:", coords);
-            puntoReferencia = coords;          // guardamos el punto
+            puntoReferencia = coords;
             map.setView([coords.lat, coords.lng], 15);
             aplicarFiltros();
           })
@@ -330,38 +350,24 @@ document.addEventListener("DOMContentLoaded", function () {
             aplicarFiltros();
           });
       } else {
-        // sin ubicación escrita: no filtramos por distancia
         puntoReferencia = null;
         aplicarFiltros();
       }
     });
   }
 
-
-// =============================
-// GEOLOCALIZAR TEXTO (UBICACIÓN CLIENTE)
-// =============================
-function geocodificarDireccion(texto) {
-  const url = "https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(texto) + "&limit=1";
-
-  return fetch(url, {
-    headers: {
-      "Accept-Language": "es"
-    }
-  })
-    .then(r => r.json())
-    .then(resultados => {
-      if (!Array.isArray(resultados) || resultados.length === 0) {
-        throw new Error("No se ha encontrado esa ubicación");
+  const btnToggle = document.getElementById("btnToggleFiltros");
+  const panelFiltros = document.getElementById("panelFiltros");
+  if (btnToggle && panelFiltros) {
+    btnToggle.addEventListener("click", function () {
+      if (panelFiltros.style.display === "none" || panelFiltros.style.display === "") {
+        panelFiltros.style.display = "block";
+      } else {
+        panelFiltros.style.display = "none";
       }
-      const r = resultados[0];
-      return {
-        lat: parseFloat(r.lat),
-        lng: parseFloat(r.lon)
-      };
     });
-}
+  }
 
-
-
-
+  localizarUsuario();
+  cargarLocales();
+});
