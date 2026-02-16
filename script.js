@@ -21,7 +21,37 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 var clusterGroup = L.markerClusterGroup();
 map.addLayer(clusterGroup);
+// Marcar solo tu ubicación (sin usarla como filtro)
+function localizarUsuario() {
+  if (!navigator.geolocation) {
+    console.warn("Geolocalización no soportada");
+    return;
+  }
 
+  navigator.geolocation.getCurrentPosition(
+    function (pos) {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      console.log("Usuario localizado en:", lat, lng);
+
+      const marker = L.marker([lat, lng], {
+        title: "Estás aquí",
+        icon: L.icon({
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+          shadowSize: [41, 41]
+        })
+      }).addTo(map);
+      marker.bindPopup("Estás aquí").openPopup();
+    },
+    function (err) {
+      console.warn("No se pudo obtener ubicación (localizarUsuario):", err);
+    }
+  );
+}
 // =============================
 // BUSCAR CERCA DE MÍ
 // =============================
@@ -404,9 +434,11 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
     // Inicialización
-  buscarCercaDeMi();
+  localizarUsuario();   // pide permiso y pinta el símbolo "Estás aquí"
   cargarLocales();
 });
+
+
 
 
 
