@@ -69,31 +69,31 @@ let puntoReferencia = null; // ubicación elegida por el cliente
 // =============================
 const iconosCategoria = {
   "Comida": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png", // restaurante
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
     iconSize: [32, 32],
     iconAnchor: [16, 32],
     popupAnchor: [0, -28]
   }),
   "Alimentación": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/3144/3144456.png", // carrito
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/3144/3144456.png",
     iconSize: [32, 32],
     iconAnchor: [16, 32],
     popupAnchor: [0, -28]
   }),
   "Moda": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/892/892458.png", // camiseta
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/892/892458.png",
     iconSize: [32, 32],
     iconAnchor: [16, 32],
     popupAnchor: [0, -28]
   }),
   "Belleza": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/3461/3461869.png", // secador
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/3461/3461869.png",
     iconSize: [32, 32],
     iconAnchor: [16, 32],
     popupAnchor: [0, -28]
   }),
   "Salud": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/2966/2966327.png", // pastilla
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/2966/2966327.png",
     iconSize: [32, 32],
     iconAnchor: [16, 32],
     popupAnchor: [0, -28]
@@ -161,7 +161,7 @@ function pintarMapa(listaLocales) {
     const group = L.featureGroup(markers);
     const bounds = group.getBounds();
     map.fitBounds(bounds, { padding: [40, 40] });
-    map.setView([37.3891, -5.9845], 13); // forzar Sevilla
+    map.setView([37.3891, -5.9845], 13);
   }
 }
 
@@ -251,7 +251,6 @@ function aplicarFiltros() {
       if (!campo.includes(textoLibre)) return false;
     }
 
-    // Filtro por distancia desde puntoReferencia
     if (radioMetros && puntoReferencia) {
       if (!local.lat || !local.lng) return false;
       const d = map.distance(
