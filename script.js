@@ -403,10 +403,12 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Inicialización
-  localizarUsuario();   // <- esta línea tiene que estar activa
+    // Inicialización
+  buscarCercaDeMi();
   cargarLocales();
 });
+
+
 
 
 
