@@ -22,7 +22,9 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 var clusterGroup = L.markerClusterGroup();
 map.addLayer(clusterGroup);
 
-// Marcar ubicación del usuario
+// =============================
+// BUSCAR CERCA DE MÍ
+// =============================
 function buscarCercaDeMi() {
   if (!navigator.geolocation) {
     alert("Tu dispositivo no permite obtener la ubicación.");
@@ -109,8 +111,8 @@ const iconoPorDefecto = L.icon({
 // CREAR MARCADOR DESDE LOCAL
 // =============================
 function crearMarkerDesdeLocal(local) {
- const cat = local.categoria || "Otros";
-const icono = iconosCategoria[cat] || iconoPorDefecto;
+  const cat = local.categoria || "Otros";
+  const icono = iconosCategoria[cat] || iconoPorDefecto;
 
   const marker = L.marker([local.lat, local.lng], {
     title: local.nombre || "",
@@ -299,12 +301,17 @@ function cargarLocales() {
 // EVENTOS
 // =============================
 document.addEventListener("DOMContentLoaded", function () {
+  // Botón aplicar filtros
   const btnAplicar = document.getElementById("btnAplicarFiltros");
   if (btnAplicar) {
     btnAplicar.addEventListener("click", function (e) {
       e.preventDefault();
       aplicarFiltros();
-        const btnCerca = document.getElementById("btnCercaDeMi");
+    });
+  }
+
+  // Botón “Buscar cerca de mí”
+  const btnCerca = document.getElementById("btnCercaDeMi");
   if (btnCerca) {
     btnCerca.addEventListener("click", function (e) {
       e.preventDefault();
@@ -312,6 +319,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Botón reset
   const btnReset = document.getElementById("btnQuitarFiltros");
   if (btnReset) {
     btnReset.addEventListener("click", function (e) {
@@ -330,6 +338,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Botón buscar rápido (texto + ubicación)
   const btnBuscarRapido = document.getElementById("btnBuscarRapido");
   if (btnBuscarRapido) {
     btnBuscarRapido.addEventListener("click", function (e) {
@@ -358,6 +367,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Lupa para abrir/cerrar panel de filtros
   const btnToggle = document.getElementById("btnToggleFiltros");
   const panelFiltros = document.getElementById("panelFiltros");
   if (btnToggle && panelFiltros) {
@@ -370,9 +380,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  localizarUsuario();
+  // Inicialización
+  // (si quieres puedes comentar localizarUsuario si ya usas mucho geolocalizador)
+  // localizarUsuario();
   cargarLocales();
 });
-
-
-
