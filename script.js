@@ -133,6 +133,7 @@ function crearMarkerDesdeLocal(local) {
   marker.bindPopup(popupHtml);
   return marker;
 }
+let puntoReferencia = null; // { lat, lng } elegido por el cliente
 
 // =============================
 // PINTAR MAPA
@@ -209,6 +210,7 @@ function aplicarFiltros() {
   const barrio = document.getElementById("fBarrio")?.value || "";
   const soloAbiertos = document.getElementById("fSoloAbiertos")?.checked || false;
   const textoLibre = normalizarTexto(document.getElementById("fTextoLibre")?.value || "");
+  const radioMetros = parseInt(document.getElementById("fRadioDistancia")?.value || "", 10) || null;
 
   localesFiltrados = todosLosLocales.filter(local => {
     if (categoria && local.categoria !== categoria) return false;
@@ -230,11 +232,22 @@ function aplicarFiltros() {
       if (!campo.includes(textoLibre)) return false;
     }
 
+    // Filtro por distancia desde puntoReferencia
+    if (radioMetros && puntoReferencia) {
+      if (!local.lat || !local.lng) return false;
+      const d = map.distance(
+        L.latLng(local.lat, local.lng),
+        L.latLng(puntoReferencia.lat, puntoReferencia.lng)
+      );
+      if (d > radioMetros) return false;
+    }
+
     return true;
   });
 
   pintarMapa(localesFiltrados);
 }
+
 
 // =============================
 // CARGAR LOCALES
@@ -306,21 +319,24 @@ document.addEventListener("DOMContentLoaded", function () {
         geocodificarDireccion(textoUbicacion)
           .then(coords => {
             console.log("Ubicación cliente:", coords);
+            puntoReferencia = coords;          // guardamos el punto
             map.setView([coords.lat, coords.lng], 15);
-
-            // aquí podríamos, si quieres, filtrar por distancia desde coords
             aplicarFiltros();
           })
           .catch(err => {
             console.warn(err);
             alert("No hemos encontrado esa ubicación. Prueba con otra dirección o barrio.");
+            puntoReferencia = null;
             aplicarFiltros();
           });
       } else {
+        // sin ubicación escrita: no filtramos por distancia
+        puntoReferencia = null;
         aplicarFiltros();
       }
     });
   }
+
 
 // =============================
 // GEOLOCALIZAR TEXTO (UBICACIÓN CLIENTE)
@@ -345,6 +361,7 @@ function geocodificarDireccion(texto) {
       };
     });
 }
+
 
 
 
