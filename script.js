@@ -21,7 +21,107 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 var clusterGroup = L.markerClusterGroup();
 map.addLayer(clusterGroup);
-// Marcar solo tu ubicación (sin usarla como filtro)
+
+// =============================
+// ESTADO GLOBAL
+// =============================
+let todosLosLocales = [];
+let localesFiltrados = [];
+let barriosUnicos = new Set();
+let primerPintado = true;
+let puntoReferencia = null; // ubicación elegida por el cliente
+
+// =============================
+// ICONOS SERIOS TIPO PIN
+// =============================
+const iconosCategoria = {
+  // 1. Comida: pin rojo con cubiertos
+  "Comida": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/685/685352.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
+  }),
+
+  // 2. Cafetería: pin marrón con taza
+  "Cafetería": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/854/854878.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
+  }),
+
+  // 3. Alimentación: pin verde con carrito / bolsa
+  "Alimentación": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/869/869869.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
+  }),
+
+  // 4. Moda: pin morado con percha
+  "Moda": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/2976/2976215.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
+  }),
+
+  // 5. Belleza: pin rosa con tijeras/peine
+  "Belleza": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/2976/2976229.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
+  }),
+
+  // 6. Salud: pin verde con cruz médica
+  "Salud": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/846/846449.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
+  }),
+
+  // 7. Ocio: pin azul con nota musical
+  "Ocio": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/535/535137.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
+  }),
+
+  // 8. Deportes: pin naranja con balón
+  "Deportes": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/931/931949.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
+  }),
+
+  // 9. Servicios: pin gris con engranaje
+  "Servicios": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/992/992700.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
+  }),
+
+  // 10. Otros: pin gris neutro
+  "Otros": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/252/252025.png",
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -24]
+  })
+};
+
+// Icono por defecto
+const iconoPorDefecto = iconosCategoria["Otros"];
+
+// =============================
+// MARCAR SOLO TU UBICACIÓN (pin azul)
+// =============================
 function localizarUsuario() {
   if (!navigator.geolocation) {
     console.warn("Geolocalización no soportada");
@@ -52,8 +152,9 @@ function localizarUsuario() {
     }
   );
 }
+
 // =============================
-// BUSCAR CERCA DE MÍ
+// BUSCAR CERCA DE MÍ (usar tu ubicación como filtro)
 // =============================
 function buscarCercaDeMi() {
   if (!navigator.geolocation) {
@@ -67,10 +168,8 @@ function buscarCercaDeMi() {
       const lng = pos.coords.longitude;
       puntoReferencia = { lat, lng };
 
-      // zoom a la posición del usuario
       map.setView([lat, lng], 15);
 
-      // si no hay radio elegido, ponemos 1000 m por defecto
       const radioSelect = document.getElementById("fRadioDistancia");
       if (radioSelect && !radioSelect.value) {
         radioSelect.value = "1000";
@@ -86,116 +185,6 @@ function buscarCercaDeMi() {
 }
 
 // =============================
-// ESTADO GLOBAL
-// =============================
-let todosLosLocales = [];
-let localesFiltrados = [];
-let barriosUnicos = new Set();
-let primerPintado = true;
-let puntoReferencia = null; // ubicación elegida por el cliente
-
-// =============================
-// ICONOS CON DIBUJOS POR CATEGORÍA
-// =============================
-// =============================
-// ICONOS CON DIBUJOS POR CATEGORÍA (versión mejorada)
-// =============================
-// =============================
-// ICONOS CON DIBUJOS POR CATEGORÍA
-// =============================
-// =============================
-// ICONOS SERIOS TIPO PIN
-// =============================
-const iconosCategoria = {
-  // Comida: pin rojo con cubiertos
-  "Comida": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/685/685352.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // Cafetería: pin marrón con taza
-  "Cafetería": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/854/854878.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // Alimentación: pin verde con carrito / bolsa
-  "Alimentación": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/869/869869.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // Moda: pin morado con percha
-  "Moda": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/2976/2976215.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // Belleza: pin rosa con tijeras/peine
-  "Belleza": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/2976/2976229.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // Salud: pin verde con cruz médica
-  "Salud": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/846/846449.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // Ocio: pin azul con nota musical
-  "Ocio": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/535/535137.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // Deportes: pin naranja con balón
-  "Deportes": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/931/931949.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // Servicios: pin gris con engranaje
-  "Servicios": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/992/992700.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // Otros: pin gris neutro
-  "Otros": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/252/252025.png",
-    iconSize: [30, 30],
-    iconAnchor: [15, 30],
-    popupAnchor: [0, -24]
-  })
-};
-
-// Icono por defecto
-const iconoPorDefecto = iconosCategoria["Otros"];
-;
-
-// Icono por defecto (por si alguna categoría rara se cuela)
-const iconoPorDefecto = iconosCategoria["Otros"];
-
-// =============================
 // CREAR MARCADOR DESDE LOCAL
 // =============================
 function crearMarkerDesdeLocal(local) {
@@ -207,11 +196,10 @@ function crearMarkerDesdeLocal(local) {
     icon: icono
   });
 
-  // Construimos URL a Google Maps (usar nombre + coords ayuda a la precisión)
   const nombre = local.nombre || "Local sin nombre";
-  const query = encodeURIComponent(nombre + " Sevilla");
   const lat = local.lat;
   const lng = local.lng;
+  const query = encodeURIComponent(nombre + " Sevilla");
   const urlMaps = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}&query_place_id=${query}`;
 
   const popupHtml = `
@@ -230,12 +218,11 @@ function crearMarkerDesdeLocal(local) {
   marker.bindPopup(popupHtml);
   return marker;
 }
+
 // =============================
 // PINTAR MAPA
 // =============================
 function pintarMapa(listaLocales) {
-  console.log("pintarMapa, nº listaLocales:", listaLocales.length);
-
   clusterGroup.clearLayers();
 
   const markers = [];
@@ -249,7 +236,6 @@ function pintarMapa(listaLocales) {
     markers.push(marker);
   });
 
-  console.log("Marcadores que se van a añadir:", markers.length);
   clusterGroup.addLayers(markers);
 
   if (primerPintado && markers.length > 0) {
@@ -367,8 +353,6 @@ function aplicarFiltros() {
 // CARGAR LOCALES
 // =============================
 function cargarLocales() {
-  console.log("Cargando locales.json...");
-
   fetch('locales.json')
     .then(r => r.json())
     .then(locales => {
@@ -382,7 +366,6 @@ function cargarLocales() {
         return l;
       });
 
-      console.log("Cargados", todosLosLocales.length, "locales.");
       localesFiltrados = todosLosLocales;
 
       rellenarBarrios();
@@ -464,7 +447,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-   // Lupa para abrir/cerrar panel de filtros
+  // Lupa para abrir/cerrar panel de filtros
   const btnToggle = document.getElementById("btnToggleFiltros");
   const panelFiltros = document.getElementById("panelFiltros");
   if (btnToggle && panelFiltros) {
@@ -477,18 +460,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-    // Inicialización
-  localizarUsuario();   // pide permiso y pinta el símbolo "Estás aquí"
+  // Inicialización
+  localizarUsuario();
   cargarLocales();
 });
-
-
-
-
-
-
-
-
-
-
-
