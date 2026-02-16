@@ -111,8 +111,8 @@ const iconoPorDefecto = L.icon({
 // CREAR MARCADOR DESDE LOCAL
 // =============================
 function crearMarkerDesdeLocal(local) {
-  const cat = local.categoria || "Otros";
-  const icono = iconosCategoria[cat] || iconoPorDefecto;
+ const cat = local.categoria || "Otros";
+const icono = iconosCategoria[cat] || iconoPorDefecto;
 
   const marker = L.marker([local.lat, local.lng], {
     title: local.nombre || "",
@@ -370,4 +370,5 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuario();
   cargarLocales();
 });
+
 
