@@ -23,34 +23,32 @@ var clusterGroup = L.markerClusterGroup();
 map.addLayer(clusterGroup);
 
 // Marcar ubicación del usuario
-function localizarUsuario() {
+function buscarCercaDeMi() {
   if (!navigator.geolocation) {
-    console.warn("Geolocalización no soportada");
+    alert("Tu dispositivo no permite obtener la ubicación.");
     return;
   }
 
-  console.log("Pidiendo ubicación...");
   navigator.geolocation.getCurrentPosition(
     function (pos) {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
-      console.log("Usuario localizado en:", lat, lng);
+      puntoReferencia = { lat, lng };
 
-      const marker = L.marker([lat, lng], {
-        title: "Estás aquí",
-        icon: L.icon({
-          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-          shadowSize: [41, 41]
-        })
-      }).addTo(map);
-      marker.bindPopup("Estás aquí").openPopup();
+      // zoom a la posición del usuario
+      map.setView([lat, lng], 15);
+
+      // si no hay radio elegido, ponemos 1000 m por defecto
+      const radioSelect = document.getElementById("fRadioDistancia");
+      if (radioSelect && !radioSelect.value) {
+        radioSelect.value = "1000";
+      }
+
+      aplicarFiltros();
     },
     function (err) {
-      console.warn("No se pudo obtener ubicación:", err);
+      console.warn("Error ubicación para 'cerca de mí':", err);
+      alert("No hemos podido obtener tu ubicación.");
     }
   );
 }
@@ -306,6 +304,11 @@ document.addEventListener("DOMContentLoaded", function () {
     btnAplicar.addEventListener("click", function (e) {
       e.preventDefault();
       aplicarFiltros();
+        const btnCerca = document.getElementById("btnCercaDeMi");
+  if (btnCerca) {
+    btnCerca.addEventListener("click", function (e) {
+      e.preventDefault();
+      buscarCercaDeMi();
     });
   }
 
@@ -370,5 +373,6 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuario();
   cargarLocales();
 });
+
 
 
