@@ -100,31 +100,51 @@ let puntoReferencia = null; // ubicación elegida por el cliente
 // =============================
 // ICONOS CON DIBUJOS POR CATEGORÍA (versión mejorada)
 // =============================
+// =============================
+// ICONOS CON DIBUJOS POR CATEGORÍA
+// =============================
 const iconosCategoria = {
+  // 1. Comida: plato y cubiertos
   "Comida": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png",
     iconSize: [36, 36],
     iconAnchor: [18, 36],
     popupAnchor: [0, -30]
   }),
+
+  // 2. Cafetería: taza de café
+  "Cafetería": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/4150/4150897.png",
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -30]
+  }),
+
+  // 3. Alimentación: bolsa de compra
   "Alimentación": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/3144/3144459.png",
     iconSize: [36, 36],
     iconAnchor: [18, 36],
     popupAnchor: [0, -30]
   }),
+
+  // 4. Moda: camiseta
   "Moda": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/892/892458.png",
     iconSize: [36, 36],
     iconAnchor: [18, 36],
     popupAnchor: [0, -30]
   }),
+
+  // 5. Belleza: cosméticos
   "Belleza": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/3534/3534033.png",
     iconSize: [36, 36],
     iconAnchor: [18, 36],
     popupAnchor: [0, -30]
   }),
+
+  // 6. Salud: pastilla
   "Salud": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/2966/2966327.png",
     iconSize: [36, 36],
@@ -132,32 +152,41 @@ const iconosCategoria = {
     popupAnchor: [0, -30]
   }),
 
-  // Nuevas categorías
+  // 7. Ocio: copa
   "Ocio": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/869/869636.png", // copa
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/869/869636.png",
     iconSize: [36, 36],
     iconAnchor: [18, 36],
     popupAnchor: [0, -30]
   }),
-  "Cafetería": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/4150/4150897.png", // café
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -30]
-  }),
+
+  // 8. Deportes: balón
   "Deportes": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/861/861512.png", // balón
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/861/861512.png",
     iconSize: [36, 36],
     iconAnchor: [18, 36],
     popupAnchor: [0, -30]
   }),
+
+  // 9. Servicios: engranaje/servicio
   "Servicios": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/8089/8089443.png", // llavero / servicio
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/8089/8089443.png",
     iconSize: [36, 36],
     iconAnchor: [18, 36],
     popupAnchor: [0, -30]
+  }),
+
+  // 10. Otros: icono genérico
+  "Otros": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/252/252025.png",
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -26]
   })
 };
+
+// Icono por defecto (por si alguna categoría rara se cuela)
+const iconoPorDefecto = iconosCategoria["Otros"];
 
 // =============================
 // CREAR MARCADOR DESDE LOCAL
@@ -445,6 +474,7 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuario();   // pide permiso y pinta el símbolo "Estás aquí"
   cargarLocales();
 });
+
 
 
 
