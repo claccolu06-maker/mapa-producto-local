@@ -12,7 +12,7 @@ function normalizarTexto(str) {
 // =============================
 // MAPA Y CLUSTERS
 // =============================
-var map = L.map('map').setView([37.3891, -5.9845], 14);
+var map = L.map('map').setView([37.3891, -5.9845], 13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
@@ -370,3 +370,4 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuario();
   cargarLocales();
 });
+
