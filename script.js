@@ -101,55 +101,63 @@ let puntoReferencia = null; // ubicación elegida por el cliente
 // ICONOS CON DIBUJOS POR CATEGORÍA (versión mejorada)
 // =============================
 const iconosCategoria = {
-  // Comida: plato y cubiertos
   "Comida": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png",
     iconSize: [36, 36],
     iconAnchor: [18, 36],
     popupAnchor: [0, -30]
   }),
-
-  // Alimentación / supermercado: bolsa de compra
   "Alimentación": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/3144/3144459.png",
     iconSize: [36, 36],
     iconAnchor: [18, 36],
     popupAnchor: [0, -30]
   }),
-
-  // Moda / ropa: camiseta
   "Moda": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/892/892458.png",
     iconSize: [36, 36],
     iconAnchor: [18, 36],
     popupAnchor: [0, -30]
   }),
-
-  // Belleza / peluquería: cosméticos
   "Belleza": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/3534/3534033.png",
     iconSize: [36, 36],
     iconAnchor: [18, 36],
     popupAnchor: [0, -30]
   }),
-
-  // Salud: pastilla
   "Salud": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/2966/2966327.png",
     iconSize: [36, 36],
     iconAnchor: [18, 36],
     popupAnchor: [0, -30]
+  }),
+
+  // Nuevas categorías
+  "Ocio": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/869/869636.png", // copa
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -30]
+  }),
+  "Cafetería": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/4150/4150897.png", // café
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -30]
+  }),
+  "Deportes": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/861/861512.png", // balón
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -30]
+  }),
+  "Servicios": L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/8089/8089443.png", // llavero / servicio
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -30]
   })
 };
-
-// Icono por defecto para otras categorías
-const iconoPorDefecto = L.icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/252/252025.png",
-  iconSize: [28, 28],
-  iconAnchor: [14, 28],
-  popupAnchor: [0, -24]
-});
-
 
 // =============================
 // CREAR MARCADOR DESDE LOCAL
@@ -437,6 +445,7 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuario();   // pide permiso y pinta el símbolo "Estás aquí"
   cargarLocales();
 });
+
 
 
 
