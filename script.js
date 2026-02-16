@@ -390,7 +390,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Lupa para abrir/cerrar panel de filtros
+   // Lupa para abrir/cerrar panel de filtros
   const btnToggle = document.getElementById("btnToggleFiltros");
   const panelFiltros = document.getElementById("panelFiltros");
   if (btnToggle && panelFiltros) {
@@ -404,10 +404,10 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Inicialización
-  // (si quieres puedes comentar localizarUsuario si ya usas mucho geolocalizador)
-  // localizarUsuario();
+  localizarUsuario();   // <- esta línea tiene que estar activa
   cargarLocales();
 });
+
 
 
 
