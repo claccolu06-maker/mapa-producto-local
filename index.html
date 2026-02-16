@@ -149,17 +149,26 @@
       gap: 4px;
     }
 
-    @media (max-width: 768px) {
+   @media (max-width: 768px) {
+  .panel-busqueda {
+    max-width: 200px;
+    top: 10px;
+    left: 10px;
+    padding: 8px 10px;
+  }
+
+  /* Ocultar selector de ámbito (Toda Sevilla) en móvil */
+  #fAmbito {
+    display: none;
+  }
+
+  /* Panel de filtros más compacto y desplazable */
   .panel-filtros {
     width: 80%;
     right: 10%;
     top: 70px;
     max-height: 60%;
     overflow-y: auto;
-  }
-
-  .panel-busqueda {
-    max-width: 210px;
   }
 }
   </style>
@@ -188,6 +197,7 @@
   </select>
 
   <button id="btnBuscarRapido">Buscar</button>
+  <button id="btnCercaDeMi">Buscar cerca de mí</button>
 </div>
 
 <!-- Botón lupa para abrir/cerrar filtros -->
@@ -250,4 +260,5 @@
 <script src="script.js"></script>
 </body>
 </html>
+
 
