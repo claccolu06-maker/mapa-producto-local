@@ -295,28 +295,56 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  const btnBuscarRapido = document.getElementById("btnBuscarRapido");
+   const btnBuscarRapido = document.getElementById("btnBuscarRapido");
   if (btnBuscarRapido) {
     btnBuscarRapido.addEventListener("click", function (e) {
       e.preventDefault();
-      aplicarFiltros();
-    });
-  }
 
-  const btnToggle = document.getElementById("btnToggleFiltros");
-  const panelFiltros = document.getElementById("panelFiltros");
-  if (btnToggle && panelFiltros) {
-    btnToggle.addEventListener("click", function () {
-      if (panelFiltros.style.display === "none" || panelFiltros.style.display === "") {
-        panelFiltros.style.display = "block";
+      const textoUbicacion = document.getElementById("fUbicacionCliente")?.value.trim();
+
+      if (textoUbicacion) {
+        geocodificarDireccion(textoUbicacion)
+          .then(coords => {
+            console.log("Ubicación cliente:", coords);
+            map.setView([coords.lat, coords.lng], 15);
+
+            // aquí podríamos, si quieres, filtrar por distancia desde coords
+            aplicarFiltros();
+          })
+          .catch(err => {
+            console.warn(err);
+            alert("No hemos encontrado esa ubicación. Prueba con otra dirección o barrio.");
+            aplicarFiltros();
+          });
       } else {
-        panelFiltros.style.display = "none";
+        aplicarFiltros();
       }
     });
   }
 
-  localizarUsuario();
-  cargarLocales();
-});
+// =============================
+// GEOLOCALIZAR TEXTO (UBICACIÓN CLIENTE)
+// =============================
+function geocodificarDireccion(texto) {
+  const url = "https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(texto) + "&limit=1";
+
+  return fetch(url, {
+    headers: {
+      "Accept-Language": "es"
+    }
+  })
+    .then(r => r.json())
+    .then(resultados => {
+      if (!Array.isArray(resultados) || resultados.length === 0) {
+        throw new Error("No se ha encontrado esa ubicación");
+      }
+      const r = resultados[0];
+      return {
+        lat: parseFloat(r.lat),
+        lng: parseFloat(r.lon)
+      };
+    });
+}
+
 
 
