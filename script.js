@@ -103,87 +103,94 @@ let puntoReferencia = null; // ubicación elegida por el cliente
 // =============================
 // ICONOS CON DIBUJOS POR CATEGORÍA
 // =============================
+// =============================
+// ICONOS SERIOS TIPO PIN
+// =============================
 const iconosCategoria = {
-  // 1. Comida: plato y cubiertos
+  // Comida: pin rojo con cubiertos
   "Comida": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png",
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -30]
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/685/685352.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
   }),
 
-  // 2. Cafetería: taza de café
+  // Cafetería: pin marrón con taza
   "Cafetería": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/4150/4150897.png",
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -30]
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/854/854878.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
   }),
 
-  // 3. Alimentación: bolsa de compra
+  // Alimentación: pin verde con carrito / bolsa
   "Alimentación": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/3144/3144459.png",
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -30]
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/869/869869.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
   }),
 
-  // 4. Moda: camiseta
+  // Moda: pin morado con percha
   "Moda": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/892/892458.png",
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -30]
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/2976/2976215.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
   }),
 
-  // 5. Belleza: cosméticos
+  // Belleza: pin rosa con tijeras/peine
   "Belleza": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/3534/3534033.png",
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -30]
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/2976/2976229.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
   }),
 
-  // 6. Salud: pastilla
+  // Salud: pin verde con cruz médica
   "Salud": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/2966/2966327.png",
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -30]
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/846/846449.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
   }),
 
-  // 7. Ocio: copa
+  // Ocio: pin azul con nota musical
   "Ocio": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/869/869636.png",
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -30]
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/535/535137.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
   }),
 
-  // 8. Deportes: balón
+  // Deportes: pin naranja con balón
   "Deportes": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/861/861512.png",
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -30]
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/931/931949.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
   }),
 
-  // 9. Servicios: engranaje/servicio
+  // Servicios: pin gris con engranaje
   "Servicios": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/8089/8089443.png",
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -30]
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/992/992700.png",
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
   }),
 
-  // 10. Otros: icono genérico
+  // Otros: pin gris neutro
   "Otros": L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/252/252025.png",
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -26]
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -24]
   })
 };
+
+// Icono por defecto
+const iconoPorDefecto = iconosCategoria["Otros"];
+;
 
 // Icono por defecto (por si alguna categoría rara se cuela)
 const iconoPorDefecto = iconosCategoria["Otros"];
@@ -474,6 +481,7 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuario();   // pide permiso y pinta el símbolo "Estás aquí"
   cargarLocales();
 });
+
 
 
 
