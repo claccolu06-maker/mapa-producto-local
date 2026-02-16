@@ -52,6 +52,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.25);
       z-index: 1000;
       max-width: 260px;
+      font-size: 14px;
     }
 
     .panel-busqueda h2 {
@@ -66,15 +67,6 @@
       margin-bottom: 6px;
       padding: 6px 8px;
       font-size: 14px;
-      <input id="fUbicacionCliente" type="text" placeholder="¿Dónde? (dirección o barrio)">
-
-<select id="fRadioDistancia">
-  <option value="">Sin límite de distancia</option>
-  <option value="500">500 m</option>
-  <option value="1000">1 km</option>
-  <option value="2000">2 km</option>
-  <option value="3000">3 km</option>
-</select>
     }
 
     .panel-busqueda button {
@@ -163,7 +155,7 @@
         right: 5%;
       }
       .panel-busqueda {
-        max-width: 200px;
+        max-width: 220px;
       }
     }
   </style>
@@ -176,9 +168,21 @@
 <div class="panel-busqueda">
   <h2>¿Qué buscas hoy?</h2>
   <input id="fTextoLibre" type="text" placeholder="Ej: bar, pan, ropa, restaurante">
+
+  <input id="fUbicacionCliente" type="text" placeholder="¿Dónde? (dirección o barrio)">
+
+  <select id="fRadioDistancia">
+    <option value="">Sin límite de distancia</option>
+    <option value="500">500 m</option>
+    <option value="1000">1 km</option>
+    <option value="2000">2 km</option>
+    <option value="3000">3 km</option>
+  </select>
+
   <select id="fAmbito">
     <option value="sevilla">Toda Sevilla</option>
   </select>
+
   <button id="btnBuscarRapido">Buscar</button>
 </div>
 
@@ -196,6 +200,7 @@
     <option value="Alimentación">Alimentación</option>
     <option value="Moda">Moda</option>
     <option value="Belleza">Belleza</option>
+    <option value="Salud">Salud</option>
   </select>
 
   <label for="fPrecioMin">Precio mínimo</label>
@@ -241,6 +246,3 @@
 <script src="script.js"></script>
 </body>
 </html>
-
-
-
