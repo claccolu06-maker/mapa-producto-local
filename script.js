@@ -396,20 +396,21 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Lupa para abrir/cerrar panel de filtros
-  const btnToggle = document.getElementById("btnToggleFiltros");
-  const panelFiltros = document.getElementById("panelFiltros");
-  if (btnToggle && panelFiltros) {
-    btnToggle.addEventListener("click", function () {
-      if (panelFiltros.style.display === "none" || panelFiltros.style.display === "") {
-        panelFiltros.style.display = "block";
+   // Botón para abrir/cerrar panel de búsqueda (izquierda)
+  const btnToggleBusqueda = document.getElementById("btnToggleBusqueda");
+  const panelBusqueda = document.getElementById("panelBusqueda");
+  if (btnToggleBusqueda && panelBusqueda) {
+    btnToggleBusqueda.addEventListener("click", function () {
+      if (panelBusqueda.style.display === "none" || panelBusqueda.style.display === "") {
+        panelBusqueda.style.display = "block";
       } else {
-        panelFiltros.style.display = "none";
+        panelBusqueda.style.display = "none";
       }
     });
   }
-
   // Inicialización
   localizarUsuario();
   cargarLocales();
 });
+
 
