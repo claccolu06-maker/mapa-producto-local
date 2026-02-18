@@ -34,7 +34,6 @@ let puntoReferencia = null; // ubicación elegida por el cliente
 // =============================
 // ICONOS: PIN MISMO TIPO, COLOR POR CATEGORÍA
 // =============================
-// Usamos la familia de marcadores coloreados de Leaflet (pointhi)
 function crearIconoColor(url) {
   return L.icon({
     iconUrl: url,
@@ -51,21 +50,15 @@ const iconosCategoria = {
   "Cafetería": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png"),
   "Alimentación": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png"),
   "Moda": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png"),
-
-  // Belleza: usamos azul claro
   "Belleza": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png"),
-
-  // Salud: usamos amarillo
   "Salud": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png"),
-
   "Ocio": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-gold.png"),
   "Deportes": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-grey.png"),
   "Servicios": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-black.png"),
-  "Otros": crearIconoColor("https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png") // azul estándar
+  "Otros": crearIconoColor("https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png")
 };
 
 const iconoPorDefecto = iconosCategoria["Otros"];
-
 
 // =============================
 // MARCAR SOLO TU UBICACIÓN (pin azul estándar)
@@ -171,6 +164,15 @@ function crearMarkerDesdeLocal(local) {
 // PINTAR MAPA
 // =============================
 function pintarMapa(listaLocales) {
+  const cont = document.getElementById("contadorResultados");
+  if (cont) {
+    if (!listaLocales || listaLocales.length === 0) {
+      cont.textContent = "No hay locales con los filtros actuales";
+    } else {
+      cont.textContent = "Mostrando " + listaLocales.length + " locales";
+    }
+  }
+
   clusterGroup.clearLayers();
 
   const markers = [];
@@ -251,6 +253,35 @@ function geocodificarDireccion(texto) {
 }
 
 // =============================
+// GUARDAR / CARGAR ESTADO DE FILTROS
+// =============================
+function obtenerEstadoFiltros() {
+  return {
+    categoria: document.getElementById("fCategoria")?.value || "",
+    precioMin: document.getElementById("fPrecioMin")?.value || "1",
+    precioMax: document.getElementById("fPrecioMax")?.value || "3",
+    barrio: document.getElementById("fBarrio")?.value || "",
+    soloAbiertos: document.getElementById("fSoloAbiertos")?.checked || false,
+    textoLibre: document.getElementById("fTextoLibre")?.value || "",
+    ubicacionTexto: document.getElementById("fUbicacionCliente")?.value || "",
+    radioDistancia: document.getElementById("fRadioDistancia")?.value || ""
+  };
+}
+
+function aplicarEstadoFiltros(estado) {
+  if (!estado) return;
+
+  if (document.getElementById("fCategoria")) document.getElementById("fCategoria").value = estado.categoria || "";
+  if (document.getElementById("fPrecioMin")) document.getElementById("fPrecioMin").value = estado.precioMin || "1";
+  if (document.getElementById("fPrecioMax")) document.getElementById("fPrecioMax").value = estado.precioMax || "3";
+  if (document.getElementById("fBarrio")) document.getElementById("fBarrio").value = estado.barrio || "";
+  if (document.getElementById("fSoloAbiertos")) document.getElementById("fSoloAbiertos").checked = !!estado.soloAbiertos;
+  if (document.getElementById("fTextoLibre")) document.getElementById("fTextoLibre").value = estado.textoLibre || "";
+  if (document.getElementById("fUbicacionCliente")) document.getElementById("fUbicacionCliente").value = estado.ubicacionTexto || "";
+  if (document.getElementById("fRadioDistancia")) document.getElementById("fRadioDistancia").value = estado.radioDistancia || "";
+}
+
+// =============================
 // APLICAR FILTROS
 // =============================
 function aplicarFiltros() {
@@ -294,6 +325,14 @@ function aplicarFiltros() {
     return true;
   });
 
+  // Guardar filtros en localStorage
+  try {
+    const estado = obtenerEstadoFiltros();
+    localStorage.setItem("mapa_sevilla_filtros", JSON.stringify(estado));
+  } catch (e) {
+    console.warn("No se pudieron guardar los filtros:", e);
+  }
+
   pintarMapa(localesFiltrados);
 }
 
@@ -317,7 +356,19 @@ function cargarLocales() {
       localesFiltrados = todosLosLocales;
 
       rellenarBarrios();
-      pintarMapa(localesFiltrados);
+
+      // Recuperar filtros guardados y aplicarlos
+      try {
+        const guardado = localStorage.getItem("mapa_sevilla_filtros");
+        if (guardado) {
+          const estado = JSON.parse(guardado);
+          aplicarEstadoFiltros(estado);
+        }
+      } catch (e) {
+        console.warn("No se pudieron leer filtros guardados:", e);
+      }
+
+      aplicarFiltros(); // para que respete filtros cargados
     })
     .catch(e => {
       console.error("Error cargando locales:", e);
@@ -329,7 +380,6 @@ function cargarLocales() {
 // EVENTOS
 // =============================
 document.addEventListener("DOMContentLoaded", function () {
-  // Botón aplicar filtros
   const btnAplicar = document.getElementById("btnAplicarFiltros");
   if (btnAplicar) {
     btnAplicar.addEventListener("click", function (e) {
@@ -338,7 +388,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Botón “Buscar cerca de mí”
   const btnCerca = document.getElementById("btnCercaDeMi");
   if (btnCerca) {
     btnCerca.addEventListener("click", function (e) {
@@ -347,7 +396,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Botón reset
   const btnReset = document.getElementById("btnQuitarFiltros");
   if (btnReset) {
     btnReset.addEventListener("click", function (e) {
@@ -362,11 +410,17 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById("fRadioDistancia").value = "";
       puntoReferencia = null;
       localesFiltrados = todosLosLocales;
+
+      try {
+        localStorage.removeItem("mapa_sevilla_filtros");
+      } catch (e2) {
+        console.warn("No se pudieron borrar los filtros guardados:", e2);
+      }
+
       pintarMapa(localesFiltrados);
     });
   }
 
-  // Botón buscar rápido (texto + ubicación)
   const btnBuscarRapido = document.getElementById("btnBuscarRapido");
   if (btnBuscarRapido) {
     btnBuscarRapido.addEventListener("click", function (e) {
@@ -395,8 +449,20 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Lupa para abrir/cerrar panel de filtros
-   // Botón para abrir/cerrar panel de búsqueda (izquierda)
+  // Lupa filtros (derecha)
+  const btnToggle = document.getElementById("btnToggleFiltros");
+  const panelFiltros = document.getElementById("panelFiltros");
+  if (btnToggle && panelFiltros) {
+    btnToggle.addEventListener("click", function () {
+      if (panelFiltros.style.display === "none" || panelFiltros.style.display === "") {
+        panelFiltros.style.display = "block";
+      } else {
+        panelFiltros.style.display = "none";
+      }
+    });
+  }
+
+  // Lupa búsqueda (izquierda)
   const btnToggleBusqueda = document.getElementById("btnToggleBusqueda");
   const panelBusqueda = document.getElementById("panelBusqueda");
   if (btnToggleBusqueda && panelBusqueda) {
@@ -408,9 +474,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
-  // Inicialización
+
   localizarUsuario();
   cargarLocales();
 });
-
-
