@@ -9,10 +9,62 @@ function normalizarTexto(str) {
     .trim();
 }
 
+// Convierte "HH:MM" a minutos desde medianoche
+function parseHoraToMinutos(horaStr) {
+  if (!horaStr) return null;
+  const [h, m] = horaStr.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+// Devuelve true/false si el local está abierto ahora según local.horario
+// Formato esperado en local.horario: objeto con claves lun, mar, mie, jue, vie, sab, dom
+// y cada una un array de strings "HH:MM-HH:MM"
+function estaAbiertoAhora(local) {
+  const horario = local.horario;
+  if (!horario) return !!local.horario_abierto; // fallback al booleano antiguo
+
+  const ahora = new Date();
+  const diaSemana = ahora.getDay(); // 0=domingo,1=lunes,...
+  const diaClave = ["dom", "lun", "mar", "mie", "jue", "vie", "sab"][diaSemana];
+
+  const tramos = horario[diaClave];
+  if (!Array.isArray(tramos) || tramos.length === 0) return false;
+
+  const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+
+  for (const tramo of tramos) {
+    const [ini, fin] = (tramo || "").split("-");
+    const mIni = parseHoraToMinutos(ini);
+    const mFin = parseHoraToMinutos(fin);
+    if (mIni == null || mFin == null) continue;
+
+    // Soportar horarios que pasan de medianoche (ej. 20:00-02:00)
+    if (mIni <= mFin) {
+      if (minutosAhora >= mIni && minutosAhora <= mFin) return true;
+    } else {
+      // Abre por la noche hasta el día siguiente
+      if (minutosAhora >= mIni || minutosAhora <= mFin) return true;
+    }
+  }
+
+  return false;
+}
+
 // =============================
-// MAPA
+// MAPA (centrado solo en Sevilla)
 // =============================
 var map = L.map("map").setView([37.3891, -5.9845], 13);
+
+// Limitar la vista a Sevilla y alrededores [web:113][web:116]
+var boundsSevilla = L.latLngBounds(
+  [37.30, -6.10], // suroeste aprox.
+  [37.50, -5.80]  // noreste aprox.
+);
+map.setMaxBounds(boundsSevilla);
+map.on("drag", function () {
+  map.panInsideBounds(boundsSevilla, { animate: false });
+});
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
@@ -37,7 +89,7 @@ let tiposPorCategoria = {};
 let primerPintado = true;
 let puntoReferencia = null;
 let ubicacionUsuario = null;
-let favoritos = new Set(); // ids o nombres
+let favoritos = new Set(); // ids
 let ultimoDetalleLocal = null;
 
 // =============================
@@ -159,7 +211,7 @@ function recentrarEnMi() {
 }
 
 // =============================
-// GEOLOCALIZAR TEXTO (dirección/barrio)
+// GEOLOCALIZAR TEXTO
 // =============================
 function geocodificarDireccion(texto) {
   const url =
@@ -184,7 +236,7 @@ function geocodificarDireccion(texto) {
 }
 
 // =============================
-// FAVORITOS (localStorage)
+// FAVORITOS
 // =============================
 const CLAVE_FAVORITOS = "mapa_sevilla_favoritos";
 const CLAVE_FILTROS = "mapa_sevilla_filtros";
@@ -384,6 +436,7 @@ function abrirPanelDetalle(local) {
     ? "⭐ " + local.valoracion + "/5"
     : "Sin valoración";
 
+  const abiertoAhora = estaAbiertoAhora(local);
   const desc = local.descripcion || "";
   const redes = local.redes || {};
 
@@ -394,9 +447,7 @@ function abrirPanelDetalle(local) {
     <p><b>Barrio:</b> ${local.barrio || "-"}</p>
     <p><b>Precio:</b> ${precioText}</p>
     <p><b>Valoración:</b> ${valoracionText}</p>
-    <p><b>Abierto ahora (simple):</b> ${
-      local.horario_abierto ? "Sí" : "No"
-    }</p>
+    <p><b>Abierto ahora:</b> ${abiertoAhora ? "Sí" : "No"}</p>
     ${
       desc
         ? `<p><b>Descripción:</b><br>${desc}</p>`
@@ -421,7 +472,6 @@ function abrirPanelDetalle(local) {
           target="_blank" rel="noopener noreferrer">Ver en Google Maps</a></p>
   `;
 
-  // Estado del favorito
   if (esFavorito(local.id)) {
     btnFav.classList.add("activo");
     btnFav.textContent = "♥";
@@ -463,19 +513,24 @@ function pintarMapa(listaLocales, hacerFitBounds) {
 
   clusterGroup.addLayers(markers);
 
-  // FitBounds suave al aplicar filtros [web:83]
   if (hacerFitBounds && markers.length > 0) {
     const group = L.featureGroup(markers);
-    const bounds = group.getBounds();
+    let bounds = group.getBounds();
+    // Asegurarnos de no salirnos de Sevilla [web:119]
+    bounds = boundsSevilla.intersects(bounds)
+      ? boundsSevilla.intersection(bounds)
+      : boundsSevilla;
     map.fitBounds(bounds, { padding: [40, 40] });
   } else if (primerPintado && markers.length > 0) {
     primerPintado = false;
     const group = L.featureGroup(markers);
-    const bounds = group.getBounds();
+    let bounds = group.getBounds();
+    bounds = boundsSevilla.intersects(bounds)
+      ? boundsSevilla.intersection(bounds)
+      : boundsSevilla;
     map.fitBounds(bounds, { padding: [40, 40] });
   }
 
-  // Delegar eventos en popups para detectar "Ver detalle"
   clusterGroup.on("popupopen", function (e) {
     const popupNode = e.popup.getElement();
     if (!popupNode) return;
@@ -529,7 +584,7 @@ function aplicarFiltros(hacerFitBounds) {
 
     if (barrio && local.barrio !== barrio) return false;
 
-    if (soloAbiertos && !local.horario_abierto) return false;
+    if (soloAbiertos && !estaAbiertoAhora(local)) return false;
 
     if (textoLibre) {
       const campo = normalizarTexto(
@@ -561,7 +616,6 @@ function aplicarFiltros(hacerFitBounds) {
     return true;
   });
 
-  // Ordenar solo por valoración (desc)
   if (orden === "valoracion_desc") {
     localesFiltrados.sort((a, b) => {
       const va = a.valoracion || 0;
@@ -570,7 +624,6 @@ function aplicarFiltros(hacerFitBounds) {
     });
   }
 
-  // Guardar filtros
   try {
     const estado = obtenerEstadoFiltros();
     localStorage.setItem(CLAVE_FILTROS, JSON.stringify(estado));
@@ -592,7 +645,6 @@ function cargarLocales() {
         throw new Error("locales.json debe ser un array []");
       }
 
-      // Asegurar un id para favoritos / detalle
       todosLosLocales = locales.map((l, idx) => {
         if (l.id == null) l.id = idx + 1;
         if (!l.precio) l.precio = 2;
@@ -607,15 +659,12 @@ function cargarLocales() {
       construirTiposPorCategoria();
       rellenarTiposDetalle();
 
-      // Recuperar filtros guardados
       try {
         const txt = localStorage.getItem(CLAVE_FILTROS);
         if (txt) {
           const estado = JSON.parse(txt);
           aplicarEstadoFiltros(estado);
-          // Después de aplicarEstadoFiltros, hay que recalcular tiposDetalle por categoría actual
           rellenarTiposDetalle();
-          // Volver a fijar el tipo_detalle guardado (por si se reseteó al cambiar la lista)
           if (estado.tipo_detalle) {
             const sel = document.getElementById("fTipoDetalle");
             if (sel) sel.value = estado.tipo_detalle;
@@ -637,7 +686,6 @@ function cargarLocales() {
 // EVENTOS
 // =============================
 document.addEventListener("DOMContentLoaded", function () {
-  // Botones paneles
   const btnToggleBusqueda = document.getElementById("btnToggleBusqueda");
   const btnToggleFiltros = document.getElementById("btnToggleFiltros");
   const panelBusqueda = document.getElementById("panelBusqueda");
@@ -664,7 +712,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Búsqueda rápida
   const btnBuscarRapido = document.getElementById("btnBuscarRapido");
   if (btnBuscarRapido) {
     btnBuscarRapido.addEventListener("click", e => {
@@ -702,7 +749,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Filtros avanzados
   const btnAplicar = document.getElementById("btnAplicarFiltros");
   if (btnAplicar) {
     btnAplicar.addEventListener("click", e => {
@@ -715,7 +761,6 @@ document.addEventListener("DOMContentLoaded", function () {
   if (btnQuitar) {
     btnQuitar.addEventListener("click", e => {
       e.preventDefault();
-      // Reset filtros
       document.getElementById("fCategoria").value = "";
       document.getElementById("fTipoDetalle").value = "";
       document.getElementById("fPrecioMin").value = "1";
@@ -746,7 +791,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Cambio de categoría -> recargar tipos
   const selCat = document.getElementById("fCategoria");
   if (selCat) {
     selCat.addEventListener("change", () => {
@@ -754,7 +798,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Panel detalle
   const btnCerrarDetalle = document.getElementById("btnCerrarDetalle");
   if (btnCerrarDetalle) {
     btnCerrarDetalle.addEventListener("click", () => {
@@ -777,7 +820,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Mostrar botón "Recentrar en mí" si el usuario se mueve mucho
   let ultimoCentro = map.getCenter();
   map.on("moveend", () => {
     const centro = map.getCenter();
@@ -802,7 +844,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Inicializar
   cargarFavoritosGuardados();
   localizarUsuarioSimple();
   cargarLocales();
