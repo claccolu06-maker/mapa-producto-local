@@ -44,7 +44,7 @@
     /* Panel de búsqueda (arriba izquierda) */
     .panel-busqueda {
       position: absolute;
-      top: 10px;
+      top: 60px;
       left: 10px;
       background: white;
       padding: 10px 12px;
@@ -75,11 +75,29 @@
       cursor: pointer;
     }
 
-    /* Botón lupa */
+    /* Botón lupa filtros (derecha) */
     #btnToggleFiltros {
       position: absolute;
       top: 10px;
       right: 10px;
+      z-index: 1100;
+      background: white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    /* Botón lupa búsqueda (izquierda) */
+    #btnToggleBusqueda {
+      position: absolute;
+      top: 10px;
+      left: 10px;
       z-index: 1100;
       background: white;
       border-radius: 50%;
@@ -149,36 +167,32 @@
       gap: 4px;
     }
 
-   @media (max-width: 768px) {
-  .panel-busqueda {
-    max-width: 200px;
-    top: 10px;
-    left: 10px;
-    padding: 8px 10px;
-  }
+    @media (max-width: 768px) {
+      .panel-busqueda {
+        max-width: 210px;
+      }
 
-  /* Ocultar selector de ámbito (Toda Sevilla) en móvil */
-  #fAmbito {
-    display: none;
-  }
-
-  /* Panel de filtros más compacto y desplazable */
-  .panel-filtros {
-    width: 80%;
-    right: 10%;
-    top: 70px;
-    max-height: 60%;
-    overflow-y: auto;
-  }
-}
+      .panel-filtros {
+        width: 80%;
+        right: 10%;
+        top: 70px;
+        max-height: 60%;
+        overflow-y: auto;
+      }
+    }
   </style>
 </head>
 <body>
 
 <div id="map"></div>
 
-<!-- Panel búsqueda rápida -->
-<div class="panel-busqueda">
+<!-- Botón para mostrar/ocultar panel izquierdo -->
+<div id="btnToggleBusqueda">
+  🔎
+</div>
+
+<!-- Panel búsqueda rápida (inicialmente oculto) -->
+<div class="panel-busqueda" id="panelBusqueda" style="display:none;">
   <h2>¿Qué buscas hoy?</h2>
   <input id="fTextoLibre" type="text" placeholder="Ej: bar, pan, ropa, restaurante">
 
@@ -200,7 +214,7 @@
   <button id="btnCercaDeMi">Buscar cerca de mí</button>
 </div>
 
-<!-- Botón lupa para abrir/cerrar filtros -->
+<!-- Botón lupa para abrir/cerrar filtros (derecha) -->
 <div id="btnToggleFiltros">🔍</div>
 
 <!-- Panel filtros detallados (oculto por defecto) -->
@@ -208,20 +222,19 @@
   <h3>Buscar local</h3>
 
   <label for="fCategoria">Categoría</label>
-<select id="fCategoria">
-  <option value="">Todas</option>
-  <option value="Comida">Comida</option>
-  <option value="Cafetería">Cafetería</option>
-  <option value="Alimentación">Alimentación</option>
-  <option value="Moda">Moda</option>
-  <option value="Belleza">Belleza</option>
-  <option value="Salud">Salud</option>
-  <option value="Ocio">Ocio</option>
-  <option value="Deportes">Deportes</option>
-  <option value="Servicios">Servicios</option>
-  <option value="Otros">Otros</option>
-</select>
-
+  <select id="fCategoria">
+    <option value="">Todas</option>
+    <option value="Comida">Comida</option>
+    <option value="Cafetería">Cafetería</option>
+    <option value="Alimentación">Alimentación</option>
+    <option value="Moda">Moda</option>
+    <option value="Belleza">Belleza</option>
+    <option value="Salud">Salud</option>
+    <option value="Ocio">Ocio</option>
+    <option value="Deportes">Deportes</option>
+    <option value="Servicios">Servicios</option>
+    <option value="Otros">Otros</option>
+  </select>
 
   <label for="fPrecioMin">Precio mínimo</label>
   <select id="fPrecioMin">
@@ -266,7 +279,3 @@
 <script src="script.js"></script>
 </body>
 </html>
-
-
-
-
