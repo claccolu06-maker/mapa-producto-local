@@ -32,95 +32,37 @@ let primerPintado = true;
 let puntoReferencia = null; // ubicación elegida por el cliente
 
 // =============================
-// ICONOS SERIOS TIPO PIN
+// ICONOS: PIN MISMO TIPO, COLOR POR CATEGORÍA
 // =============================
+// Usamos la familia de marcadores coloreados de Leaflet (pointhi)
+function crearIconoColor(url) {
+  return L.icon({
+    iconUrl: url,
+    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+}
+
 const iconosCategoria = {
-  // 1. Comida: pin rojo con cubiertos
-  "Comida": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/685/685352.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // 2. Cafetería: pin marrón con taza
-  "Cafetería": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/854/854878.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // 3. Alimentación: pin verde con carrito / bolsa
-  "Alimentación": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/869/869869.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // 4. Moda: pin morado con percha
-  "Moda": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/2976/2976215.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // 5. Belleza: pin rosa con tijeras/peine
-  "Belleza": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/2976/2976229.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // 6. Salud: pin verde con cruz médica
-  "Salud": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/846/846449.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // 7. Ocio: pin azul con nota musical
-  "Ocio": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/535/535137.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // 8. Deportes: pin naranja con balón
-  "Deportes": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/931/931949.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // 9. Servicios: pin gris con engranaje
-  "Servicios": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/992/992700.png",
-    iconSize: [34, 34],
-    iconAnchor: [17, 34],
-    popupAnchor: [0, -28]
-  }),
-
-  // 10. Otros: pin gris neutro
-  "Otros": L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/252/252025.png",
-    iconSize: [30, 30],
-    iconAnchor: [15, 30],
-    popupAnchor: [0, -24]
-  })
+  "Comida": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png"),
+  "Cafetería": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png"),
+  "Alimentación": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png"),
+  "Moda": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png"),
+  "Belleza": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-rose.png"),
+  "Salud": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-teal.png"),
+  "Ocio": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png"),
+  "Deportes": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png"),
+  "Servicios": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-grey.png"),
+  "Otros": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-black.png")
 };
 
-// Icono por defecto
 const iconoPorDefecto = iconosCategoria["Otros"];
 
 // =============================
-// MARCAR SOLO TU UBICACIÓN (pin azul)
+// MARCAR SOLO TU UBICACIÓN (pin azul estándar)
 // =============================
 function localizarUsuario() {
   if (!navigator.geolocation) {
