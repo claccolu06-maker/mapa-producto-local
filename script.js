@@ -513,23 +513,22 @@ function pintarMapa(listaLocales, hacerFitBounds) {
 
   clusterGroup.addLayers(markers);
 
-  if (hacerFitBounds && markers.length > 0) {
-    const group = L.featureGroup(markers);
-    let bounds = group.getBounds();
-    // Asegurarnos de no salirnos de Sevilla [web:119]
-    bounds = boundsSevilla.intersects(bounds)
-      ? boundsSevilla.intersection(bounds)
-      : boundsSevilla;
-    map.fitBounds(bounds, { padding: [40, 40] });
-  } else if (primerPintado && markers.length > 0) {
-    primerPintado = false;
-    const group = L.featureGroup(markers);
-    let bounds = group.getBounds();
-    bounds = boundsSevilla.intersects(bounds)
-      ? boundsSevilla.intersection(bounds)
-      : boundsSevilla;
-    map.fitBounds(bounds, { padding: [40, 40] });
+if (hacerFitBounds && markers.length > 0) {
+  const group = L.featureGroup(markers);
+  let bounds = group.getBounds();
+  if (!boundsSevilla.contains(bounds)) {
+    bounds = boundsSevilla;
   }
+  map.fitBounds(bounds, { padding: [40, 40] });
+} else if (primerPintado && markers.length > 0) {
+  primerPintado = false;
+  const group = L.featureGroup(markers);
+  let bounds = group.getBounds();
+  if (!boundsSevilla.contains(bounds)) {
+    bounds = boundsSevilla;
+  }
+  map.fitBounds(bounds, { padding: [40, 40] });
+}
 
   clusterGroup.on("popupopen", function (e) {
     const popupNode = e.popup.getElement();
@@ -848,3 +847,4 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuarioSimple();
   cargarLocales();
 });
+
