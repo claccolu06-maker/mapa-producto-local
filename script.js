@@ -51,15 +51,21 @@ const iconosCategoria = {
   "Cafetería": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png"),
   "Alimentación": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png"),
   "Moda": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png"),
-  "Belleza": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-rose.png"),
-  "Salud": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-teal.png"),
-  "Ocio": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png"),
-  "Deportes": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png"),
-  "Servicios": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-grey.png"),
-  "Otros": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-black.png")
+
+  // Belleza: usamos azul claro
+  "Belleza": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png"),
+
+  // Salud: usamos amarillo
+  "Salud": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png"),
+
+  "Ocio": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-gold.png"),
+  "Deportes": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-grey.png"),
+  "Servicios": crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-black.png"),
+  "Otros": crearIconoColor("https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png") // azul estándar
 };
 
 const iconoPorDefecto = iconosCategoria["Otros"];
+
 
 // =============================
 // MARCAR SOLO TU UBICACIÓN (pin azul estándar)
@@ -406,3 +412,4 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuario();
   cargarLocales();
 });
+
