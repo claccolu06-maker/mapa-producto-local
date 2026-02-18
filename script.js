@@ -436,9 +436,10 @@ function abrirPanelDetalle(local) {
     ? "⭐ " + local.valoracion + "/5"
     : "Sin valoración";
 
-  const abiertoAhora = estaAbiertoAhora(local);
+    const abiertoAhora = estaAbiertoAhora(local);
   const desc = local.descripcion || "";
   const redes = local.redes || {};
+  const foto = local.foto || "";
 
   body.innerHTML = `
     <p><span class="badge">${local.categoria || "-"}</span>
@@ -448,28 +449,16 @@ function abrirPanelDetalle(local) {
     <p><b>Precio:</b> ${precioText}</p>
     <p><b>Valoración:</b> ${valoracionText}</p>
     <p><b>Abierto ahora:</b> ${abiertoAhora ? "Sí" : "No"}</p>
-    ${
-      desc
-        ? `<p><b>Descripción:</b><br>${desc}</p>`
-        : ""
-    }
-    ${
-      redes.web
-        ? `<p><b>Web:</b> <a href="${redes.web}" target="_blank" rel="noopener noreferrer">${redes.web}</a></p>`
-        : ""
-    }
-    ${
-      redes.ig
-        ? `<p><b>Instagram:</b> <a href="${redes.ig}" target="_blank" rel="noopener noreferrer">${redes.ig}</a></p>`
-        : ""
-    }
-    ${
-      redes.tiktok
-        ? `<p><b>TikTok:</b> <a href="${redes.tiktok}" target="_blank" rel="noopener noreferrer">${redes.tiktok}</a></p>`
-        : ""
-    }
+    ${desc ? `<p><b>Descripción:</b><br>${desc}</p>` : ""}
+    ${redes.web ? `<p><b>Web:</b> <a href="${redes.web}" target="_blank" rel="noopener noreferrer">${redes.web}</a></p>` : ""}
+    ${redes.ig ? `<p><b>Instagram:</b> <a href="${redes.ig}" target="_blank" rel="noopener noreferrer">${redes.ig}</a></p>` : ""}
+    ${redes.tiktok ? `<p><b>TikTok:</b> <a href="${redes.tiktok}" target="_blank" rel="noopener noreferrer">${redes.tiktok}</a></p>` : ""}
     <p><a href="https://www.google.com/maps/search/?api=1&query=${local.lat},${local.lng}"
           target="_blank" rel="noopener noreferrer">Ver en Google Maps</a></p>
+    ${foto ? `<div style="margin-top:10px;">
+                <img src="${foto}" alt="${local.nombre || "Foto del local"}"
+                     style="width:100%;max-height:220px;object-fit:cover;border-radius:6px;">
+              </div>` : ""}
   `;
 
   if (esFavorito(local.id)) {
@@ -847,4 +836,5 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuarioSimple();
   cargarLocales();
 });
+
 
