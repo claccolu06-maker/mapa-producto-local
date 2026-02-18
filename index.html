@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Mapa Producto Local Sevilla</title>
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Leaflet -->
   <link
@@ -41,7 +40,7 @@
       z-index: 1;
     }
 
-    /* Panel de búsqueda (arriba izquierda) */
+    /* Panel de búsqueda rápida (izquierda) */
     .panel-busqueda {
       position: absolute;
       top: 60px;
@@ -75,48 +74,12 @@
       cursor: pointer;
     }
 
-    /* Botón lupa filtros (derecha) */
-    #btnToggleFiltros {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 1100;
-      background: white;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-      cursor: pointer;
-      font-size: 20px;
-    }
-
-    /* Botón lupa búsqueda (izquierda) */
-    #btnToggleBusqueda {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 1100;
-      background: white;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-      cursor: pointer;
-      font-size: 20px;
-    }
-
-    /* Panel de filtros (derecha) */
+    /* Panel filtros (derecha) */
     .panel-filtros {
       position: absolute;
       top: 60px;
       right: 10px;
-      width: 280px;
+      width: 300px;
       background: white;
       padding: 10px 12px 12px;
       border-radius: 8px;
@@ -127,7 +90,7 @@
 
     .panel-filtros h3 {
       margin-top: 0;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-size: 15px;
     }
 
@@ -150,7 +113,7 @@
     .panel-filtros .fila-botones {
       display: flex;
       gap: 8px;
-      margin-top: 10px;
+      margin-top: 8px;
     }
 
     .panel-filtros button {
@@ -165,11 +128,134 @@
       display: flex;
       align-items: center;
       gap: 4px;
+      font-size: 13px;
+    }
+
+    /* Botones flotantes (lupas, recentrar) */
+    #btnToggleBusqueda,
+    #btnToggleFiltros {
+      position: absolute;
+      top: 10px;
+      z-index: 1100;
+      background: white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    #btnToggleBusqueda {
+      left: 10px;
+    }
+
+    #btnToggleFiltros {
+      right: 10px;
+    }
+
+    #btnRecentraMi {
+      position: absolute;
+      bottom: 80px;
+      right: 10px;
+      z-index: 1100;
+      background: white;
+      border-radius: 20px;
+      padding: 6px 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      cursor: pointer;
+      font-size: 13px;
+      display: none;
+    }
+
+    /* Leyenda */
+    #leyendaCategorias {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 900;
+      background: white;
+      padding: 6px 8px;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+      font-size: 12px;
+      max-width: 260px;
+    }
+
+    /* Panel lateral detalle */
+    #panelDetalle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 320px;
+      max-width: 90%;
+      height: 100%;
+      background: #ffffff;
+      box-shadow: -2px 0 6px rgba(0,0,0,0.25);
+      z-index: 1200;
+      transform: translateX(100%);
+      transition: transform 0.25s ease-out;
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+    }
+
+    #panelDetalle.abierto {
+      transform: translateX(0);
+    }
+
+    #panelDetalleHeader {
+      padding: 10px 12px;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    #panelDetalleBody {
+      padding: 10px 12px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    #panelDetalle h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #f3f3f3;
+      font-size: 11px;
+      margin-right: 4px;
+      margin-top: 2px;
+    }
+
+    .btn-favorito {
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .btn-favorito.activo {
+      color: #e63946;
+    }
+
+    #contadorResultados {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #555;
     }
 
     @media (max-width: 768px) {
       .panel-busqueda {
-        max-width: 210px;
+        max-width: 220px;
       }
 
       .panel-filtros {
@@ -179,24 +265,27 @@
         max-height: 60%;
         overflow-y: auto;
       }
+
+      #panelDetalle {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-
 <div id="map"></div>
 
-<!-- Botón para mostrar/ocultar panel izquierdo -->
-<div id="btnToggleBusqueda">
-  🔎
-</div>
+<!-- Botones flotantes -->
+<div id="btnToggleBusqueda">🔎</div>
+<div id="btnToggleFiltros">⚙️</div>
+<div id="btnRecentraMi">Recentrar en mí</div>
 
-<!-- Panel búsqueda rápida (inicialmente oculto) -->
+<!-- Panel búsqueda rápida -->
 <div class="panel-busqueda" id="panelBusqueda" style="display:none;">
   <h2>¿Qué buscas hoy?</h2>
-  <input id="fTextoLibre" type="text" placeholder="Ej: bar, pan, ropa, restaurante">
+  <input id="fTextoLibre" type="text" placeholder="Ej: bar, pan, ropa, restaurante" />
 
-  <input id="fUbicacionCliente" type="text" placeholder="¿Dónde? (dirección o barrio)">
+  <input id="fUbicacionCliente" type="text" placeholder="¿Dónde? (dirección o barrio)" />
 
   <select id="fRadioDistancia">
     <option value="">Sin límite de distancia</option>
@@ -214,12 +303,9 @@
   <button id="btnCercaDeMi">Buscar cerca de mí</button>
 </div>
 
-<!-- Botón lupa para abrir/cerrar filtros (derecha) -->
-<div id="btnToggleFiltros">🔍</div>
-
-<!-- Panel filtros detallados (oculto por defecto) -->
+<!-- Panel filtros -->
 <div class="panel-filtros" id="panelFiltros" style="display:none;">
-  <h3>Buscar local</h3>
+  <h3>Filtros avanzados</h3>
 
   <label for="fCategoria">Categoría</label>
   <select id="fCategoria">
@@ -234,6 +320,12 @@
     <option value="Deportes">Deportes</option>
     <option value="Servicios">Servicios</option>
     <option value="Otros">Otros</option>
+  </select>
+
+  <label for="fTipoDetalle">Tipo dentro de la categoría</label>
+  <select id="fTipoDetalle">
+    <option value="">Todos los tipos</option>
+    <!-- Se rellena dinámicamente -->
   </select>
 
   <label for="fPrecioMin">Precio mínimo</label>
@@ -252,47 +344,57 @@
 
   <label for="fBarrio">Barrio</label>
   <select id="fBarrio">
-    <!-- se rellenará por JS -->
+    <!-- JS -->
+  </select>
+
+  <label for="fOrden">Ordenar por</label>
+  <select id="fOrden">
+    <option value="ninguno">Sin orden especial</option>
+    <option value="valoracion_desc">Mejor valorados primero</option>
   </select>
 
   <div class="checkbox-linea">
-    <input type="checkbox" id="fSoloAbiertos">
-    <label for="fSoloAbiertos">Solo abiertos</label>
+    <input type="checkbox" id="fSoloAbiertos" />
+    <label for="fSoloAbiertos">Solo abiertos (simple)</label>
+  </div>
+
+  <div class="checkbox-linea">
+    <input type="checkbox" id="fSoloEnMapa" />
+    <label for="fSoloEnMapa">Solo locales en la vista actual</label>
   </div>
 
   <div class="fila-botones">
-    <button id="btnAplicarFiltros">Aplicar filtros</button>
-    <button id="btnQuitarFiltros">Quitar filtros</button>
+    <button id="btnAplicarFiltros">Aplicar</button>
+    <button id="btnQuitarFiltros">Quitar</button>
   </div>
 
-  <div id="contadorResultados" style="margin-top:8px; font-size:12px; color:#555;">
-    Mostrando todos los locales
-  </div>
+  <div id="contadorResultados">Mostrando todos los locales</div>
 </div>
 
-<!-- Leyenda de categorías -->
-<div id="leyendaCategorias" style="
-  position:absolute;
-  bottom:10px;
-  left:10px;
-  z-index:900;
-  background:white;
-  padding:6px 8px;
-  border-radius:6px;
-  box-shadow:0 2px 4px rgba(0,0,0,0.25);
-  font-size:12px;
-  max-width:260px;
-">
-  <b>Categorías</b><br>
+<!-- Leyenda -->
+<div id="leyendaCategorias">
+  <b>Categorías</b><br />
   <span style="color:#d7191c;">●</span> Comida
   <span style="color:#fdae61; margin-left:6px;">●</span> Cafetería
-  <span style="color:#1a9641; margin-left:6px;">●</span> Alimentación<br>
+  <span style="color:#1a9641; margin-left:6px;">●</span> Alimentación<br />
   <span style="color:#7b3294;">●</span> Moda
   <span style="color:#4575b4; margin-left:6px;">●</span> Belleza
-  <span style="color:#ffff00; margin-left:6px;">●</span> Salud<br>
+  <span style="color:#ffff00; margin-left:6px;">●</span> Salud<br />
   <span style="color:#313695;">●</span> Ocio
   <span style="color:#f46d43; margin-left:6px;">●</span> Deportes
   <span style="color:#4d4d4d; margin-left:6px;">●</span> Servicios
+</div>
+
+<!-- Panel detalle local -->
+<div id="panelDetalle">
+  <div id="panelDetalleHeader">
+    <h2 id="detalleNombre">Local</h2>
+    <button id="btnFavorito" class="btn-favorito" title="Marcar como favorito">♡</button>
+    <button id="btnCerrarDetalle">✕</button>
+  </div>
+  <div id="panelDetalleBody">
+    <!-- Se rellena por JS -->
+  </div>
 </div>
 
 <!-- Leaflet JS -->
