@@ -9,7 +9,6 @@ function normalizarTexto(str) {
     .trim();
 }
 
-// Convierte "HH:MM" a minutos desde medianoche
 function parseHoraToMinutos(horaStr) {
   if (!horaStr) return null;
   const [h, m] = horaStr.split(":").map(Number);
@@ -17,17 +16,14 @@ function parseHoraToMinutos(horaStr) {
   return h * 60 + m;
 }
 
-// Devuelve true/false si el local está abierto ahora según local.horario
-// Formato esperado en local.horario: objeto con claves lun, mar, mie, jue, vie, sab, dom
-// y cada una un array de strings "HH:MM-HH:MM"
+// horario: {lun:[\"09:00-14:00\",...], ...}
 function estaAbiertoAhora(local) {
   const horario = local.horario;
-  if (!horario) return !!local.horario_abierto; // fallback al booleano antiguo
+  if (!horario) return !!local.horario_abierto;
 
   const ahora = new Date();
-  const diaSemana = ahora.getDay(); // 0=domingo,1=lunes,...
+  const diaSemana = ahora.getDay(); // 0=dom
   const diaClave = ["dom", "lun", "mar", "mie", "jue", "vie", "sab"][diaSemana];
-
   const tramos = horario[diaClave];
   if (!Array.isArray(tramos) || tramos.length === 0) return false;
 
@@ -39,27 +35,23 @@ function estaAbiertoAhora(local) {
     const mFin = parseHoraToMinutos(fin);
     if (mIni == null || mFin == null) continue;
 
-    // Soportar horarios que pasan de medianoche (ej. 20:00-02:00)
     if (mIni <= mFin) {
       if (minutosAhora >= mIni && minutosAhora <= mFin) return true;
     } else {
-      // Abre por la noche hasta el día siguiente
       if (minutosAhora >= mIni || minutosAhora <= mFin) return true;
     }
   }
-
   return false;
 }
 
 // =============================
-// MAPA (centrado solo en Sevilla)
+// MAPA CENTRADO EN SEVILLA
 // =============================
 var map = L.map("map").setView([37.3891, -5.9845], 13);
 
-// Limitar la vista a Sevilla y alrededores [web:113][web:116]
 var boundsSevilla = L.latLngBounds(
-  [37.30, -6.10], // suroeste aprox.
-  [37.50, -5.80]  // noreste aprox.
+  [37.30, -6.10],
+  [37.50, -5.80]
 );
 map.setMaxBounds(boundsSevilla);
 map.on("drag", function () {
@@ -71,7 +63,7 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap contributors"
 }).addTo(map);
 
-// MarkerCluster con opciones de rendimiento [web:58]
+// MarkerCluster rendimiento
 var clusterGroup = L.markerClusterGroup({
   spiderfyOnEveryZoom: false,
   disableClusteringAtZoom: 18,
@@ -89,7 +81,7 @@ let tiposPorCategoria = {};
 let primerPintado = true;
 let puntoReferencia = null;
 let ubicacionUsuario = null;
-let favoritos = new Set(); // ids
+let favoritos = new Set();
 let ultimoDetalleLocal = null;
 
 // =============================
@@ -107,36 +99,16 @@ function crearIconoColor(url) {
 }
 
 const iconosCategoria = {
-  Comida: crearIconoColor(
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png"
-  ),
-  Cafetería: crearIconoColor(
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png"
-  ),
-  Alimentación: crearIconoColor(
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png"
-  ),
-  Moda: crearIconoColor(
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png"
-  ),
-  Belleza: crearIconoColor(
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png"
-  ),
-  Salud: crearIconoColor(
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png"
-  ),
-  Ocio: crearIconoColor(
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-gold.png"
-  ),
-  Deportes: crearIconoColor(
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-grey.png"
-  ),
-  Servicios: crearIconoColor(
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-black.png"
-  ),
-  Otros: crearIconoColor(
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png"
-  )
+  Comida: crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png"),
+  Cafetería: crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png"),
+  Alimentación: crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png"),
+  Moda: crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png"),
+  Belleza: crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png"),
+  Salud: crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png"),
+  Ocio: crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-gold.png"),
+  Deportes: crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-grey.png"),
+  Servicios: crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-black.png"),
+  Otros: crearIconoColor("https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png")
 };
 
 const iconoPorDefecto = iconosCategoria["Otros"];
@@ -156,13 +128,11 @@ function localizarUsuarioSimple() {
       L.marker([lat, lng], {
         title: "Estás aquí",
         icon: L.icon({
-          iconUrl:
-            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+          iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
           iconSize: [25, 41],
           iconAnchor: [12, 41],
           popupAnchor: [1, -34],
-          shadowUrl:
-            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+          shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
           shadowSize: [41, 41]
         })
       })
@@ -187,7 +157,6 @@ function buscarCercaDeMi() {
       const lng = pos.coords.longitude;
       puntoReferencia = { lat, lng };
       ubicacionUsuario = { lat, lng };
-
       map.setView([lat, lng], 15);
 
       const radioSelect = document.getElementById("fRadioDistancia");
@@ -219,9 +188,7 @@ function geocodificarDireccion(texto) {
     encodeURIComponent(texto) +
     "&limit=1";
 
-  return fetch(url, {
-    headers: { "Accept-Language": "es" }
-  })
+  return fetch(url, { headers: { "Accept-Language": "es" } })
     .then(r => r.json())
     .then(res => {
       if (!Array.isArray(res) || res.length === 0) {
@@ -265,11 +232,8 @@ function esFavorito(idLocal) {
 }
 
 function toggleFavorito(idLocal) {
-  if (favoritos.has(idLocal)) {
-    favoritos.delete(idLocal);
-  } else {
-    favoritos.add(idLocal);
-  }
+  if (favoritos.has(idLocal)) favoritos.delete(idLocal);
+  else favoritos.add(idLocal);
   guardarFavoritos();
 }
 
@@ -294,7 +258,6 @@ function obtenerEstadoFiltros() {
 
 function aplicarEstadoFiltros(estado) {
   if (!estado) return;
-
   const setValue = (id, v) => {
     const el = document.getElementById(id);
     if (el) el.value = v ?? "";
@@ -319,7 +282,7 @@ function aplicarEstadoFiltros(estado) {
 }
 
 // =============================
-// SELECTS: barrios y tipo_detalle
+// SELECTS
 // =============================
 function rellenarBarrios() {
   barriosUnicos.clear();
@@ -330,7 +293,6 @@ function rellenarBarrios() {
   const select = document.getElementById("fBarrio");
   if (!select) return;
   select.innerHTML = "";
-
   const optAll = document.createElement("option");
   optAll.value = "";
   optAll.textContent = "Todos los barrios";
@@ -361,7 +323,6 @@ function rellenarTiposDetalle() {
   const selectTipo = document.getElementById("fTipoDetalle");
   if (!selectTipo) return;
   selectTipo.innerHTML = "";
-
   const optAll = document.createElement("option");
   optAll.value = "";
   optAll.textContent = "Todos los tipos";
@@ -379,7 +340,7 @@ function rellenarTiposDetalle() {
 }
 
 // =============================
-// CREAR MARCADORES Y POPUP
+// MARCADORES Y POPUP
 // =============================
 function crearMarkerDesdeLocal(local) {
   const cat = local.categoria || "Otros";
@@ -418,7 +379,7 @@ function crearMarkerDesdeLocal(local) {
 }
 
 // =============================
-// PANEL DETALLE
+// PANEL DETALLE (foto al final)
 // =============================
 function abrirPanelDetalle(local) {
   ultimoDetalleLocal = local;
@@ -426,7 +387,6 @@ function abrirPanelDetalle(local) {
   const titulo = document.getElementById("detalleNombre");
   const body = document.getElementById("panelDetalleBody");
   const btnFav = document.getElementById("btnFavorito");
-
   if (!panel || !titulo || !body || !btnFav) return;
 
   titulo.textContent = local.nombre || "Local";
@@ -436,7 +396,7 @@ function abrirPanelDetalle(local) {
     ? "⭐ " + local.valoracion + "/5"
     : "Sin valoración";
 
-    const abiertoAhora = estaAbiertoAhora(local);
+  const abiertoAhora = estaAbiertoAhora(local);
   const desc = local.descripcion || "";
   const redes = local.redes || {};
   const foto = local.foto || "";
@@ -456,8 +416,10 @@ function abrirPanelDetalle(local) {
     <p><a href="https://www.google.com/maps/search/?api=1&query=${local.lat},${local.lng}"
           target="_blank" rel="noopener noreferrer">Ver en Google Maps</a></p>
     ${foto ? `<div style="margin-top:10px;">
-                <img src="${foto}" alt="${local.nombre || "Foto del local"}"
-                     style="width:100%;max-height:220px;object-fit:cover;border-radius:6px;">
+                <img src="${foto}"
+                     alt="${local.nombre || "Foto del local"}"
+                     style="width:100%;max-height:220px;object-fit:cover;border-radius:6px;"
+                     onerror="this.style.display='none'">
               </div>` : ""}
   `;
 
@@ -484,11 +446,9 @@ function cerrarPanelDetalle() {
 function pintarMapa(listaLocales, hacerFitBounds) {
   const cont = document.getElementById("contadorResultados");
   if (cont) {
-    if (!listaLocales || listaLocales.length === 0) {
-      cont.textContent = "No hay locales con los filtros actuales";
-    } else {
-      cont.textContent = "Mostrando " + listaLocales.length + " locales";
-    }
+    cont.textContent = !listaLocales || listaLocales.length === 0
+      ? "No hay locales con los filtros actuales"
+      : "Mostrando " + listaLocales.length + " locales";
   }
 
   clusterGroup.clearLayers();
@@ -502,29 +462,24 @@ function pintarMapa(listaLocales, hacerFitBounds) {
 
   clusterGroup.addLayers(markers);
 
-if (hacerFitBounds && markers.length > 0) {
-  const group = L.featureGroup(markers);
-  let bounds = group.getBounds();
-  if (!boundsSevilla.contains(bounds)) {
-    bounds = boundsSevilla;
+  if (hacerFitBounds && markers.length > 0) {
+    const group = L.featureGroup(markers);
+    let bounds = group.getBounds();
+    if (!boundsSevilla.contains(bounds)) bounds = boundsSevilla;
+    map.fitBounds(bounds, { padding: [40, 40] });
+  } else if (primerPintado && markers.length > 0) {
+    primerPintado = false;
+    const group = L.featureGroup(markers);
+    let bounds = group.getBounds();
+    if (!boundsSevilla.contains(bounds)) bounds = boundsSevilla;
+    map.fitBounds(bounds, { padding: [40, 40] });
   }
-  map.fitBounds(bounds, { padding: [40, 40] });
-} else if (primerPintado && markers.length > 0) {
-  primerPintado = false;
-  const group = L.featureGroup(markers);
-  let bounds = group.getBounds();
-  if (!boundsSevilla.contains(bounds)) {
-    bounds = boundsSevilla;
-  }
-  map.fitBounds(bounds, { padding: [40, 40] });
-}
 
   clusterGroup.on("popupopen", function (e) {
     const popupNode = e.popup.getElement();
     if (!popupNode) return;
     const btn = popupNode.querySelector(".btn-ver-detalle");
     if (!btn) return;
-
     btn.addEventListener("click", function () {
       const id = this.getAttribute("data-id");
       const local = todosLosLocales.find(l => String(l.id) === String(id));
@@ -539,32 +494,19 @@ if (hacerFitBounds && markers.length > 0) {
 function aplicarFiltros(hacerFitBounds) {
   const categoria = document.getElementById("fCategoria")?.value || "";
   const tipo_detalle = document.getElementById("fTipoDetalle")?.value || "";
-  const precioMin = parseInt(
-    document.getElementById("fPrecioMin")?.value || "1",
-    10
-  );
-  const precioMax = parseInt(
-    document.getElementById("fPrecioMax")?.value || "3",
-    10
-  );
+  const precioMin = parseInt(document.getElementById("fPrecioMin")?.value || "1", 10);
+  const precioMax = parseInt(document.getElementById("fPrecioMax")?.value || "3", 10);
   const barrio = document.getElementById("fBarrio")?.value || "";
-  const soloAbiertos =
-    document.getElementById("fSoloAbiertos")?.checked || false;
+  const soloAbiertos = document.getElementById("fSoloAbiertos")?.checked || false;
   const soloEnMapa = document.getElementById("fSoloEnMapa")?.checked || false;
-  const textoLibre = normalizarTexto(
-    document.getElementById("fTextoLibre")?.value || ""
-  );
-  const radioMetros = parseInt(
-    document.getElementById("fRadioDistancia")?.value || "",
-    10
-  ) || null;
+  const textoLibre = normalizarTexto(document.getElementById("fTextoLibre")?.value || "");
+  const radioMetros = parseInt(document.getElementById("fRadioDistancia")?.value || "", 10) || null;
   const orden = document.getElementById("fOrden")?.value || "ninguno";
 
   const bounds = map.getBounds();
 
   localesFiltrados = todosLosLocales.filter(local => {
     if (categoria && local.categoria !== categoria) return false;
-
     if (tipo_detalle && local.tipo_detalle !== tipo_detalle) return false;
 
     const p = local.precio ?? 2;
@@ -576,13 +518,10 @@ function aplicarFiltros(hacerFitBounds) {
 
     if (textoLibre) {
       const campo = normalizarTexto(
-        (local.nombre || "") +
-          " " +
-          (local.categoria || "") +
-          " " +
-          (local.tipo_detalle || "") +
-          " " +
-          (local.barrio || "")
+        (local.nombre || "") + " " +
+        (local.categoria || "") + " " +
+        (local.tipo_detalle || "") + " " +
+        (local.barrio || "")
       );
       if (!campo.includes(textoLibre)) return false;
     }
@@ -605,11 +544,7 @@ function aplicarFiltros(hacerFitBounds) {
   });
 
   if (orden === "valoracion_desc") {
-    localesFiltrados.sort((a, b) => {
-      const va = a.valoracion || 0;
-      const vb = b.valoracion || 0;
-      return vb - va;
-    });
+    localesFiltrados.sort((a, b) => (b.valoracion || 0) - (a.valoracion || 0));
   }
 
   try {
@@ -636,13 +571,13 @@ function cargarLocales() {
       todosLosLocales = locales.map((l, idx) => {
         if (l.id == null) l.id = idx + 1;
         if (!l.precio) l.precio = 2;
-        if (typeof l.horario_abierto === "undefined")
-          l.horario_abierto = true;
+        if (typeof l.horario_abierto === "undefined") l.horario_abierto = true;
+        if (!("foto" in l)) l.foto = "";      // por si no existe
+        if (!("redes" in l)) l.redes = {};
         return l;
       });
 
       localesFiltrados = todosLosLocales;
-
       rellenarBarrios();
       construirTiposPorCategoria();
       rellenarTiposDetalle();
@@ -683,20 +618,16 @@ document.addEventListener("DOMContentLoaded", function () {
   if (btnToggleBusqueda && panelBusqueda) {
     btnToggleBusqueda.addEventListener("click", () => {
       panelBusqueda.style.display =
-        panelBusqueda.style.display === "none" ||
-        panelBusqueda.style.display === ""
-          ? "block"
-          : "none";
+        panelBusqueda.style.display === "none" || panelBusqueda.style.display === ""
+          ? "block" : "none";
     });
   }
 
   if (btnToggleFiltros && panelFiltros) {
     btnToggleFiltros.addEventListener("click", () => {
       panelFiltros.style.display =
-        panelFiltros.style.display === "none" ||
-        panelFiltros.style.display === ""
-          ? "block"
-          : "none";
+        panelFiltros.style.display === "none" || panelFiltros.style.display === ""
+          ? "block" : "none";
     });
   }
 
@@ -704,9 +635,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (btnBuscarRapido) {
     btnBuscarRapido.addEventListener("click", e => {
       e.preventDefault();
-      const txtUbic = document
-        .getElementById("fUbicacionCliente")
-        ?.value.trim();
+      const txtUbic = document.getElementById("fUbicacionCliente")?.value.trim();
       if (txtUbic) {
         geocodificarDireccion(txtUbic)
           .then(coords => {
@@ -716,9 +645,7 @@ document.addEventListener("DOMContentLoaded", function () {
           })
           .catch(err => {
             console.warn(err);
-            alert(
-              "No hemos encontrado esa ubicación. Prueba con otra dirección o barrio."
-            );
+            alert("No hemos encontrado esa ubicación. Prueba con otra dirección o barrio.");
             puntoReferencia = null;
             aplicarFiltros(true);
           });
@@ -808,7 +735,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  let ultimoCentro = map.getCenter();
   map.on("moveend", () => {
     const centro = map.getCenter();
     if (ubicacionUsuario) {
@@ -816,13 +742,8 @@ document.addEventListener("DOMContentLoaded", function () {
         L.latLng(ubicacionUsuario.lat, ubicacionUsuario.lng),
         centro
       );
-      if (d > 800) {
-        btnRecentraMi.style.display = "block";
-      } else {
-        btnRecentraMi.style.display = "none";
-      }
+      btnRecentraMi.style.display = d > 800 ? "block" : "none";
     }
-    ultimoCentro = centro;
   });
 
   if (btnRecentraMi) {
@@ -836,5 +757,3 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuarioSimple();
   cargarLocales();
 });
-
-
