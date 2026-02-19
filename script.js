@@ -16,7 +16,7 @@ function parseHoraToMinutos(horaStr) {
   return h * 60 + m;
 }
 
-// horario: {lun:[\"09:00-14:00\",...], ...}
+// horario: {lun:["09:00-14:00",...], ...}
 function estaAbiertoAhora(local) {
   const horario = local.horario;
   if (!horario) return !!local.horario_abierto;
@@ -340,6 +340,42 @@ function rellenarTiposDetalle() {
 }
 
 // =============================
+// CHIPS RESUMEN DE FILTROS
+// =============================
+function actualizarChipsResumen() {
+  const cont = document.getElementById("chipsResumen");
+  if (!cont) return;
+
+  const estado = obtenerEstadoFiltros();
+  const chips = [];
+
+  if (estado.categoria) chips.push(estado.categoria);
+  if (estado.tipo_detalle) chips.push(estado.tipo_detalle);
+  if (estado.barrio) chips.push(estado.barrio);
+  if (estado.soloAbiertos) chips.push("Abierto ahora");
+  if (estado.soloEnMapa) chips.push("Solo en vista");
+  if (estado.orden === "valoracion_desc") chips.push("Mejor valorados");
+  if (estado.textoLibre) chips.push("Texto: \"" + estado.textoLibre + "\"");
+
+  cont.innerHTML = "";
+
+  if (chips.length === 0) {
+    const span = document.createElement("span");
+    span.className = "chip-filter";
+    span.textContent = "Sin filtros activos";
+    cont.appendChild(span);
+    return;
+  }
+
+  chips.forEach(txt => {
+    const span = document.createElement("span");
+    span.className = "chip-filter";
+    span.textContent = txt;
+    cont.appendChild(span);
+  });
+}
+
+// =============================
 // MARCADORES Y POPUP
 // =============================
 function crearMarkerDesdeLocal(local) {
@@ -554,6 +590,7 @@ function aplicarFiltros(hacerFitBounds) {
     console.warn("No se pudieron guardar los filtros:", e);
   }
 
+  actualizarChipsResumen();
   pintarMapa(localesFiltrados, hacerFitBounds);
 }
 
@@ -572,7 +609,7 @@ function cargarLocales() {
         if (l.id == null) l.id = idx + 1;
         if (!l.precio) l.precio = 2;
         if (typeof l.horario_abierto === "undefined") l.horario_abierto = true;
-        if (!("foto" in l)) l.foto = "";      // por si no existe
+        if (!("foto" in l)) l.foto = "";
         if (!("redes" in l)) l.redes = {};
         return l;
       });
@@ -597,6 +634,7 @@ function cargarLocales() {
         console.warn("No se pudieron leer filtros guardados:", e);
       }
 
+      actualizarChipsResumen();
       aplicarFiltros(true);
     })
     .catch(e => {
@@ -702,6 +740,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       localesFiltrados = todosLosLocales;
+      actualizarChipsResumen();
       aplicarFiltros(true);
     });
   }
