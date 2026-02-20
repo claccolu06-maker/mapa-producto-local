@@ -54,15 +54,6 @@
       background: radial-gradient(circle at top left, #e0f2fe 0, #f9fafb 45%, #f5f5f7 100%);
     }
 
-    #map {
-      position: absolute;
-      top: 64px;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 1;
-    }
-
     /* Header superior */
     .app-header {
       position: fixed;
@@ -117,6 +108,131 @@
       gap: 8px;
       font-size: 12px;
       color: var(--color-muted);
+    }
+
+    /* Layout principal: mapa + lista */
+    .app-layout {
+      position: absolute;
+      top: 64px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(320px, 380px);
+      gap: 0;
+    }
+
+    .map-wrapper {
+      position: relative;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1;
+    }
+
+    .lista-wrapper {
+      position: relative;
+      background: linear-gradient(to bottom, #f9fafb, #ffffff);
+      border-left: 1px solid rgba(148,163,184,0.25);
+      box-shadow: -12px 0 30px rgba(15,23,42,0.16);
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .lista-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(148,163,184,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(8px);
+      font-size: 13px;
+    }
+
+    .lista-header h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .lista-contenido {
+      padding: 8px 10px 10px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .lista-empty {
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
+    .card-local {
+      border-radius: 10px;
+      padding: 8px 9px;
+      margin-bottom: 8px;
+      background: #ffffff;
+      box-shadow: 0 10px 18px rgba(15,23,42,0.08);
+      border: 1px solid rgba(148,163,184,0.2);
+      cursor: pointer;
+      transition: transform 0.09s ease-out, box-shadow 0.09s ease-out, border-color 0.09s ease-out;
+      font-size: 13px;
+    }
+
+    .card-local:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 28px rgba(15,23,42,0.18);
+      border-color: var(--color-primary);
+    }
+
+    .card-local.activo {
+      border-color: var(--color-primary);
+      box-shadow: 0 18px 32px rgba(37,99,235,0.22);
+    }
+
+    .card-local-titulo {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+
+    .card-local-nombre {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .card-local-etiquetas {
+      font-size: 11px;
+      color: var(--color-muted);
+      margin-bottom: 3px;
+    }
+
+    .card-local-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--color-muted);
+    }
+
+    .pill-barrio {
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.04);
+    }
+
+    .pill-valoracion {
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(250,204,21,0.14);
+      color: #92400e;
     }
 
     /* Botones flotantes */
@@ -447,10 +563,20 @@
       text-decoration: underline;
     }
 
-    @media (max-width: 768px) {
-      #map {
-        top: 64px;
+    @media (max-width: 1024px) {
+      .app-layout {
+        grid-template-columns: 1fr;
       }
+      .lista-wrapper {
+        display: none; /* luego se convertirá en bottom sheet en móvil */
+      }
+      .map-wrapper #map {
+        top: 0;
+        bottom: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
       .panel-busqueda {
         max-width: 90%;
         left: 5%;
@@ -483,7 +609,29 @@
   </div>
 </div>
 
-<div id="map"></div>
+<div class="app-layout">
+  <div class="map-wrapper">
+    <div id="map"></div>
+  </div>
+  <aside class="lista-wrapper">
+    <div class="lista-header">
+      <div>
+        <h2>Locales encontrados</h2>
+        <div id="textoResumenLista" style="font-size:11px; color:var(--color-muted);">
+          Mostrando todos los locales
+        </div>
+      </div>
+      <div style="font-size:11px; color:var(--color-muted);">
+        <span id="contadorLista">0 locales</span>
+      </div>
+    </div>
+    <div class="lista-contenido" id="contenedorListaLocales">
+      <div class="lista-empty">
+        Aparecerán aquí los locales según los filtros aplicados.
+      </div>
+    </div>
+  </aside>
+</div>
 
 <!-- Botones flotantes -->
 <div id="btnToggleBusqueda">
