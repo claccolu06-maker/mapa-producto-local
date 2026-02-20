@@ -84,6 +84,10 @@ let ubicacionUsuario = null;
 let favoritos = new Set();
 let ultimoDetalleLocal = null;
 
+// NUEVO: para sincronizar lista <-> markers
+let markerPorId = {};
+let localSeleccionadoId = null;
+
 // =============================
 // ICONOS
 // =============================
@@ -355,7 +359,7 @@ function actualizarChipsResumen() {
   if (estado.soloAbiertos) chips.push("Abierto ahora");
   if (estado.soloEnMapa) chips.push("Solo en vista");
   if (estado.orden === "valoracion_desc") chips.push("Mejor valorados");
-  if (estado.textoLibre) chips.push("Texto: \"" + estado.textoLibre + "\"");
+  if (estado.textoLibre) chips.push('Texto: "' + estado.textoLibre + '"');
 
   cont.innerHTML = "";
 
@@ -373,6 +377,104 @@ function actualizarChipsResumen() {
     span.textContent = txt;
     cont.appendChild(span);
   });
+}
+
+// =============================
+// LISTA LATERAL DE LOCALES
+// =============================
+function actualizarListaLocales(lista) {
+  localesFiltrados = lista || [];
+  const contenedor = document.getElementById("contenedorListaLocales");
+  const contadorLista = document.getElementById("contadorLista");
+
+  if (!contenedor || !contadorLista) return;
+
+  contenedor.innerHTML = "";
+
+  if (!localesFiltrados.length) {
+    contenedor.innerHTML = '<div class="lista-empty">No se han encontrado locales con estos filtros.</div>';
+    contadorLista.textContent = "0 locales";
+    actualizarResumenLista("Sin resultados con los filtros actuales");
+    return;
+  }
+
+  contadorLista.textContent = `${localesFiltrados.length} ${localesFiltrados.length === 1 ? "local" : "locales"}`;
+
+  localesFiltrados.forEach(local => {
+    const card = document.createElement("div");
+    card.className = "card-local";
+    card.dataset.id = local.id; // id único
+
+    const categoria = local.categoria || "Sin categoría";
+    const tipo = local.tipo_detalle || "";
+    const barrio = local.barrio || "Sin barrio";
+    const valoracion = (typeof local.valoracion !== "undefined" && local.valoracion !== null)
+      ? local.valoracion
+      : null;
+    const precio = local.precio || null;
+
+    card.innerHTML = `
+      <div class="card-local-titulo">
+        <div class="card-local-nombre">${local.nombre || "Local sin nombre"}</div>
+        ${valoracion !== null
+          ? `<span class="pill-valoracion">★ ${valoracion.toFixed ? valoracion.toFixed(1) : valoracion}</span>`
+          : ""}
+      </div>
+      <div class="card-local-etiquetas">
+        ${categoria}${tipo ? " · " + tipo : ""}${precio ? " · " + "€".repeat(precio) : ""}
+      </div>
+      <div class="card-local-meta">
+        <span class="pill-barrio">${barrio}</span>
+        <span>${local.direccion || ""}</span>
+      </div>
+    `;
+
+    card.addEventListener("click", () => {
+      seleccionarLocalDesdeLista(local.id);
+    });
+
+    contenedor.appendChild(card);
+  });
+
+  resaltarCardSeleccionada();
+}
+
+function seleccionarLocalDesdeLista(idLocal) {
+  localSeleccionadoId = idLocal;
+  resaltarCardSeleccionada();
+
+  const local = localesFiltrados.find(l => String(l.id) === String(idLocal));
+  if (!local) return;
+
+  if (local.lat && local.lng && typeof map !== "undefined") {
+    map.setView([local.lat, local.lng], 17, { animate: true });
+  }
+
+  const marker = markerPorId[idLocal];
+  if (marker) {
+    if (marker.openPopup) {
+      marker.openPopup();
+    }
+  }
+
+  abrirPanelDetalle(local);
+}
+
+function resaltarCardSeleccionada() {
+  const cards = document.querySelectorAll(".card-local");
+  cards.forEach(card => {
+    if (card.dataset.id === String(localSeleccionadoId)) {
+      card.classList.add("activo");
+    } else {
+      card.classList.remove("activo");
+    }
+  });
+}
+
+function actualizarResumenLista(texto) {
+  const el = document.getElementById("textoResumenLista");
+  if (!el) return;
+  el.textContent = texto || "Mostrando todos los locales";
 }
 
 // =============================
@@ -405,17 +507,21 @@ function crearMarkerDesdeLocal(local) {
   const recomendadoText = local.recomendado ? "Recomendado" : "";
 
   const popupHtml = `
-    <b>${nombre}</b><br>
-    ${valoracionText} ${recomendadoText ? " · " + recomendadoText : ""}<br>
-    <button class="btn-ver-detalle" data-id="${local.id}">Ver detalle</button>
+    <b>${nombre}</b><br><br>
+    ${valoracionText} ${recomendadoText ? " · " + recomendadoText : ""}<br><br>
+    <button class="btn-ver-detalle" data-id="${local.id}">Ver detalle</button><br>
   `;
 
   marker.bindPopup(popupHtml);
+
+  // Guardamos referencia del marker por id de local
+  markerPorId[local.id] = marker;
+
   return marker;
 }
 
 // =============================
-// PANEL DETALLE (foto al final)
+// PANEL DETALLE
 // =============================
 function abrirPanelDetalle(local) {
   ultimoDetalleLocal = local;
@@ -487,7 +593,9 @@ function pintarMapa(listaLocales, hacerFitBounds) {
       : "Mostrando " + listaLocales.length + " locales";
   }
 
+  // Reiniciamos estado de markers
   clusterGroup.clearLayers();
+  markerPorId = {};
 
   const markers = [];
   listaLocales.forEach(local => {
@@ -511,6 +619,7 @@ function pintarMapa(listaLocales, hacerFitBounds) {
     map.fitBounds(bounds, { padding: [40, 40] });
   }
 
+  // Evento para botón "Ver detalle" en popup
   clusterGroup.on("popupopen", function (e) {
     const popupNode = e.popup.getElement();
     if (!popupNode) return;
@@ -519,9 +628,17 @@ function pintarMapa(listaLocales, hacerFitBounds) {
     btn.addEventListener("click", function () {
       const id = this.getAttribute("data-id");
       const local = todosLosLocales.find(l => String(l.id) === String(id));
-      if (local) abrirPanelDetalle(local);
+      if (local) {
+        localSeleccionadoId = local.id;
+        resaltarCardSeleccionada();
+        abrirPanelDetalle(local);
+      }
     });
   });
+
+  // Actualizamos también la lista lateral
+  actualizarListaLocales(listaLocales);
+  actualizarResumenLista(); // texto por defecto
 }
 
 // =============================
