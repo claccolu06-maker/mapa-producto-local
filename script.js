@@ -84,9 +84,10 @@ let ubicacionUsuario = null;
 let favoritos = new Set();
 let ultimoDetalleLocal = null;
 
-// NUEVO: para sincronizar lista <-> markers
+// Para sincronizar lista <-> markers
 let markerPorId = {};
 let localSeleccionadoId = null;
+let markerSeleccionado = null;
 
 // =============================
 // ICONOS
@@ -116,6 +117,7 @@ const iconosCategoria = {
 };
 
 const iconoPorDefecto = iconosCategoria["Otros"];
+const iconoSeleccionado = crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-gold.png");
 
 // =============================
 // GEOLOCALIZACIÓN
@@ -452,6 +454,7 @@ function seleccionarLocalDesdeLista(idLocal) {
 
   const marker = markerPorId[idLocal];
   if (marker) {
+    resaltarMarkerSeleccionado(marker);
     if (marker.openPopup) {
       marker.openPopup();
     }
@@ -475,6 +478,51 @@ function actualizarResumenLista(texto) {
   const el = document.getElementById("textoResumenLista");
   if (!el) return;
   el.textContent = texto || "Mostrando todos los locales";
+}
+
+function resaltarMarkerSeleccionado(marker) {
+  // Restaurar marker previo
+  if (markerSeleccionado && markerSeleccionado !== marker) {
+    const localPrevio = markerSeleccionado._localData;
+    if (localPrevio) {
+      const catPrev = localPrevio.categoria || "Otros";
+      const iconPrev = iconosCategoria[catPrev] || iconoPorDefecto;
+      markerSeleccionado.setIcon(iconPrev);
+    }
+  }
+
+  markerSeleccionado = marker;
+
+  // Si no tiene datos del local, los buscamos
+  if (!marker._localData) {
+    const id = Object.keys(markerPorId).find(
+      key => markerPorId[key] === marker
+    );
+    if (id) {
+      const local = todosLosLocales.find(l => String(l.id) === String(id));
+      if (local) marker._localData = local;
+    }
+  }
+
+  // Cambiar icono a seleccionado
+  marker.setIcon(iconoSeleccionado);
+
+  // Pequeña animación de "salto"
+  const originalLatLng = marker.getLatLng();
+  let step = 0;
+  const maxStep = 10;
+  const offset = 0.00015;
+
+  const interval = setInterval(() => {
+    step++;
+    const factor = step <= maxStep / 2 ? 1 : -1;
+    const delta = factor * offset;
+    marker.setLatLng([originalLatLng.lat + delta, originalLatLng.lng]);
+    if (step >= maxStep) {
+      marker.setLatLng(originalLatLng);
+      clearInterval(interval);
+    }
+  }, 25);
 }
 
 // =============================
@@ -516,6 +564,7 @@ function crearMarkerDesdeLocal(local) {
 
   // Guardamos referencia del marker por id de local
   markerPorId[local.id] = marker;
+  marker._localData = local;
 
   return marker;
 }
@@ -596,6 +645,7 @@ function pintarMapa(listaLocales, hacerFitBounds) {
   // Reiniciamos estado de markers
   clusterGroup.clearLayers();
   markerPorId = {};
+  markerSeleccionado = null;
 
   const markers = [];
   listaLocales.forEach(local => {
@@ -631,6 +681,10 @@ function pintarMapa(listaLocales, hacerFitBounds) {
       if (local) {
         localSeleccionadoId = local.id;
         resaltarCardSeleccionada();
+        const marker = markerPorId[local.id];
+        if (marker) {
+          resaltarMarkerSeleccionado(marker);
+        }
         abrirPanelDetalle(local);
       }
     });
