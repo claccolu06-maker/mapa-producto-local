@@ -410,7 +410,7 @@ function actualizarListaLocales(lista) {
     const categoria = local.categoria || "Sin categoría";
     const tipo = local.tipo_detalle || "";
     const barrio = local.barrio || "Sin barrio";
-    const valoracion = (typeof local.valoracion !== "undefined" && local.valoracion !== null)
+    const valoracion = (typeof local.valoracion === "number" && local.valoracion > 0)
       ? local.valoracion
       : null;
     const precio = local.precio || null;
@@ -419,7 +419,7 @@ function actualizarListaLocales(lista) {
       <div class="card-local-titulo">
         <div class="card-local-nombre">${local.nombre || "Local sin nombre"}</div>
         ${valoracion !== null
-          ? `<span class="pill-valoracion">★ ${valoracion.toFixed ? valoracion.toFixed(1) : valoracion}</span>`
+          ? `<span class="pill-valoracion">★ ${valoracion.toFixed(1)}</span>`
           : ""}
       </div>
       <div class="card-local-etiquetas">
@@ -449,7 +449,7 @@ function seleccionarLocalDesdeLista(idLocal) {
   if (!local) return;
 
   if (local.lat && local.lng && typeof map !== "undefined") {
-    map.setView([local.lat, local.lng], 17, { animate: true });
+    map.setView([local.lat, local.lng], 18, { animate: true }); // zoom más alto
   }
 
   const marker = markerPorId[idLocal];
@@ -549,8 +549,9 @@ function crearMarkerDesdeLocal(local) {
     "&query_place_id=" +
     query;
 
-  const valoracionText = local.valoracion
-    ? "⭐ " + local.valoracion + "/5"
+  const tieneValoracion = (typeof local.valoracion === "number" && local.valoracion > 0);
+  const valoracionText = tieneValoracion
+    ? "⭐ " + local.valoracion.toFixed(1) + "/5"
     : "Sin valoración";
   const recomendadoText = local.recomendado ? "Recomendado" : "";
 
@@ -583,8 +584,9 @@ function abrirPanelDetalle(local) {
   titulo.textContent = local.nombre || "Local";
 
   const precioText = local.precio ? "★".repeat(local.precio) : "Sin datos";
-  const valoracionText = local.valoracion
-    ? "⭐ " + local.valoracion + "/5"
+  const tieneValoracion = (typeof local.valoracion === "number" && local.valoracion > 0);
+  const valoracionText = tieneValoracion
+    ? "⭐ " + local.valoracion.toFixed(1) + "/5"
     : "Sin valoración";
 
   const abiertoAhora = estaAbiertoAhora(local);
@@ -684,6 +686,9 @@ function pintarMapa(listaLocales, hacerFitBounds) {
         const marker = markerPorId[local.id];
         if (marker) {
           resaltarMarkerSeleccionado(marker);
+          if (local.lat && local.lng) {
+            map.setView([local.lat, local.lng], 18, { animate: true });
+          }
         }
         abrirPanelDetalle(local);
       }
