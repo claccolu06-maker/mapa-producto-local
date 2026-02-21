@@ -151,7 +151,24 @@ function localizarUsuarioSimple() {
   );
 }
 
+// Versión "cerca de mí" usando locate en móvil
 function buscarCercaDeMi() {
+  if (L.Browser.mobile && navigator.geolocation) {
+    map.locate({ setView: true, maxZoom: 16 });
+    map.once("locationfound", e => {
+      ubicacionUsuario = { lat: e.latlng.lat, lng: e.latlng.lng };
+      puntoReferencia = { lat: e.latlng.lat, lng: e.latlng.lng };
+      const radioSelect = document.getElementById("fRadioDistancia");
+      if (radioSelect && !radioSelect.value) radioSelect.value = "1000";
+      aplicarFiltros(true);
+    });
+    map.once("locationerror", () => {
+      alert("No hemos podido obtener tu ubicación.");
+    });
+    return;
+  }
+
+  // Fallback escritorio / si no hay locate
   if (!navigator.geolocation) {
     alert("Tu dispositivo no permite obtener la ubicación.");
     return;
@@ -370,6 +387,7 @@ function actualizarChipsResumen() {
     span.className = "chip-filter";
     span.textContent = "Sin filtros activos";
     cont.appendChild(span);
+    actualizarTextoBtnFiltros(0);
     return;
   }
 
@@ -379,6 +397,15 @@ function actualizarChipsResumen() {
     span.textContent = txt;
     cont.appendChild(span);
   });
+
+  actualizarTextoBtnFiltros(chips.length);
+}
+
+// Cambia el texto del botón Filtros según nº de chips
+function actualizarTextoBtnFiltros(numFiltros) {
+  const el = document.getElementById("textoBtnFiltros");
+  if (!el) return;
+  el.textContent = numFiltros > 0 ? `Filtros (${numFiltros})` : "Filtros";
 }
 
 // =============================
@@ -449,7 +476,7 @@ function seleccionarLocalDesdeLista(idLocal) {
   if (!local) return;
 
   if (local.lat && local.lng && typeof map !== "undefined") {
-    map.setView([local.lat, local.lng], 18, { animate: true }); // zoom más alto
+    map.setView([local.lat, local.lng], 18, { animate: true });
   }
 
   const marker = markerPorId[idLocal];
@@ -828,6 +855,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const panelBusqueda = document.getElementById("panelBusqueda");
   const panelFiltros = document.getElementById("panelFiltros");
   const btnRecentraMi = document.getElementById("btnRecentraMi");
+  const listaWrapper = document.getElementById("listaWrapper");
+  const btnToggleLista = document.getElementById("btnToggleLista");
 
   if (btnToggleBusqueda && panelBusqueda) {
     btnToggleBusqueda.addEventListener("click", () => {
@@ -965,6 +994,16 @@ document.addEventListener("DOMContentLoaded", function () {
     btnRecentraMi.addEventListener("click", e => {
       e.preventDefault();
       recentrarEnMi();
+    });
+  }
+
+  // Toggle lista + invalidateSize para que el mapa se reajuste
+  if (btnToggleLista && listaWrapper) {
+    btnToggleLista.addEventListener("click", () => {
+      listaWrapper.classList.toggle("oculta");
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 220);
     });
   }
 
