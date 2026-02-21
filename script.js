@@ -47,7 +47,12 @@ function estaAbiertoAhora(local) {
 // =============================
 // MAPA CENTRADO EN SEVILLA
 // =============================
-var map = L.map("map").setView([37.3891, -5.9845], 13);
+var map = L.map("map", {
+  zoomControl: true,
+  inertia: true,
+  inertiaDeceleration: 3000, // más suave en móvil
+  tap: true
+}).setView([37.3891, -5.9845], 13); // [web:96][web:126]
 
 var boundsSevilla = L.latLngBounds(
   [37.30, -6.10],
@@ -122,6 +127,30 @@ const iconoSeleccionado = crearIconoColor("https://raw.githubusercontent.com/poi
 // =============================
 // GEOLOCALIZACIÓN
 // =============================
+
+// Punto azul de "estás aquí"
+let markerUbicacion = null;
+
+function dibujarUbicacionUsuario(lat, lng) {
+  ubicacionUsuario = { lat, lng };
+  if (markerUbicacion) {
+    markerUbicacion.setLatLng([lat, lng]);
+  } else {
+    markerUbicacion = L.marker([lat, lng], {
+      title: "Estás aquí",
+      icon: L.icon({
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+        shadowSize: [41, 41]
+      })
+    }).addTo(map).bindPopup("Estás aquí");
+  }
+}
+
+// Localización sencilla al cargar (no obliga a setView)
 function localizarUsuarioSimple() {
   if (!navigator.geolocation) return;
 
@@ -129,46 +158,21 @@ function localizarUsuarioSimple() {
     pos => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
-      ubicacionUsuario = { lat, lng };
-
-      L.marker([lat, lng], {
-        title: "Estás aquí",
-        icon: L.icon({
-          iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-          shadowSize: [41, 41]
-        })
-      })
-        .addTo(map)
-        .bindPopup("Estás aquí");
+      dibujarUbicacionUsuario(lat, lng);
     },
     err => {
       console.warn("No se pudo localizar usuario:", err);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 60 * 1000
     }
-  );
+  ); // [web:102][web:131]
 }
 
-// Versión "cerca de mí" usando locate en móvil
+// "Cerca de mí": centra y filtra por radio si está definido
 function buscarCercaDeMi() {
-  if (L.Browser.mobile && navigator.geolocation) {
-    map.locate({ setView: true, maxZoom: 16 });
-    map.once("locationfound", e => {
-      ubicacionUsuario = { lat: e.latlng.lat, lng: e.latlng.lng };
-      puntoReferencia = { lat: e.latlng.lat, lng: e.latlng.lng };
-      const radioSelect = document.getElementById("fRadioDistancia");
-      if (radioSelect && !radioSelect.value) radioSelect.value = "1000";
-      aplicarFiltros(true);
-    });
-    map.once("locationerror", () => {
-      alert("No hemos podido obtener tu ubicación.");
-    });
-    return;
-  }
-
-  // Fallback escritorio / si no hay locate
   if (!navigator.geolocation) {
     alert("Tu dispositivo no permite obtener la ubicación.");
     return;
@@ -178,8 +182,9 @@ function buscarCercaDeMi() {
     pos => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
+      dibujarUbicacionUsuario(lat, lng);
       puntoReferencia = { lat, lng };
-      ubicacionUsuario = { lat, lng };
+
       map.setView([lat, lng], 15);
 
       const radioSelect = document.getElementById("fRadioDistancia");
@@ -189,9 +194,14 @@ function buscarCercaDeMi() {
     },
     err => {
       console.warn("Error ubicación cerca de mí:", err);
-      alert("No hemos podido obtener tu ubicación.");
+      alert("No hemos podido obtener tu ubicación. Revisa permisos de ubicación del navegador.");
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 20000,
+      maximumAge: 0
     }
-  );
+  ); // [web:102][web:131]
 }
 
 function recentrarEnMi() {
@@ -795,6 +805,16 @@ function aplicarFiltros(hacerFitBounds) {
 
   actualizarChipsResumen();
   pintarMapa(localesFiltrados, hacerFitBounds);
+
+  // Mensaje aclaratorio cuando se filtra por vista actual
+  const resumenEl = document.getElementById("textoResumenLista");
+  if (resumenEl) {
+    if (soloEnMapa) {
+      resumenEl.textContent = `Mostrando ${localesFiltrados.length} locales (filtrando por vista actual)`;
+    } else {
+      resumenEl.textContent = `Mostrando ${localesFiltrados.length} locales`;
+    }
+  }
 }
 
 // =============================
@@ -832,6 +852,12 @@ function cargarLocales() {
             const sel = document.getElementById("fTipoDetalle");
             if (sel) sel.value = estado.tipo_detalle;
           }
+        }
+
+        // En móvil, forzamos "Solo en mapa" a desmarcado
+        if (L.Browser.mobile) {
+          const cbMapa = document.getElementById("fSoloEnMapa");
+          if (cbMapa) cbMapa.checked = false;
         }
       } catch (e) {
         console.warn("No se pudieron leer filtros guardados:", e);
