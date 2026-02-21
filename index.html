@@ -110,20 +110,19 @@
       color: var(--color-muted);
     }
 
-    /* Layout principal: mapa + lista */
+    /* Layout principal: mapa + lista (lista flotante) */
     .app-layout {
       position: absolute;
       top: 64px;
       bottom: 0;
       left: 0;
       right: 0;
-      display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(320px, 380px);
-      gap: 0;
     }
 
     .map-wrapper {
       position: relative;
+      width: 100%;
+      height: 100%;
     }
 
     #map {
@@ -136,22 +135,36 @@
     }
 
     .lista-wrapper {
-      position: relative;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      bottom: 10px;
+      width: 340px;
+      max-width: 75vw;
       background: linear-gradient(to bottom, #f9fafb, #ffffff);
-      border-left: 1px solid rgba(148,163,184,0.25);
-      box-shadow: -12px 0 30px rgba(15,23,42,0.16);
-      z-index: 1100;
+      border-radius: 14px;
+      border: 1px solid rgba(148,163,184,0.25);
+      box-shadow: 0 18px 35px rgba(15,23,42,0.25);
+      z-index: 1200;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.22s ease-out, opacity 0.18s ease-out;
+    }
+
+    .lista-wrapper.oculta {
+      transform: translateX(105%);
+      opacity: 0;
+      pointer-events: none;
     }
 
     .lista-header {
-      padding: 10px 14px;
+      padding: 10px 12px;
       border-bottom: 1px solid rgba(148,163,184,0.2);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.96);
       backdrop-filter: blur(8px);
       font-size: 13px;
     }
@@ -235,7 +248,37 @@
       color: #92400e;
     }
 
-    /* Botones flotantes */
+    /* Botón flotante para abrir/cerrar lista */
+    #btnToggleLista {
+      position: absolute;
+      bottom: 20px;
+      left: 14px;
+      z-index: 1300;
+      background: var(--color-panel);
+      border-radius: 999px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 10px 20px rgba(15,23,42,0.2);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--color-text);
+      border: 1px solid rgba(148,163,184,0.4);
+    }
+
+    #btnToggleLista span.icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--color-primary-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-primary);
+    }
+
+    /* Botones flotantes búsqueda/filtros */
     #btnToggleBusqueda,
     #btnToggleFiltros {
       position: absolute;
@@ -564,15 +607,23 @@
     }
 
     @media (max-width: 1024px) {
-      .app-layout {
-        grid-template-columns: 1fr;
-      }
       .lista-wrapper {
-        display: none; /* luego se convertirá en bottom sheet en móvil */
-      }
-      .map-wrapper #map {
-        top: 0;
+        top: auto;
+        right: 0;
+        left: 0;
         bottom: 0;
+        width: 100%;
+        max-width: 100%;
+        height: 55%;
+        border-radius: 16px 16px 0 0;
+      }
+      .lista-wrapper.oculta {
+        transform: translateY(105%);
+      }
+      #btnToggleLista {
+        bottom: 16px;
+        left: 50%;
+        transform: translateX(-50%);
       }
     }
 
@@ -612,163 +663,170 @@
 <div class="app-layout">
   <div class="map-wrapper">
     <div id="map"></div>
-  </div>
-  <aside class="lista-wrapper">
-    <div class="lista-header">
-      <div>
-        <h2>Locales encontrados</h2>
-        <div id="textoResumenLista" style="font-size:11px; color:var(--color-muted);">
-          Mostrando todos los locales
+
+    <!-- Botón flotante lista -->
+    <div id="btnToggleLista">
+      <span class="icon">📍</span><span>Lista de locales</span>
+    </div>
+
+    <!-- Botones flotantes búsqueda / filtros / recentrar -->
+    <div id="btnToggleBusqueda">
+      <span class="icon">🔎</span><span>Buscar</span>
+    </div>
+    <div id="btnToggleFiltros">
+      <span class="icon">⚙️</span><span>Filtros</span>
+    </div>
+    <div id="btnRecentraMi">Recentrar en mí</div>
+
+    <!-- Panel búsqueda rápida -->
+    <div class="panel-busqueda" id="panelBusqueda" style="display:none;">
+      <h2>¿Qué buscas hoy?</h2>
+
+      <div class="field-label">Qué</div>
+      <input id="fTextoLibre" type="text" placeholder="Ej: bar, panadería, ropa, gimnasio" />
+
+      <div class="field-label">Dónde</div>
+      <input id="fUbicacionCliente" type="text" placeholder="Dirección o barrio" />
+
+      <div class="field-label">Radio</div>
+      <select id="fRadioDistancia">
+        <option value="">Sin límite</option>
+        <option value="500">500 m</option>
+        <option value="1000">1 km</option>
+        <option value="2000">2 km</option>
+        <option value="3000">3 km</option>
+      </select>
+
+      <div style="margin-top:6px; display:flex; gap:6px;">
+        <button id="btnBuscarRapido" class="btn-primary">Buscar</button>
+        <button id="btnCercaDeMi" class="btn-ghost">Cerca de mí</button>
+      </div>
+    </div>
+
+    <!-- Panel filtros -->
+    <div class="panel-filtros" id="panelFiltros" style="display:none;">
+      <h3>Filtros avanzados</h3>
+
+      <div class="panel-section-title">Qué</div>
+      <label class="field-label" for="fCategoria">Categoría principal</label>
+      <select id="fCategoria">
+        <option value="">Todas</option>
+        <option value="Comida">Comida</option>
+        <option value="Cafetería">Cafetería</option>
+        <option value="Alimentación">Alimentación</option>
+        <option value="Moda">Moda</option>
+        <option value="Belleza">Belleza</option>
+        <option value="Salud">Salud</option>
+        <option value="Ocio">Ocio</option>
+        <option value="Deportes">Deportes</option>
+        <option value="Servicios">Servicios</option>
+        <option value="Otros">Otros</option>
+      </select>
+
+      <label class="field-label" for="fTipoDetalle">Tipo dentro de la categoría</label>
+      <select id="fTipoDetalle">
+        <option value="">Todos los tipos</option>
+      </select>
+
+      <div class="panel-section-title">Precio y valoración</div>
+      <div style="display:flex; gap:6px;">
+        <div style="flex:1;">
+          <label class="field-label" for="fPrecioMin">Precio mín.</label>
+          <select id="fPrecioMin">
+            <option value="1">1 ★</option>
+            <option value="2" selected>2 ★</option>
+            <option value="3">3 ★</option>
+          </select>
+        </div>
+        <div style="flex:1;">
+          <label class="field-label" for="fPrecioMax">Precio máx.</label>
+          <select id="fPrecioMax">
+            <option value="1">1 ★</option>
+            <option value="2">2 ★</option>
+            <option value="3" selected>3 ★</option>
+          </select>
         </div>
       </div>
-      <div style="font-size:11px; color:var(--color-muted);">
-        <span id="contadorLista">0 locales</span>
-      </div>
-    </div>
-    <div class="lista-contenido" id="contenedorListaLocales">
-      <div class="lista-empty">
-        Aparecerán aquí los locales según los filtros aplicados.
-      </div>
-    </div>
-  </aside>
-</div>
 
-<!-- Botones flotantes -->
-<div id="btnToggleBusqueda">
-  <span class="icon">🔎</span><span>Buscar</span>
-</div>
-<div id="btnToggleFiltros">
-  <span class="icon">⚙️</span><span>Filtros</span>
-</div>
-<div id="btnRecentraMi">Recentrar en mí</div>
-
-<!-- Panel búsqueda rápida -->
-<div class="panel-busqueda" id="panelBusqueda" style="display:none;">
-  <h2>¿Qué buscas hoy?</h2>
-
-  <div class="field-label">Qué</div>
-  <input id="fTextoLibre" type="text" placeholder="Ej: bar, panadería, ropa, gimnasio" />
-
-  <div class="field-label">Dónde</div>
-  <input id="fUbicacionCliente" type="text" placeholder="Dirección o barrio" />
-
-  <div class="field-label">Radio</div>
-  <select id="fRadioDistancia">
-    <option value="">Sin límite</option>
-    <option value="500">500 m</option>
-    <option value="1000">1 km</option>
-    <option value="2000">2 km</option>
-    <option value="3000">3 km</option>
-  </select>
-
-  <div style="margin-top:6px; display:flex; gap:6px;">
-    <button id="btnBuscarRapido" class="btn-primary">Buscar</button>
-    <button id="btnCercaDeMi" class="btn-ghost">Cerca de mí</button>
-  </div>
-</div>
-
-<!-- Panel filtros -->
-<div class="panel-filtros" id="panelFiltros" style="display:none;">
-  <h3>Filtros avanzados</h3>
-
-  <div class="panel-section-title">Qué</div>
-  <label class="field-label" for="fCategoria">Categoría principal</label>
-  <select id="fCategoria">
-    <option value="">Todas</option>
-    <option value="Comida">Comida</option>
-    <option value="Cafetería">Cafetería</option>
-    <option value="Alimentación">Alimentación</option>
-    <option value="Moda">Moda</option>
-    <option value="Belleza">Belleza</option>
-    <option value="Salud">Salud</option>
-    <option value="Ocio">Ocio</option>
-    <option value="Deportes">Deportes</option>
-    <option value="Servicios">Servicios</option>
-    <option value="Otros">Otros</option>
-  </select>
-
-  <label class="field-label" for="fTipoDetalle">Tipo dentro de la categoría</label>
-  <select id="fTipoDetalle">
-    <option value="">Todos los tipos</option>
-  </select>
-
-  <div class="panel-section-title">Precio y valoración</div>
-  <div style="display:flex; gap:6px;">
-    <div style="flex:1;">
-      <label class="field-label" for="fPrecioMin">Precio mín.</label>
-      <select id="fPrecioMin">
-        <option value="1">1 ★</option>
-        <option value="2" selected>2 ★</option>
-        <option value="3">3 ★</option>
+      <label class="field-label" for="fOrden">Ordenar por</label>
+      <select id="fOrden">
+        <option value="ninguno">Sin orden especial</option>
+        <option value="valoracion_desc">Mejor valorados primero</option>
       </select>
+
+      <div class="panel-section-title">Dónde</div>
+      <label class="field-label" for="fBarrio">Barrio</label>
+      <select id="fBarrio"></select>
+
+      <div class="panel-section-title">Estado</div>
+      <div class="checkbox-linea">
+        <input type="checkbox" id="fSoloAbiertos" />
+        <label for="fSoloAbiertos">Solo abiertos ahora</label>
+      </div>
+      <div class="checkbox-linea">
+        <input type="checkbox" id="fSoloEnMapa" />
+        <label for="fSoloEnMapa">Solo locales en la vista actual</label>
+      </div>
+
+      <div class="panel-section-title">Resumen</div>
+      <div class="chip-row" id="chipsResumen">
+        <span class="chip-filter">Sin filtros activos</span>
+      </div>
+
+      <div class="fila-botones">
+        <button id="btnAplicarFiltros" class="btn-apply">Aplicar filtros</button>
+        <button id="btnQuitarFiltros" class="btn-reset">Quitar</button>
+      </div>
+
+      <div id="contadorResultados">Mostrando todos los locales</div>
     </div>
-    <div style="flex:1;">
-      <label class="field-label" for="fPrecioMax">Precio máx.</label>
-      <select id="fPrecioMax">
-        <option value="1">1 ★</option>
-        <option value="2">2 ★</option>
-        <option value="3" selected>3 ★</option>
-      </select>
+
+    <!-- Leyenda -->
+    <div id="leyendaCategorias">
+      <b>Categorías</b><br />
+      <span style="color:#d7191c;">●</span> Comida
+      <span style="color:#fdae61; margin-left:6px;">●</span> Cafetería
+      <span style="color:#1a9641; margin-left:6px;">●</span> Alimentación<br />
+      <span style="color:#7b3294;">●</span> Moda
+      <span style="color:#4575b4; margin-left:6px;">●</span> Belleza
+      <span style="color:#ffff00; margin-left:6px;">●</span> Salud<br />
+      <span style="color:#313695;">●</span> Ocio
+      <span style="color:#f46d43; margin-left:6px;">●</span> Deportes
+      <span style="color:#4d4d4d; margin-left:6px;">●</span> Servicios
     </div>
-  </div>
 
-  <label class="field-label" for="fOrden">Ordenar por</label>
-  <select id="fOrden">
-    <option value="ninguno">Sin orden especial</option>
-    <option value="valoracion_desc">Mejor valorados primero</option>
-  </select>
-
-  <div class="panel-section-title">Dónde</div>
-  <label class="field-label" for="fBarrio">Barrio</label>
-  <select id="fBarrio"></select>
-
-  <div class="panel-section-title">Estado</div>
-  <div class="checkbox-linea">
-    <input type="checkbox" id="fSoloAbiertos" />
-    <label for="fSoloAbiertos">Solo abiertos ahora</label>
-  </div>
-  <div class="checkbox-linea">
-    <input type="checkbox" id="fSoloEnMapa" />
-    <label for="fSoloEnMapa">Solo locales en la vista actual</label>
-  </div>
-
-  <div class="panel-section-title">Resumen</div>
-  <div class="chip-row" id="chipsResumen">
-    <span class="chip-filter">Sin filtros activos</span>
-  </div>
-
-  <div class="fila-botones">
-    <button id="btnAplicarFiltros" class="btn-apply">Aplicar filtros</button>
-    <button id="btnQuitarFiltros" class="btn-reset">Quitar</button>
-  </div>
-
-  <div id="contadorResultados">Mostrando todos los locales</div>
-</div>
-
-<!-- Leyenda -->
-<div id="leyendaCategorias">
-  <b>Categorías</b><br />
-  <span style="color:#d7191c;">●</span> Comida
-  <span style="color:#fdae61; margin-left:6px;">●</span> Cafetería
-  <span style="color:#1a9641; margin-left:6px;">●</span> Alimentación<br />
-  <span style="color:#7b3294;">●</span> Moda
-  <span style="color:#4575b4; margin-left:6px;">●</span> Belleza
-  <span style="color:#ffff00; margin-left:6px;">●</span> Salud<br />
-  <span style="color:#313695;">●</span> Ocio
-  <span style="color:#f46d43; margin-left:6px;">●</span> Deportes
-  <span style="color:#4d4d4d; margin-left:6px;">●</span> Servicios
-</div>
-
-<!-- Panel detalle -->
-<div id="panelDetalle">
-  <div id="panelDetalleHeader">
-    <h2 id="detalleNombre">Local</h2>
-    <div style="display:flex; align-items:center;">
-      <button id="btnFavorito" class="btn-favorito" title="Marcar como favorito">♡</button>
-      <button id="btnCerrarDetalle">✕</button>
+    <!-- Panel detalle -->
+    <div id="panelDetalle">
+      <div id="panelDetalleHeader">
+        <h2 id="detalleNombre">Local</h2>
+        <div style="display:flex; align-items:center;">
+          <button id="btnFavorito" class="btn-favorito" title="Marcar como favorito">♡</button>
+          <button id="btnCerrarDetalle">✕</button>
+        </div>
+      </div>
+      <div id="panelDetalleBody"></div>
     </div>
+
+    <!-- Lista (pestaña) -->
+    <aside class="lista-wrapper oculta" id="listaWrapper">
+      <div class="lista-header">
+        <div>
+          <h2>Locales encontrados</h2>
+          <div id="textoResumenLista" style="font-size:11px; color:var(--color-muted);">
+            Mostrando todos los locales
+          </div>
+        </div>
+        <div style="font-size:11px; color:var(--color-muted);">
+          <span id="contadorLista">0 locales</span>
+        </div>
+      </div>
+      <div class="lista-contenido" id="contenedorListaLocales">
+        <div class="lista-empty">
+          Aparecerán aquí los locales según los filtros aplicados.
+        </div>
+      </div>
+    </aside>
   </div>
-  <div id="panelDetalleBody"></div>
 </div>
 
 <!-- Leaflet JS -->
