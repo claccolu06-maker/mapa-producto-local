@@ -99,13 +99,6 @@ let markerPorId = {};
 let localSeleccionadoId = null;
 let markerSeleccionado = null;
 
-// Debounce filtros (si quisieras usarlo en inputs ruidosos)
-let filtroTimeout = null;
-function aplicarFiltrosDebounced() {
-  clearTimeout(filtroTimeout);
-  filtroTimeout = setTimeout(() => aplicarFiltros(true), 200);
-}
-
 // =============================
 // ICONOS
 // =============================
@@ -139,8 +132,6 @@ const iconoSeleccionado = crearIconoColor("https://raw.githubusercontent.com/poi
 // =============================
 // GEOLOCALIZACIÓN
 // =============================
-
-// Punto azul de "estás aquí"
 let markerUbicacion = null;
 
 function dibujarUbicacionUsuario(lat, lng) {
@@ -162,7 +153,6 @@ function dibujarUbicacionUsuario(lat, lng) {
   }
 }
 
-// Localización sencilla al cargar
 function localizarUsuarioSimple() {
   if (!navigator.geolocation) return;
 
@@ -183,7 +173,6 @@ function localizarUsuarioSimple() {
   );
 }
 
-// "Cerca de mí"
 function buscarCercaDeMi() {
   if (!navigator.geolocation) {
     alert("Tu dispositivo no permite obtener la ubicación.");
@@ -519,12 +508,10 @@ function seleccionarLocalDesdeLista(idLocal) {
   const local = localesFiltrados.find(l => String(l.id) === String(idLocal));
   if (!local) return;
 
-  // centrar mapa en ese local
   if (local.lat && local.lng && typeof map !== "undefined") {
     map.setView([local.lat, local.lng], 18, { animate: true });
   }
 
-  // resaltar marker y abrir popup
   const marker = markerPorId[idLocal];
   if (marker) {
     resaltarMarkerSeleccionado(marker);
@@ -533,10 +520,8 @@ function seleccionarLocalDesdeLista(idLocal) {
     }
   }
 
-  // abrir panel detalle
   abrirPanelDetalle(local);
 
-  // cerrar la lista de locales si está abierta
   const listaWrapper = document.getElementById("listaWrapper");
   if (listaWrapper && !listaWrapper.classList.contains("oculta")) {
     listaWrapper.classList.add("oculta");
@@ -626,7 +611,7 @@ function crearMarkerDesdeLocal(local) {
     "," +
     lng +
     "&query_place_id=" +
-    query; [web:68]
+    query;
 
   const tieneValoracion = (typeof local.valoracion === "number" && local.valoracion > 0);
   const valoracionText = tieneValoracion
@@ -1092,5 +1077,3 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuarioSimple();
   cargarLocales();
 });
-
-
