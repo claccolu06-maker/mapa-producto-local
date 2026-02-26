@@ -50,7 +50,7 @@ function estaAbiertoAhora(local) {
 var map = L.map("map", {
   zoomControl: true,
   inertia: true,
-  inertiaDeceleration: 3000, // más suave en móvil
+  inertiaDeceleration: 3000,
   tap: true,
   preferCanvas: true
 }).setView([37.3891, -5.9845], 13);
@@ -99,7 +99,7 @@ let markerPorId = {};
 let localSeleccionadoId = null;
 let markerSeleccionado = null;
 
-// Debounce filtros
+// Debounce filtros (si quisieras usarlo en inputs ruidosos)
 let filtroTimeout = null;
 function aplicarFiltrosDebounced() {
   clearTimeout(filtroTimeout);
@@ -462,7 +462,10 @@ function actualizarListaLocales(lista) {
 
     const categoria = local.categoria || "Sin categoría";
     const tipo = local.tipo_detalle || "";
-    const barrio = local.barrio || "Sin barrio";
+    const barrio = local.barrio || "";
+    const direccion = local.direccion || "";
+    const direccionTexto = direccion || (barrio ? `Barrio de ${barrio}` : "Sevilla");
+
     const valoracion = (typeof local.valoracion === "number" && local.valoracion > 0)
       ? local.valoracion
       : null;
@@ -479,8 +482,8 @@ function actualizarListaLocales(lista) {
         ${categoria}${tipo ? " · " + tipo : ""}${precio ? " · " + "€".repeat(precio) : ""}
       </div>
       <div class="card-local-meta">
-        <span class="pill-barrio">${barrio}</span>
-        <span>${local.direccion || ""}</span>
+        <span class="pill-barrio">${barrio || "Sevilla"}</span>
+        <span>${direccionTexto}</span>
       </div>
     `;
 
@@ -516,6 +519,19 @@ function seleccionarLocalDesdeLista(idLocal) {
   }
 
   abrirPanelDetalle(local);
+
+  // Abrir Google Maps en nueva pestaña al pinchar la card
+  if (local.lat && local.lng) {
+    const query = encodeURIComponent((local.nombre || "") + " Sevilla");
+    const urlMaps =
+      "https://www.google.com/maps/search/?api=1&query=" +
+      local.lat +
+      "," +
+      local.lng +
+      "&query_place_id=" +
+      query;
+    window.open(urlMaps, "_blank");
+  }
 }
 
 function resaltarCardSeleccionada() {
@@ -536,7 +552,6 @@ function actualizarResumenLista(texto) {
 }
 
 function resaltarMarkerSeleccionado(marker) {
-  // Restaurar marker previo
   if (markerSeleccionado && markerSeleccionado !== marker) {
     const localPrevio = markerSeleccionado._localData;
     if (localPrevio) {
@@ -548,7 +563,6 @@ function resaltarMarkerSeleccionado(marker) {
 
   markerSeleccionado = marker;
 
-  // Si no tiene datos del local, los buscamos
   if (!marker._localData) {
     const id = Object.keys(markerPorId).find(
       key => markerPorId[key] === marker
@@ -559,10 +573,8 @@ function resaltarMarkerSeleccionado(marker) {
     }
   }
 
-  // Cambiar icono a seleccionado
   marker.setIcon(iconoSeleccionado);
 
-  // Pequeña animación de "salto"
   const originalLatLng = marker.getLatLng();
   let step = 0;
   const maxStep = 10;
@@ -602,7 +614,7 @@ function crearMarkerDesdeLocal(local) {
     "," +
     lng +
     "&query_place_id=" +
-    query;
+    query; [web:68]
 
   const tieneValoracion = (typeof local.valoracion === "number" && local.valoracion > 0);
   const valoracionText = tieneValoracion
@@ -613,12 +625,12 @@ function crearMarkerDesdeLocal(local) {
   const popupHtml = `
     <b>${nombre}</b><br><br>
     ${valoracionText} ${recomendadoText ? " · " + recomendadoText : ""}<br><br>
+    <a href="${urlMaps}" target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a><br><br>
     <button class="btn-ver-detalle" data-id="${local.id}">Ver detalle</button><br>
   `;
 
   marker.bindPopup(popupHtml);
 
-  // Guardamos referencia del marker por id de local
   markerPorId[local.id] = marker;
   marker._localData = local;
 
@@ -649,11 +661,15 @@ function abrirPanelDetalle(local) {
   const redes = local.redes || {};
   const foto = local.foto || "";
 
+  const barrio = local.barrio || "";
+  const direccion = local.direccion || "";
+  const direccionTexto = direccion || (barrio ? `Barrio de ${barrio}` : "Sevilla");
+
   body.innerHTML = `
     <p><span class="badge">${local.categoria || "-"}</span>
        <span class="badge">${local.tipo_detalle || ""}</span></p>
-    <p><b>Dirección:</b> ${local.direccion || "-"}</p>
-    <p><b>Barrio:</b> ${local.barrio || "-"}</p>
+    <p><b>Dirección:</b> ${direccionTexto}</p>
+    <p><b>Barrio:</b> ${barrio || "Sevilla"}</p>
     <p><b>Precio:</b> ${precioText}</p>
     <p><b>Valoración:</b> ${valoracionText}</p>
     <p><b>Abierto ahora:</b> ${abiertoAhora ? "Sí" : "No"}</p>
@@ -700,7 +716,6 @@ function pintarMapa(listaLocales, hacerFitBounds) {
       : "Mostrando " + listaLocales.length + " locales";
   }
 
-  // Reiniciamos estado de markers
   clusterGroup.clearLayers();
   markerPorId = {};
   markerSeleccionado = null;
@@ -727,7 +742,6 @@ function pintarMapa(listaLocales, hacerFitBounds) {
     map.fitBounds(bounds, { padding: [40, 40] });
   }
 
-  // Evento para botón "Ver detalle" en popup
   clusterGroup.on("popupopen", function (e) {
     const popupNode = e.popup.getElement();
     if (!popupNode) return;
@@ -751,9 +765,8 @@ function pintarMapa(listaLocales, hacerFitBounds) {
     });
   });
 
-  // Actualizamos también la lista lateral
   actualizarListaLocales(listaLocales);
-  actualizarResumenLista(); // texto por defecto
+  actualizarResumenLista();
 }
 
 // =============================
@@ -825,7 +838,6 @@ function aplicarFiltros(hacerFitBounds) {
   actualizarChipsResumen();
   pintarMapa(localesFiltrados, hacerFitBounds);
 
-  // Mensaje aclaratorio cuando se filtra por vista actual
   const resumenEl = document.getElementById("textoResumenLista");
   if (resumenEl) {
     if (soloEnMapa) {
@@ -853,6 +865,8 @@ function cargarLocales() {
         if (typeof l.horario_abierto === "undefined") l.horario_abierto = true;
         if (!("foto" in l)) l.foto = "";
         if (!("redes" in l)) l.redes = {};
+        if (!("barrio" in l)) l.barrio = "";
+        if (!("direccion" in l)) l.direccion = "";
         return l;
       });
 
@@ -872,7 +886,6 @@ function cargarLocales() {
           }
         }
 
-        // En móvil, forzamos "Solo en mapa" a desmarcado
         if (L.Browser.mobile) {
           const cbMapa = document.getElementById("fSoloEnMapa");
           if (cbMapa) cbMapa.checked = false;
@@ -1041,7 +1054,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Toggle lista + invalidateSize para que el mapa se reajuste
   if (btnToggleLista && listaWrapper) {
     btnToggleLista.addEventListener("click", () => {
       listaWrapper.classList.toggle("oculta");
