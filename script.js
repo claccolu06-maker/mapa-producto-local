@@ -51,8 +51,9 @@ var map = L.map("map", {
   zoomControl: true,
   inertia: true,
   inertiaDeceleration: 3000, // más suave en móvil
-  tap: true
-}).setView([37.3891, -5.9845], 13); // [web:96][web:126]
+  tap: true,
+  preferCanvas: true
+}).setView([37.3891, -5.9845], 13);
 
 var boundsSevilla = L.latLngBounds(
   [37.30, -6.10],
@@ -71,8 +72,12 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 // MarkerCluster rendimiento
 var clusterGroup = L.markerClusterGroup({
   spiderfyOnEveryZoom: false,
-  disableClusteringAtZoom: 18,
-  chunkedLoading: true
+  disableClusteringAtZoom: 17,
+  chunkedLoading: true,
+  chunkDelay: 80,
+  chunkInterval: 200,
+  maxClusterRadius: 70,
+  removeOutsideVisibleBounds: true
 });
 map.addLayer(clusterGroup);
 
@@ -93,6 +98,13 @@ let ultimoDetalleLocal = null;
 let markerPorId = {};
 let localSeleccionadoId = null;
 let markerSeleccionado = null;
+
+// Debounce filtros
+let filtroTimeout = null;
+function aplicarFiltrosDebounced() {
+  clearTimeout(filtroTimeout);
+  filtroTimeout = setTimeout(() => aplicarFiltros(true), 200);
+}
 
 // =============================
 // ICONOS
@@ -168,7 +180,7 @@ function localizarUsuarioSimple() {
       timeout: 15000,
       maximumAge: 60 * 1000
     }
-  ); // [web:102][web:131]
+  );
 }
 
 // "Cerca de mí": centra y filtra por radio si está definido
@@ -201,7 +213,7 @@ function buscarCercaDeMi() {
       timeout: 20000,
       maximumAge: 0
     }
-  ); // [web:102][web:131]
+  );
 }
 
 function recentrarEnMi() {
@@ -422,7 +434,9 @@ function actualizarTextoBtnFiltros(numFiltros) {
 // LISTA LATERAL DE LOCALES
 // =============================
 function actualizarListaLocales(lista) {
-  localesFiltrados = lista || [];
+  const maxLista = 300;
+  localesFiltrados = (lista || []).slice(0, maxLista);
+
   const contenedor = document.getElementById("contenedorListaLocales");
   const contadorLista = document.getElementById("contadorLista");
 
@@ -438,6 +452,8 @@ function actualizarListaLocales(lista) {
   }
 
   contadorLista.textContent = `${localesFiltrados.length} ${localesFiltrados.length === 1 ? "local" : "locales"}`;
+
+  const fragment = document.createDocumentFragment();
 
   localesFiltrados.forEach(local => {
     const card = document.createElement("div");
@@ -472,8 +488,10 @@ function actualizarListaLocales(lista) {
       seleccionarLocalDesdeLista(local.id);
     });
 
-    contenedor.appendChild(card);
+    fragment.appendChild(card);
   });
+
+  contenedor.appendChild(fragment);
 
   resaltarCardSeleccionada();
 }
@@ -648,6 +666,7 @@ function abrirPanelDetalle(local) {
     ${foto ? `<div style="margin-top:10px;">
                 <img src="${foto}"
                      alt="${local.nombre || "Foto del local"}"
+                     loading="lazy"
                      style="width:100%;max-height:220px;object-fit:cover;border-radius:6px;"
                      onerror="this.style.display='none'">
               </div>` : ""}
@@ -752,7 +771,7 @@ function aplicarFiltros(hacerFitBounds) {
   const radioMetros = parseInt(document.getElementById("fRadioDistancia")?.value || "", 10) || null;
   const orden = document.getElementById("fOrden")?.value || "ninguno";
 
-  const bounds = map.getBounds();
+  const bounds = soloEnMapa ? map.getBounds() : null;
 
   localesFiltrados = todosLosLocales.filter(local => {
     if (categoria && local.categoria !== categoria) return false;
@@ -784,7 +803,7 @@ function aplicarFiltros(hacerFitBounds) {
       if (d > radioMetros) return false;
     }
 
-    if (soloEnMapa) {
+    if (soloEnMapa && bounds) {
       const latlng = L.latLng(local.lat, local.lng);
       if (!bounds.contains(latlng)) return false;
     }
@@ -837,7 +856,6 @@ function cargarLocales() {
         return l;
       });
 
-      localesFiltrados = todosLosLocales;
       rellenarBarrios();
       construirTiposPorCategoria();
       rellenarTiposDetalle();
@@ -1007,7 +1025,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   map.on("moveend", () => {
     const centro = map.getCenter();
-    if (ubicacionUsuario) {
+    if (ubicacionUsuario && btnRecentraMi) {
       const d = map.distance(
         L.latLng(ubicacionUsuario.lat, ubicacionUsuario.lng),
         centro
