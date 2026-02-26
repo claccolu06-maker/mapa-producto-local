@@ -605,13 +605,13 @@ function crearMarkerDesdeLocal(local) {
   const lat = local.lat;
   const lng = local.lng;
   const query = encodeURIComponent(nombre + " Sevilla");
-  const urlMaps =
-    "https://www.google.com/maps/search/?api=1&query=" +
-    lat +
-    "," +
-    lng +
-    "&query_place_id=" +
-    query;
+ const urlMaps =
+  "https://www.google.com/maps/search/?api=1&query=" +
+  lat +
+  "," +
+  lng +
+  "&query_place_id=" +
+  query;
 
   const tieneValoracion = (typeof local.valoracion === "number" && local.valoracion > 0);
   const valoracionText = tieneValoracion
@@ -1077,3 +1077,4 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuarioSimple();
   cargarLocales();
 });
+
