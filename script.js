@@ -531,8 +531,18 @@ function seleccionarLocalDesdeLista(idLocal) {
     }
   }
 
-  abrirPanelDetalle(local); // solo abre panel en tu página, sin ir a Google Maps
+  abrirPanelDetalle(local);
+
+  // cerrar lista de locales
+  const listaWrapper = document.getElementById("listaWrapper");
+  if (listaWrapper && !listaWrapper.classList.contains("oculta")) {
+    listaWrapper.classList.add("oculta");
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 220);
+  }
 }
+
 
 function resaltarCardSeleccionada() {
   const cards = document.querySelectorAll(".card-local");
@@ -1080,3 +1090,4 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuarioSimple();
   cargarLocales();
 });
+
