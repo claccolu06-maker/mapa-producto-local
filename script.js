@@ -99,7 +99,7 @@ let markerPorId = {};
 let localSeleccionadoId = null;
 let markerSeleccionado = null;
 
-// Debounce filtros (si quisieras usarlo en inputs ruidosos)
+// Debounce filtros (por si quieres usarlo en inputs ruidosos)
 let filtroTimeout = null;
 function aplicarFiltrosDebounced() {
   clearTimeout(filtroTimeout);
@@ -162,7 +162,6 @@ function dibujarUbicacionUsuario(lat, lng) {
   }
 }
 
-// Localización sencilla al cargar (no obliga a setView)
 function localizarUsuarioSimple() {
   if (!navigator.geolocation) return;
 
@@ -183,7 +182,6 @@ function localizarUsuarioSimple() {
   );
 }
 
-// "Cerca de mí": centra y filtra por radio si está definido
 function buscarCercaDeMi() {
   if (!navigator.geolocation) {
     alert("Tu dispositivo no permite obtener la ubicación.");
@@ -423,7 +421,6 @@ function actualizarChipsResumen() {
   actualizarTextoBtnFiltros(chips.length);
 }
 
-// Cambia el texto del botón Filtros según nº de chips
 function actualizarTextoBtnFiltros(numFiltros) {
   const el = document.getElementById("textoBtnFiltros");
   if (!el) return;
@@ -458,13 +455,23 @@ function actualizarListaLocales(lista) {
   localesFiltrados.forEach(local => {
     const card = document.createElement("div");
     card.className = "card-local";
-    card.dataset.id = local.id; // id único
+    card.dataset.id = local.id;
 
     const categoria = local.categoria || "Sin categoría";
     const tipo = local.tipo_detalle || "";
-    const barrio = local.barrio || "";
-    const direccion = local.direccion || "";
-    const direccionTexto = direccion || (barrio ? `Barrio de ${barrio}` : "Sevilla");
+    const barrio = (local.barrio || "").trim();
+
+    let direccion = (local.direccion || "").trim();
+    if (!direccion || direccion.toLowerCase() === "dirección desconocida") {
+      if (barrio) {
+        direccion = `Barrio de ${barrio}`;
+      } else if (local.lat && local.lng) {
+        direccion = `${local.lat.toFixed(5)}, ${local.lng.toFixed(5)}`;
+      } else {
+        direccion = "Sevilla";
+      }
+    }
+    const direccionTexto = direccion;
 
     const valoracion = (typeof local.valoracion === "number" && local.valoracion > 0)
       ? local.valoracion
@@ -520,7 +527,6 @@ function seleccionarLocalDesdeLista(idLocal) {
 
   abrirPanelDetalle(local);
 
-  // Abrir Google Maps en nueva pestaña al pinchar la card
   if (local.lat && local.lng) {
     const query = encodeURIComponent((local.nombre || "") + " Sevilla");
     const urlMaps =
@@ -614,7 +620,7 @@ function crearMarkerDesdeLocal(local) {
     "," +
     lng +
     "&query_place_id=" +
-    query; [web:68]
+    query;
 
   const tieneValoracion = (typeof local.valoracion === "number" && local.valoracion > 0);
   const valoracionText = tieneValoracion
@@ -661,9 +667,18 @@ function abrirPanelDetalle(local) {
   const redes = local.redes || {};
   const foto = local.foto || "";
 
-  const barrio = local.barrio || "";
-  const direccion = local.direccion || "";
-  const direccionTexto = direccion || (barrio ? `Barrio de ${barrio}` : "Sevilla");
+  const barrio = (local.barrio || "").trim();
+  let direccion = (local.direccion || "").trim();
+  if (!direccion || direccion.toLowerCase() === "dirección desconocida") {
+    if (barrio) {
+      direccion = `Barrio de ${barrio}`;
+    } else if (local.lat && local.lng) {
+      direccion = `${local.lat.toFixed(5)}, ${local.lng.toFixed(5)}`;
+    } else {
+      direccion = "Sevilla";
+    }
+  }
+  const direccionTexto = direccion;
 
   body.innerHTML = `
     <p><span class="badge">${local.categoria || "-"}</span>
