@@ -99,7 +99,7 @@ let markerPorId = {};
 let localSeleccionadoId = null;
 let markerSeleccionado = null;
 
-// Debounce filtros (por si quieres usarlo en inputs ruidosos)
+// Debounce filtros (si quisieras usarlo en inputs ruidosos)
 let filtroTimeout = null;
 function aplicarFiltrosDebounced() {
   clearTimeout(filtroTimeout);
@@ -162,6 +162,7 @@ function dibujarUbicacionUsuario(lat, lng) {
   }
 }
 
+// Localización sencilla al cargar
 function localizarUsuarioSimple() {
   if (!navigator.geolocation) return;
 
@@ -182,6 +183,7 @@ function localizarUsuarioSimple() {
   );
 }
 
+// "Cerca de mí"
 function buscarCercaDeMi() {
   if (!navigator.geolocation) {
     alert("Tu dispositivo no permite obtener la ubicación.");
@@ -459,9 +461,13 @@ function actualizarListaLocales(lista) {
 
     const categoria = local.categoria || "Sin categoría";
     const tipo = local.tipo_detalle || "";
-    const barrio = (local.barrio || "").trim();
 
-    let direccion = (local.direccion || "").trim();
+    const rawBarrio = (local.barrio || "").trim();
+    const rawDireccion = (local.direccion || "").trim();
+
+    const barrio = rawBarrio.toLowerCase() === "desconocido" ? "" : rawBarrio;
+
+    let direccion = rawDireccion;
     if (!direccion || direccion.toLowerCase() === "dirección desconocida") {
       if (barrio) {
         direccion = `Barrio de ${barrio}`;
@@ -525,19 +531,7 @@ function seleccionarLocalDesdeLista(idLocal) {
     }
   }
 
-  abrirPanelDetalle(local);
-
-  if (local.lat && local.lng) {
-    const query = encodeURIComponent((local.nombre || "") + " Sevilla");
-    const urlMaps =
-      "https://www.google.com/maps/search/?api=1&query=" +
-      local.lat +
-      "," +
-      local.lng +
-      "&query_place_id=" +
-      query;
-    window.open(urlMaps, "_blank");
-  }
+  abrirPanelDetalle(local); // solo abre panel en tu página, sin ir a Google Maps
 }
 
 function resaltarCardSeleccionada() {
@@ -614,13 +608,13 @@ function crearMarkerDesdeLocal(local) {
   const lat = local.lat;
   const lng = local.lng;
   const query = encodeURIComponent(nombre + " Sevilla");
-const urlMaps =
-  "https://www.google.com/maps/search/?api=1&query=" +
-  lat +
-  "," +
-  lng +
-  "&query_place_id=" +
-  query;
+  const urlMaps =
+    "https://www.google.com/maps/search/?api=1&query=" +
+    lat +
+    "," +
+    lng +
+    "&query_place_id=" +
+    query; [web:68]
 
   const tieneValoracion = (typeof local.valoracion === "number" && local.valoracion > 0);
   const valoracionText = tieneValoracion
@@ -667,8 +661,12 @@ function abrirPanelDetalle(local) {
   const redes = local.redes || {};
   const foto = local.foto || "";
 
-  const barrio = (local.barrio || "").trim();
-  let direccion = (local.direccion || "").trim();
+  const rawBarrio = (local.barrio || "").trim();
+  const rawDireccion = (local.direccion || "").trim();
+
+  const barrio = rawBarrio.toLowerCase() === "desconocido" ? "" : rawBarrio;
+
+  let direccion = rawDireccion;
   if (!direccion || direccion.toLowerCase() === "dirección desconocida") {
     if (barrio) {
       direccion = `Barrio de ${barrio}`;
@@ -1082,4 +1080,3 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuarioSimple();
   cargarLocales();
 });
-
