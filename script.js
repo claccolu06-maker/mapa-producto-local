@@ -519,10 +519,12 @@ function seleccionarLocalDesdeLista(idLocal) {
   const local = localesFiltrados.find(l => String(l.id) === String(idLocal));
   if (!local) return;
 
+  // centrar mapa en ese local
   if (local.lat && local.lng && typeof map !== "undefined") {
     map.setView([local.lat, local.lng], 18, { animate: true });
   }
 
+  // resaltar marker y abrir popup
   const marker = markerPorId[idLocal];
   if (marker) {
     resaltarMarkerSeleccionado(marker);
@@ -531,9 +533,10 @@ function seleccionarLocalDesdeLista(idLocal) {
     }
   }
 
+  // abrir panel detalle
   abrirPanelDetalle(local);
 
-  // cerrar lista de locales
+  // cerrar la lista de locales si está abierta
   const listaWrapper = document.getElementById("listaWrapper");
   if (listaWrapper && !listaWrapper.classList.contains("oculta")) {
     listaWrapper.classList.add("oculta");
@@ -542,7 +545,6 @@ function seleccionarLocalDesdeLista(idLocal) {
     }, 220);
   }
 }
-
 
 function resaltarCardSeleccionada() {
   const cards = document.querySelectorAll(".card-local");
@@ -1090,4 +1092,5 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuarioSimple();
   cargarLocales();
 });
+
 
