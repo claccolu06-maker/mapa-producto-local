@@ -566,6 +566,11 @@
       padding: 10px 14px 14px;
       overflow-y: auto;
       flex: 1;
+      font-size: 14px;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .badge {
@@ -607,6 +612,106 @@
     }
     a:hover {
       text-decoration: underline;
+    }
+
+    /* Bloques del detalle */
+    .detalle-header {
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+    }
+    .detalle-titulo-linea {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .detalle-nombre {
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .detalle-subtitulo {
+      margin-top: 4px;
+      color: #666;
+      font-size: 13px;
+    }
+    .detalle-info-principal {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .detalle-linea {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0;
+    }
+    .detalle-label {
+      font-weight: 500;
+      color: #555;
+      font-size: 13px;
+    }
+    .detalle-valor {
+      text-align: right;
+      font-size: 13px;
+    }
+    .estado-abierto {
+      color: #0a8a3a;
+      font-weight: 600;
+    }
+    .estado-cerrado {
+      color: #c0392b;
+      font-weight: 600;
+    }
+    .detalle-bloque {
+      margin-top: 4px;
+    }
+    .detalle-descripcion {
+      margin: 4px 0 0;
+      line-height: 1.4;
+    }
+    .detalle-redes-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .detalle-redes-links a {
+      font-size: 13px;
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .detalle-redes-links a:hover {
+      text-decoration: underline;
+    }
+    .detalle-boton-maps {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #111827;
+      color: #fff;
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .detalle-boton-maps:hover {
+      background: #000;
+    }
+    .detalle-foto img {
+      width: 100%;
+      max-height: 220px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .detalle-pill {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: #f3f4f6;
+    }
+    .detalle-pill-valoracion {
+      background: #fbbf24;
+      color: #111827;
     }
 
     @media (max-width: 1024px) {
@@ -751,10 +856,19 @@
         </div>
       </div>
 
+      <label class="field-label" for="fValoracionMin">Valoración mínima</label>
+      <select id="fValoracionMin">
+        <option value="0">Cualquiera</option>
+        <option value="3">3★ o más</option>
+        <option value="4">4★ o más</option>
+        <option value="4.5">4.5★ o más</option>
+      </select>
+
       <label class="field-label" for="fOrden">Ordenar por</label>
       <select id="fOrden">
         <option value="ninguno">Sin orden especial</option>
         <option value="valoracion_desc">Mejor valorados primero</option>
+        <option value="distancia_asc">Más cerca primero</option>
       </select>
 
       <div class="panel-section-title">Dónde</div>
