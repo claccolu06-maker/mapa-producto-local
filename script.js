@@ -981,6 +981,42 @@ function cargarLocales() {
 }
 
 // =============================
+// GESTOS SWIPE EN MÓVIL
+// =============================
+function habilitarSwipeCerrar(elemento, onCerrar) {
+  if (!elemento) return;
+
+  let touchStartY = null;
+  let touchCurrentY = null;
+  const desplazamientoMinimo = 60;
+
+  elemento.addEventListener("touchstart", function (e) {
+    if (e.touches.length !== 1) return;
+    touchStartY = e.touches[0].clientY;
+    touchCurrentY = touchStartY;
+  }, { passive: true });
+
+  elemento.addEventListener("touchmove", function (e) {
+    if (touchStartY === null) return;
+    touchCurrentY = e.touches[0].clientY;
+  }, { passive: true });
+
+  elemento.addEventListener("touchend", function () {
+    if (touchStartY === null || touchCurrentY === null) {
+      touchStartY = null;
+      touchCurrentY = null;
+      return;
+    }
+    const diffY = touchCurrentY - touchStartY;
+    if (diffY > desplazamientoMinimo) {
+      onCerrar();
+    }
+    touchStartY = null;
+    touchCurrentY = null;
+  });
+}
+
+// =============================
 // EVENTOS
 // =============================
 document.addEventListener("DOMContentLoaded", function () {
@@ -1143,8 +1179,22 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Swipe para cerrar lista y panel detalle en móvil
+  habilitarSwipeCerrar(listaWrapper, () => {
+    if (!listaWrapper.classList.contains("oculta")) {
+      listaWrapper.classList.add("oculta");
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 220);
+    }
+  });
+
+  const panelDetalleEl = document.getElementById("panelDetalle");
+  habilitarSwipeCerrar(panelDetalleEl, () => {
+    cerrarPanelDetalle();
+  });
+
   cargarFavoritosGuardados();
   localizarUsuarioSimple();
   cargarLocales();
 });
-
