@@ -53,7 +53,7 @@ var map = L.map("map", {
   inertiaDeceleration: 3000,
   tap: true,
   preferCanvas: true
-}).setView([37.3891, -5.9845], 13);
+}).setView([37.3891, -5.9845], 14);
 
 var boundsSevilla = L.latLngBounds(
   [37.30, -6.10],
@@ -792,13 +792,13 @@ function pintarMapa(listaLocales, hacerFitBounds) {
     let bounds = group.getBounds();
     if (!boundsSevilla.contains(bounds)) bounds = boundsSevilla;
     map.fitBounds(bounds, { padding: [40, 40] });
-  } else if (primerPintado && markers.length > 0) {
-    primerPintado = false;
-    const group = L.featureGroup(markers);
-    let bounds = group.getBounds();
-    if (!boundsSevilla.contains(bounds)) bounds = boundsSevilla;
-    map.fitBounds(bounds, { padding: [40, 40] });
-  }
+ } else if (primerPintado && markers.length > 0) {
+  primerPintado = false;
+  // const group = L.featureGroup(markers);
+  // let bounds = group.getBounds();
+  // if (!boundsSevilla.contains(bounds)) bounds = boundsSevilla;
+  // map.fitBounds(bounds, { padding: [40, 40] });
+}
 
   clusterGroup.on("popupopen", function (e) {
     const popupNode = e.popup.getElement();
@@ -1198,3 +1198,4 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuarioSimple();
   cargarLocales();
 });
+
