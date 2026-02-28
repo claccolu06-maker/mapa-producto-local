@@ -787,18 +787,23 @@ function pintarMapa(listaLocales, hacerFitBounds) {
 
   clusterGroup.addLayers(markers);
 
-  if (hacerFitBounds && markers.length > 0) {
-    const group = L.featureGroup(markers);
-    let bounds = group.getBounds();
-    if (!boundsSevilla.contains(bounds)) bounds = boundsSevilla;
-    map.fitBounds(bounds, { padding: [40, 40] });
- } else if (primerPintado && markers.length > 0) {
-  primerPintado = false;
-  // const group = L.featureGroup(markers);
-  // let bounds = group.getBounds();
-  // if (!boundsSevilla.contains(bounds)) bounds = boundsSevilla;
-  // map.fitBounds(bounds, { padding: [40, 40] });
-}
+  // Solo usamos para el fitBounds los marcadores que están dentro de Sevilla
+  const markersEnSevilla = markers.filter(m =>
+    boundsSevilla.contains(m.getLatLng())
+  );
+
+  if (hacerFitBounds && markersEnSevilla.length > 0) {
+    const group = L.featureGroup(markersEnSevilla);
+    map.fitBounds(group.getBounds(), { padding: [40, 40] });
+  } else if (primerPintado && markersEnSevilla.length > 0) {
+    primerPintado = false;
+    const group = L.featureGroup(markersEnSevilla);
+    map.fitBounds(group.getBounds(), { padding: [40, 40] });
+  } else if (primerPintado) {
+    // Fallback si no hay ningún marcador dentro de Sevilla
+    primerPintado = false;
+    map.setView([37.3891, -5.9845], 13);
+  }
 
   clusterGroup.on("popupopen", function (e) {
     const popupNode = e.popup.getElement();
@@ -1198,4 +1203,5 @@ document.addEventListener("DOMContentLoaded", function () {
   localizarUsuarioSimple();
   cargarLocales();
 });
+
 
