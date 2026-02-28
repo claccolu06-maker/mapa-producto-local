@@ -89,7 +89,7 @@ let localesFiltrados = [];
 let barriosUnicos = new Set();
 let tiposPorCategoria = {};
 let primerPintado = true;
-let puntoReferencia = null;
+let puntoReferencia = null; // también se usa para distancia
 let ubicacionUsuario = null;
 let favoritos = new Set();
 let ultimoDetalleLocal = null;
@@ -286,7 +286,8 @@ function obtenerEstadoFiltros() {
     textoLibre: document.getElementById("fTextoLibre")?.value || "",
     ubicacionTexto: document.getElementById("fUbicacionCliente")?.value || "",
     radioDistancia: document.getElementById("fRadioDistancia")?.value || "",
-    orden: document.getElementById("fOrden")?.value || "ninguno"
+    orden: document.getElementById("fOrden")?.value || "ninguno",
+    valoracionMin: document.getElementById("fValoracionMin")?.value || "0"
   };
 }
 
@@ -303,6 +304,7 @@ function aplicarEstadoFiltros(estado) {
   setValue("fPrecioMax", estado.precioMax || "3");
   setValue("fBarrio", estado.barrio || "");
   setValue("fOrden", estado.orden || "ninguno");
+  setValue("fValoracionMin", estado.valoracionMin || "0");
 
   const cbAbiertos = document.getElementById("fSoloAbiertos");
   if (cbAbiertos) cbAbiertos.checked = !!estado.soloAbiertos;
@@ -389,6 +391,8 @@ function actualizarChipsResumen() {
   if (estado.soloAbiertos) chips.push("Abierto ahora");
   if (estado.soloEnMapa) chips.push("Solo en vista");
   if (estado.orden === "valoracion_desc") chips.push("Mejor valorados");
+  if (estado.orden === "distancia_asc") chips.push("Más cerca primero");
+  if (parseFloat(estado.valoracionMin || "0") > 0) chips.push(`≥ ${estado.valoracionMin}★`);
   if (estado.textoLibre) chips.push('Texto: "' + estado.textoLibre + '"');
 
   cont.innerHTML = "";
@@ -605,13 +609,13 @@ function crearMarkerDesdeLocal(local) {
   const lat = local.lat;
   const lng = local.lng;
   const query = encodeURIComponent(nombre + " Sevilla");
- const urlMaps =
-  "https://www.google.com/maps/search/?api=1&query=" +
-  lat +
-  "," +
-  lng +
-  "&query_place_id=" +
-  query;
+  const urlMaps =
+    "https://www.google.com/maps/search/?api=1&query=" +
+    lat +
+    "," +
+    lng +
+    "&query_place_id=" +
+    query;
 
   const tieneValoracion = (typeof local.valoracion === "number" && local.valoracion > 0);
   const valoracionText = tieneValoracion
@@ -676,24 +680,68 @@ function abrirPanelDetalle(local) {
   const direccionTexto = direccion;
 
   body.innerHTML = `
-    <p><span class="badge">${local.categoria || "-"}</span>
-       <span class="badge">${local.tipo_detalle || ""}</span></p>
-    <p><b>Dirección:</b> ${direccionTexto}</p>
-    <p><b>Barrio:</b> ${barrio || "Sevilla"}</p>
-    <p><b>Precio:</b> ${precioText}</p>
-    <p><b>Valoración:</b> ${valoracionText}</p>
-    <p><b>Abierto ahora:</b> ${abiertoAhora ? "Sí" : "No"}</p>
-    ${desc ? `<p><b>Descripción:</b><br>${desc}</p>` : ""}
-    ${redes.web ? `<p><b>Web:</b> <a href="${redes.web}" target="_blank" rel="noopener noreferrer">${redes.web}</a></p>` : ""}
-    ${redes.ig ? `<p><b>Instagram:</b> <a href="${redes.ig}" target="_blank" rel="noopener noreferrer">${redes.ig}</a></p>` : ""}
-    ${redes.tiktok ? `<p><b>TikTok:</b> <a href="${redes.tiktok}" target="_blank" rel="noopener noreferrer">${redes.tiktok}</a></p>` : ""}
-    <p><a href="https://www.google.com/maps/search/?api=1&query=${local.lat},${local.lng}"
-          target="_blank" rel="noopener noreferrer">Ver en Google Maps</a></p>
-    ${foto ? `<div style="margin-top:10px;">
+    <div class="detalle-header">
+      <div class="detalle-titulo-linea">
+        <span class="detalle-nombre">${local.nombre || "Local"}</span>
+        ${tieneValoracion
+          ? `<span class="detalle-pill detalle-pill-valoracion">${valoracionText}</span>`
+          : ""}
+      </div>
+      <div class="detalle-subtitulo">
+        <span>${local.categoria || "-"}</span>
+        ${local.tipo_detalle ? ` · <span>${local.tipo_detalle}</span>` : ""}
+      </div>
+    </div>
+
+    <div class="detalle-info-principal">
+      <p class="detalle-linea">
+        <span class="detalle-label">Dirección</span>
+        <span class="detalle-valor">${direccionTexto}</span>
+      </p>
+      <p class="detalle-linea">
+        <span class="detalle-label">Barrio</span>
+        <span class="detalle-valor">${barrio || "Sevilla"}</span>
+      </p>
+      <p class="detalle-linea">
+        <span class="detalle-label">Precio</span>
+        <span class="detalle-valor">${precioText}</span>
+      </p>
+      <p class="detalle-linea">
+        <span class="detalle-label">Estado</span>
+        <span class="detalle-valor ${abiertoAhora ? "estado-abierto" : "estado-cerrado"}">
+          ${abiertoAhora ? "Abierto ahora" : "Cerrado ahora"}
+        </span>
+      </p>
+    </div>
+
+    ${desc ? `
+      <div class="detalle-bloque">
+        <p class="detalle-label">Descripción</p>
+        <p class="detalle-descripcion">${desc}</p>
+      </div>` : ""}
+
+    ${(redes.web || redes.ig || redes.tiktok) ? `
+      <div class="detalle-bloque detalle-redes">
+        <p class="detalle-label">Presencia online</p>
+        <div class="detalle-redes-links">
+          ${redes.web ? `<a href="${redes.web}" target="_blank" rel="noopener noreferrer">Web</a>` : ""}
+          ${redes.ig ? `<a href="${redes.ig}" target="_blank" rel="noopener noreferrer">Instagram</a>` : ""}
+          ${redes.tiktok ? `<a href="${redes.tiktok}" target="_blank" rel="noopener noreferrer">TikTok</a>` : ""}
+        </div>
+      </div>` : ""}
+
+    <div class="detalle-bloque">
+      <a class="detalle-boton-maps"
+         href="https://www.google.com/maps/search/?api=1&query=${local.lat},${local.lng}"
+         target="_blank" rel="noopener noreferrer">
+        Ver ruta en Google Maps
+      </a>
+    </div>
+
+    ${foto ? `<div class="detalle-foto">
                 <img src="${foto}"
                      alt="${local.nombre || "Foto del local"}"
                      loading="lazy"
-                     style="width:100%;max-height:220px;object-fit:cover;border-radius:6px;"
                      onerror="this.style.display='none'">
               </div>` : ""}
   `;
@@ -793,6 +841,7 @@ function aplicarFiltros(hacerFitBounds) {
   const textoLibre = normalizarTexto(document.getElementById("fTextoLibre")?.value || "");
   const radioMetros = parseInt(document.getElementById("fRadioDistancia")?.value || "", 10) || null;
   const orden = document.getElementById("fOrden")?.value || "ninguno";
+  const valoracionMin = parseFloat(document.getElementById("fValoracionMin")?.value || "0");
 
   const bounds = soloEnMapa ? map.getBounds() : null;
 
@@ -806,6 +855,11 @@ function aplicarFiltros(hacerFitBounds) {
     if (barrio && local.barrio !== barrio) return false;
 
     if (soloAbiertos && !estaAbiertoAhora(local)) return false;
+
+    if (!Number.isNaN(valoracionMin) && valoracionMin > 0) {
+      const v = typeof local.valoracion === "number" ? local.valoracion : 0;
+      if (v < valoracionMin) return false;
+    }
 
     if (textoLibre) {
       const campo = normalizarTexto(
@@ -834,8 +888,19 @@ function aplicarFiltros(hacerFitBounds) {
     return true;
   });
 
+  // ORDENACIÓN
   if (orden === "valoracion_desc") {
     localesFiltrados.sort((a, b) => (b.valoracion || 0) - (a.valoracion || 0));
+  } else if (orden === "distancia_asc" && puntoReferencia) {
+    const refLatLng = L.latLng(puntoReferencia.lat, puntoReferencia.lng);
+    localesFiltrados.forEach(l => {
+      if (l.lat && l.lng) {
+        l._distancia = refLatLng.distanceTo(L.latLng(l.lat, l.lng));
+      } else {
+        l._distancia = Infinity;
+      }
+    });
+    localesFiltrados.sort((a, b) => (a._distancia || Infinity) - (b._distancia || Infinity));
   }
 
   try {
@@ -852,6 +917,8 @@ function aplicarFiltros(hacerFitBounds) {
   if (resumenEl) {
     if (soloEnMapa) {
       resumenEl.textContent = `Mostrando ${localesFiltrados.length} locales (filtrando por vista actual)`;
+    } else if (orden === "distancia_asc" && puntoReferencia) {
+      resumenEl.textContent = `Mostrando ${localesFiltrados.length} locales ordenados por distancia`;
     } else {
       resumenEl.textContent = `Mostrando ${localesFiltrados.length} locales`;
     }
@@ -995,6 +1062,8 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById("fSoloAbiertos").checked = false;
       document.getElementById("fSoloEnMapa").checked = false;
       document.getElementById("fOrden").value = "ninguno";
+      const vm = document.getElementById("fValoracionMin");
+      if (vm) vm.value = "0";
 
       const tLibre = document.getElementById("fTextoLibre");
       if (tLibre) tLibre.value = "";
@@ -1048,12 +1117,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   map.on("moveend", () => {
     const centro = map.getCenter();
-    if (ubicacionUsuario && btnRecentraMi) {
+    const btnRecentraMiEl = btnRecentraMi;
+    if (ubicacionUsuario && btnRecentraMiEl) {
       const d = map.distance(
         L.latLng(ubicacionUsuario.lat, ubicacionUsuario.lng),
         centro
       );
-      btnRecentraMi.style.display = d > 800 ? "block" : "none";
+      btnRecentraMiEl.style.display = d > 800 ? "block" : "none";
     }
   });
 
