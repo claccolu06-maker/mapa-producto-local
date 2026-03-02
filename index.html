@@ -4,34 +4,23 @@
   <meta charset="UTF-8" />
   <title>Mapa Comercio Local Sevilla — Descubre negocios de barrio</title>
 
-  <!-- MEJORA: Viewport sin user-scalable=no (accesibilidad WCAG 2.1) -->
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
   />
 
-  <!-- MEJORA: Meta description para SEO -->
   <meta name="description" content="Explora y descubre comercios locales de barrio en Sevilla. Mapa interactivo con filtros por categoría, barrio, valoración, horarios y más." />
-
-  <!-- MEJORA: Open Graph para redes sociales -->
   <meta property="og:title" content="Mapa Comercio Local Sevilla" />
   <meta property="og:description" content="Descubre negocios de barrio en Sevilla con nuestro mapa interactivo." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://claccolu06-maker.github.io/mapa-producto-local/" />
   <meta property="og:locale" content="es_ES" />
-
-  <!-- MEJORA: Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Mapa Comercio Local Sevilla" />
   <meta name="twitter:description" content="Descubre negocios de barrio en Sevilla." />
-
-  <!-- MEJORA: Favicon (crea un favicon.png y colócalo en la raíz) -->
   <link rel="icon" type="image/png" href="favicon.png" />
-
-  <!-- MEJORA: Theme color para móviles -->
   <meta name="theme-color" content="#2563eb" />
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -39,14 +28,11 @@
     rel="stylesheet"
   />
 
-  <!-- Leaflet CSS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     crossorigin="anonymous"
   />
-
-  <!-- MarkerCluster CSS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
@@ -56,11 +42,7 @@
     href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
   />
 
-  <!-- MEJORA: Idealmente extraer a styles.css — de momento limpio y organizado aquí -->
   <style>
-    /* ============================
-       VARIABLES Y RESET
-       ============================ */
     :root {
       --color-bg: #f5f5f7;
       --color-panel: #ffffff;
@@ -68,7 +50,6 @@
       --color-primary-soft: rgba(37, 99, 235, 0.1);
       --color-accent: #f97316;
       --color-text: #111827;
-      /* MEJORA: Contraste mejorado para textos secundarios */
       --color-muted: #4b5563;
       --radius-md: 10px;
       --radius-lg: 14px;
@@ -90,10 +71,6 @@
       background: radial-gradient(circle at top left, #e0f2fe 0, #f9fafb 45%, #f5f5f7 100%);
     }
 
-    /* ============================
-       UTILIDADES REUTILIZABLES
-       ============================ */
-    /* MEJORA: Clases utilitarias en lugar de estilos inline */
     .flex-row {
       display: flex;
       gap: 6px;
@@ -126,9 +103,6 @@
       border: 0;
     }
 
-    /* ============================
-       HEADER
-       ============================ */
     .app-header {
       position: fixed;
       top: 0;
@@ -157,7 +131,6 @@
       border-radius: 10px;
       background: radial-gradient(circle at 30% 30%, #f97316, #2563eb);
       box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
-      /* MEJORA: alt via aria */
     }
 
     .app-title {
@@ -185,9 +158,6 @@
       color: var(--color-muted);
     }
 
-    /* ============================
-       LAYOUT PRINCIPAL
-       ============================ */
     .app-layout {
       position: absolute;
       top: 64px;
@@ -211,9 +181,6 @@
       z-index: 1;
     }
 
-    /* ============================
-       LISTA LATERAL
-       ============================ */
     .lista-wrapper {
       position: absolute;
       top: 10px;
@@ -266,9 +233,6 @@
       color: var(--color-muted);
     }
 
-    /* ============================
-       CARDS DE LOCALES
-       ============================ */
     .card-local {
       border-radius: 10px;
       padding: 8px 9px;
@@ -292,7 +256,6 @@
       box-shadow: 0 18px 32px rgba(37, 99, 235, 0.22);
     }
 
-    /* MEJORA: Focus visible para navegación por teclado */
     .card-local:focus-visible {
       outline: 2px solid var(--color-primary);
       outline-offset: 2px;
@@ -337,10 +300,6 @@
       color: #92400e;
     }
 
-    /* ============================
-       BOTONES FLOTANTES
-       ============================ */
-    /* MEJORA: Estilos unificados para botones flotantes (ahora son <button>) */
     .btn-flotante {
       position: absolute;
       z-index: 1100;
@@ -418,21 +377,21 @@
       outline-offset: 2px;
     }
 
-    /* ============================
-       PANEL BÚSQUEDA
-       ============================ */
+    /* PANEL BÚSQUEDA AJUSTADO */
     .panel-busqueda {
       position: absolute;
-      top: 120px;
+      top: 90px;
       left: 14px;
       background: var(--color-panel);
       padding: 10px 12px 12px;
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-soft);
       z-index: 1000;
-      max-width: 260px;
+      max-width: 320px;
       font-size: 13px;
       border: 1px solid rgba(148, 163, 184, 0.25);
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
     }
 
     .panel-busqueda h2 {
@@ -506,14 +465,12 @@
       outline-offset: 2px;
     }
 
-    /* ============================
-       PANEL FILTROS
-       ============================ */
+    /* PANEL FILTROS AJUSTADO */
     .panel-filtros {
       position: absolute;
-      top: 120px;
+      top: 90px;
       right: 14px;
-      width: 300px;
+      width: 320px;
       background: var(--color-panel);
       padding: 10px 12px 12px;
       border-radius: var(--radius-lg);
@@ -521,6 +478,8 @@
       z-index: 1000;
       font-size: 13px;
       border: 1px solid rgba(148, 163, 184, 0.25);
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
     }
 
     .panel-filtros h3 {
@@ -625,9 +584,6 @@
       color: var(--color-muted);
     }
 
-    /* ============================
-       LEYENDA — MEJORA: Semántica
-       ============================ */
     #leyendaCategorias {
       position: absolute;
       bottom: 12px;
@@ -681,9 +637,6 @@
     .dot-deportes { background: #f46d43; }
     .dot-servicios { background: #4d4d4d; }
 
-    /* ============================
-       PANEL DETALLE
-       ============================ */
     #panelDetalle {
       position: absolute;
       top: 64px;
@@ -771,7 +724,6 @@
       outline-offset: 2px;
     }
 
-    /* Links */
     a {
       color: var(--color-primary);
       text-decoration: none;
@@ -781,9 +733,6 @@
       text-decoration: underline;
     }
 
-    /* ============================
-       DETALLE: BLOQUES INTERNOS
-       ============================ */
     .detalle-header {
       border-bottom: 1px solid #eee;
       padding-bottom: 8px;
@@ -903,9 +852,6 @@
       color: #111827;
     }
 
-    /* ============================
-       RESPONSIVE
-       ============================ */
     @media (max-width: 1024px) {
       .lista-wrapper {
         top: auto;
@@ -917,11 +863,9 @@
         height: 55%;
         border-radius: 16px 16px 0 0;
       }
-
       .lista-wrapper.oculta {
         transform: translateY(105%);
       }
-
       #btnToggleLista {
         bottom: 16px;
         left: 50%;
@@ -931,30 +875,27 @@
 
     @media (max-width: 768px) {
       .panel-busqueda {
-        max-width: 90%;
-        left: 5%;
+        max-width: 92%;
+        left: 4%;
+        top: 90px;
+        max-height: calc(100vh - 110px);
       }
-
       .panel-filtros {
         width: 92%;
         right: 4%;
-        top: 118px;
-        max-height: 60%;
+        top: 90px;
+        max-height: calc(100vh - 110px);
         overflow-y: auto;
       }
-
       #panelDetalle {
         width: 100%;
         border-radius: 16px 16px 0 0;
       }
-
-      /* MEJORA: Leyenda más compacta en móvil */
       .leyenda-lista {
         grid-template-columns: 1fr 1fr;
       }
     }
 
-    /* MEJORA: Estilos para el botón "Ver detalle" en popup */
     .btn-ver-detalle {
       background: var(--color-primary);
       color: #fff;
@@ -975,7 +916,6 @@
       outline-offset: 2px;
     }
 
-    /* MEJORA: Skip to content para accesibilidad */
     .skip-link {
       position: absolute;
       top: -40px;
@@ -995,10 +935,8 @@
 </head>
 <body>
 
-<!-- MEJORA: Skip link para accesibilidad por teclado -->
 <a class="skip-link" href="#map">Ir al mapa</a>
 
-<!-- MEJORA: Noscript fallback -->
 <noscript>
   <div style="padding: 40px; text-align: center; font-family: sans-serif;">
     <h2>JavaScript necesario</h2>
@@ -1008,7 +946,6 @@
 
 <header class="app-header">
   <div class="app-brand">
-    <!-- MEJORA: aria-hidden en logo decorativo -->
     <div class="app-logo" aria-hidden="true"></div>
     <div class="app-title">
       <h1>Comercio Local Sevilla</h1>
@@ -1024,7 +961,6 @@
   <div class="map-wrapper">
     <div id="map" role="application" aria-label="Mapa interactivo de comercios locales en Sevilla"></div>
 
-    <!-- MEJORA: Todos los controles flotantes son ahora <button> con aria-label -->
     <button id="btnToggleLista" class="btn-flotante" aria-label="Mostrar u ocultar lista de locales" aria-expanded="false">
       <span class="icon" aria-hidden="true">📍</span>
       <span>Lista de locales</span>
@@ -1042,12 +978,9 @@
 
     <button id="btnRecentraMi" aria-label="Recentrar mapa en mi ubicación">Recentrar en mí</button>
 
-    <!-- Panel búsqueda rápida -->
-    <!-- MEJORA: role="search" y aria-label -->
     <div class="panel-busqueda" id="panelBusqueda" role="search" aria-label="Búsqueda rápida de locales" style="display:none;">
       <h2>¿Qué buscas hoy?</h2>
 
-      <!-- MEJORA: <label> en lugar de <div class="field-label"> -->
       <label class="field-label" for="fTextoLibre">Qué</label>
       <input id="fTextoLibre" type="text" placeholder="Ej: bar, panadería, ropa, gimnasio" autocomplete="off" />
 
@@ -1069,8 +1002,6 @@
       </div>
     </div>
 
-    <!-- Panel filtros -->
-    <!-- MEJORA: role="region" y aria-label -->
     <div class="panel-filtros" id="panelFiltros" role="region" aria-label="Filtros avanzados" style="display:none;">
       <h3>Filtros avanzados</h3>
 
@@ -1102,7 +1033,6 @@
         <div style="flex:1;">
           <label class="field-label" for="fPrecioMin">Precio mín.</label>
           <select id="fPrecioMin">
-            <!-- MEJORA: Default en 1 para no excluir locales baratos -->
             <option value="1" selected>1 ★</option>
             <option value="2">2 ★</option>
             <option value="3">3 ★</option>
@@ -1157,11 +1087,9 @@
         <button id="btnQuitarFiltros" class="btn-reset">Quitar</button>
       </div>
 
-      <!-- MEJORA: aria-live para cambios dinámicos -->
       <div id="contadorResultados" aria-live="polite">Mostrando todos los locales</div>
     </div>
 
-    <!-- MEJORA: Leyenda con estructura semántica -->
     <nav id="leyendaCategorias" role="region" aria-label="Leyenda de categorías del mapa">
       <div class="leyenda-titulo">Categorías</div>
       <ul class="leyenda-lista">
@@ -1177,8 +1105,6 @@
       </ul>
     </nav>
 
-    <!-- Panel detalle -->
-    <!-- MEJORA: role="dialog" y aria-hidden -->
     <div id="panelDetalle" role="dialog" aria-label="Detalle del local" aria-hidden="true">
       <div id="panelDetalleHeader">
         <h2 id="detalleNombre">Local</h2>
@@ -1190,7 +1116,6 @@
       <div id="panelDetalleBody"></div>
     </div>
 
-    <!-- Lista lateral -->
     <aside class="lista-wrapper oculta" id="listaWrapper" role="complementary" aria-label="Lista de locales encontrados">
       <div class="lista-header">
         <div>
@@ -1212,11 +1137,8 @@
   </div>
 </main>
 
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
-<!-- MarkerCluster JS -->
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-<!-- App -->
 <script src="script.js"></script>
 </body>
 </html>
