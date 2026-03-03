@@ -69,6 +69,7 @@
       font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--color-text);
       background: radial-gradient(circle at top left, #e0f2fe 0, #f9fafb 45%, #f5f5f7 100%);
+      overflow: hidden; /* evita franja blanca a la derecha */
     }
 
     .flex-row {
@@ -181,15 +182,17 @@
       z-index: 1;
     }
 
+    /* Lista de locales: abajo centrada en escritorio */
     .lista-wrapper {
       position: absolute;
-      top: 10px;
-      right: 10px;
-      bottom: 10px;
-      width: 340px;
-      max-width: 75vw;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 360px;
+      max-width: 80vw;
+      height: 220px;
       background: linear-gradient(to bottom, #f9fafb, #ffffff);
-      border-radius: 14px;
+      border-radius: 16px;
       border: 1px solid rgba(148, 163, 184, 0.25);
       box-shadow: 0 18px 35px rgba(15, 23, 42, 0.25);
       z-index: 1200;
@@ -200,7 +203,7 @@
     }
 
     .lista-wrapper.oculta {
-      transform: translateX(105%);
+      transform: translate(-50%, 110%);
       opacity: 0;
       pointer-events: none;
     }
@@ -338,9 +341,11 @@
       font-size: 14px;
     }
 
+    /* Botón lista: por encima de la lista, centrado */
     #btnToggleLista {
-      bottom: 20px;
-      left: 14px;
+      bottom: 250px;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 1300;
       box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
     }
@@ -377,25 +382,23 @@
       outline-offset: 2px;
     }
 
-    /* PANEL BÚSQUEDA CENTRADO */
-   .panel-busqueda {
-  position: absolute;
-  top: 72px;                 /* menos separación del header */
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--color-panel);
-  padding: 8px 12px 10px;    /* padding algo menor */
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-soft);
-  z-index: 1000;
-  width: 32vw;               /* proporcional a ancho ventana */
-  max-width: 360px;
-  min-width: 280px;
-  font-size: 13px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  max-height: calc(100vh - 110px); /* 64 header + 10 margen + resto */
-  overflow-y: auto;
-}
+    /* Panel búsqueda: sale desde la lupa, un poco a la derecha */
+    .panel-busqueda {
+      position: absolute;
+      top: 90px;
+      left: 80px;              /* lupa está en ~14px */
+      background: var(--color-panel);
+      padding: 8px 12px 10px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      z-index: 1000;
+      width: 320px;
+      max-width: 360px;
+      font-size: 13px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      max-height: calc(100vh - 110px);
+      overflow-y: auto;
+    }
 
     .panel-busqueda h2 {
       margin: 0 0 6px 0;
@@ -468,24 +471,23 @@
       outline-offset: 2px;
     }
 
-    /* PANEL FILTROS */
     .panel-filtros {
-  position: absolute;
-  top: 72px;
-  right: 14px;
-  width: 28vw;
-  max-width: 340px;
-  min-width: 260px;
-  background: var(--color-panel);
-  padding: 8px 12px 10px;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-soft);
-  z-index: 1000;
-  font-size: 13px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  max-height: calc(100vh - 110px);
-  overflow-y: auto;
-}
+      position: absolute;
+      top: 90px;
+      right: 14px;
+      width: 320px;
+      max-width: 360px;
+      min-width: 260px;
+      background: var(--color-panel);
+      padding: 8px 12px 10px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      z-index: 1000;
+      font-size: 13px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      max-height: calc(100vh - 110px);
+      overflow-y: auto;
+    }
 
     .panel-filtros h3 {
       margin: 0 0 6px 0;
@@ -856,15 +858,8 @@
       background: #fbbf24;
       color: #111827;
     }
-@media (max-width: 1024px) {
-  .panel-busqueda {
-    top: 72px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90vw;
-    max-width: 480px;
-    max-height: calc(100vh - 100px);
-  }
+
+    @media (max-width: 1024px) {
       .lista-wrapper {
         top: auto;
         right: 0;
@@ -874,6 +869,7 @@
         max-width: 100%;
         height: 55%;
         border-radius: 16px 16px 0 0;
+        transform: translateX(0);
       }
       .lista-wrapper.oculta {
         transform: translateY(105%);
@@ -887,10 +883,10 @@
 
     @media (max-width: 768px) {
       .panel-busqueda {
-        max-width: 92%;
-        left: 50%;
-        transform: translateX(-50%);
         top: 90px;
+        left: 10px;
+        width: calc(100vw - 20px);
+        max-width: none;
         max-height: calc(100vh - 110px);
       }
       .panel-filtros {
@@ -1155,4 +1151,3 @@
 <script src="script.js"></script>
 </body>
 </html>
-
