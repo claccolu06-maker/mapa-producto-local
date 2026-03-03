@@ -69,7 +69,7 @@
       font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--color-text);
       background: radial-gradient(circle at top left, #e0f2fe 0, #f9fafb 45%, #f5f5f7 100%);
-      overflow: hidden; /* evita franja blanca a la derecha */
+      overflow: hidden; /* sin scroll horizontal ni franja azul */
     }
 
     .flex-row {
@@ -182,15 +182,15 @@
       z-index: 1;
     }
 
-    /* Lista de locales: abajo centrada en escritorio */
+    /* Lista de locales: abajo centrada */
     .lista-wrapper {
       position: absolute;
-      bottom: 14px;
+      bottom: 12px;              /* misma altura que la leyenda */
       left: 50%;
       transform: translateX(-50%);
       width: 360px;
       max-width: 80vw;
-      height: 220px;
+      height: 200px;
       background: linear-gradient(to bottom, #f9fafb, #ffffff);
       border-radius: 16px;
       border: 1px solid rgba(148, 163, 184, 0.25);
@@ -341,18 +341,19 @@
       font-size: 14px;
     }
 
-    /* Botón lista: por encima de la lista, centrado */
+    /* Botón lista: justo encima de la tarjeta de lista */
     #btnToggleLista {
-      bottom: 250px;
+      bottom: 220px;  /* 12 + 200 + pequeño margen */
       left: 50%;
       transform: translateX(-50%);
       z-index: 1300;
       box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
     }
 
+    /* Buscar más a la derecha */
     #btnToggleBusqueda {
       top: 76px;
-      left: 14px;
+      left: 120px;   /* antes 14px */
     }
 
     #btnToggleFiltros {
@@ -382,11 +383,11 @@
       outline-offset: 2px;
     }
 
-    /* Panel búsqueda: sale desde la lupa, un poco a la derecha */
+    /* Panel búsqueda: sigue saliendo junto a la lupa, un poco a la derecha */
     .panel-busqueda {
       position: absolute;
       top: 90px;
-      left: 80px;              /* lupa está en ~14px */
+      left: 80px;
       background: var(--color-panel);
       padding: 8px 12px 10px;
       border-radius: var(--radius-lg);
@@ -591,10 +592,12 @@
       color: var(--color-muted);
     }
 
+    /* Leyenda abajo a la derecha */
     #leyendaCategorias {
       position: absolute;
       bottom: 12px;
-      left: 14px;
+      right: 14px;  /* la pasamos a la derecha */
+      left: auto;
       z-index: 900;
       background: var(--color-panel);
       padding: 8px 10px;
