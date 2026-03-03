@@ -1,38 +1,27 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Mapa Comercio Local Sevilla — Descubre negocios de barrio</title>
-
+  <title>Mapa Comercio Local Sevilla</title>
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
   />
 
-  <meta name="description" content="Explora y descubre comercios locales de barrio en Sevilla. Mapa interactivo con filtros por categoría, barrio, valoración, horarios y más." />
-  <meta property="og:title" content="Mapa Comercio Local Sevilla" />
-  <meta property="og:description" content="Descubre negocios de barrio en Sevilla con nuestro mapa interactivo." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://claccolu06-maker.github.io/mapa-producto-local/" />
-  <meta property="og:locale" content="es_ES" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Mapa Comercio Local Sevilla" />
-  <meta name="twitter:description" content="Descubre negocios de barrio en Sevilla." />
-  <link rel="icon" type="image/png" href="favicon.png" />
-  <meta name="theme-color" content="#2563eb" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@500;700&display=swap" rel="stylesheet">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@500;700&display=swap"
-    rel="stylesheet"
-  />
-
+  <!-- Leaflet -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    crossorigin="anonymous"
+    crossorigin=""
   />
+
+  <!-- MarkerCluster CSS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
@@ -47,88 +36,139 @@
       --color-bg: #f5f5f7;
       --color-panel: #ffffff;
       --color-primary: #2563eb;
-      --color-primary-soft: rgba(37, 99, 235, 0.1);
+      --color-primary-soft: rgba(37,99,235,0.1);
       --color-accent: #f97316;
       --color-text: #111827;
-      --color-muted: #4b5563;
+      --color-muted: #6b7280;
       --radius-md: 10px;
       --radius-lg: 14px;
-      --shadow-soft: 0 18px 30px rgba(15, 23, 42, 0.16);
+      --shadow-soft: 0 18px 30px rgba(15,23,42,0.16);
     }
 
-    *,
-    *::before,
-    *::after {
+    * {
       box-sizing: border-box;
     }
 
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: var(--color-text);
-  background: radial-gradient(circle at top left, #e0f2fe 0, #f9fafb 45%, #f5f5f7 100%);
-  overflow: hidden;          /* sin scroll */
-}
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--color-text);
+      background: radial-gradient(circle at top left, #e0f2fe 0, #f9fafb 45%, #f5f5f7 100%);
+    }
 
-.app-layout {
-  position: absolute;
-  top: 64px;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;               /* ocupa todo el ancho */
-}
-
-.map-wrapper {
-  position: relative;
-  width: 100%;               /* ocupa todo el ancho */
-  height: 100%;
-}
-
-#map {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;               /* importante para que no sobresalga */
-  height: 100%;
-  z-index: 1;
-}
-
-   .lista-wrapper {
-  position: absolute;
-  bottom: 12px;
-  right: 14px;        /* estaba centrada, ahora abajo derecha */
-  width: 360px;
-  max-width: 80vw;
-  height: 200px;
-  background: linear-gradient(to bottom, #f9fafb, #ffffff);
-  border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.25);
-  z-index: 1200;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transition: transform 0.22s ease-out, opacity 0.18s ease-out;
-}
-
-.lista-wrapper.oculta {
-  transform: translateY(110%);
-  opacity: 0;
-  pointer-events: none;
-}
-
-    .lista-header {
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    /* Header superior */
+    .app-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      background: linear-gradient(to right, rgba(255,255,255,0.9), rgba(248,250,252,0.9));
+      border-bottom: 1px solid rgba(148,163,184,0.25);
+      z-index: 1500;
+    }
+
+    .app-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .app-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: radial-gradient(circle at 30% 30%, #f97316, #2563eb);
+      box-shadow: 0 10px 20px rgba(15,23,42,0.2);
+    }
+
+    .app-title {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-title h1 {
+      margin: 0;
+      font-family: "DM Sans", system-ui, sans-serif;
+      font-size: 18px;
+      letter-spacing: 0.01em;
+    }
+
+    .app-title span {
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
+    .app-header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+
+    /* Layout principal: mapa + lista (lista flotante) */
+    .app-layout {
+      position: absolute;
+      top: 64px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .map-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1;
+    }
+
+    .lista-wrapper {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      bottom: 10px;
+      width: 340px;
+      max-width: 75vw;
+      background: linear-gradient(to bottom, #f9fafb, #ffffff);
+      border-radius: 14px;
+      border: 1px solid rgba(148,163,184,0.25);
+      box-shadow: 0 18px 35px rgba(15,23,42,0.25);
+      z-index: 1200;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.22s ease-out, opacity 0.18s ease-out;
+    }
+
+    .lista-wrapper.oculta {
+      transform: translateX(105%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .lista-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(148,163,184,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255,255,255,0.96);
       backdrop-filter: blur(8px);
       font-size: 13px;
     }
@@ -155,8 +195,8 @@ html, body {
       padding: 8px 9px;
       margin-bottom: 8px;
       background: #ffffff;
-      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
-      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 10px 18px rgba(15,23,42,0.08);
+      border: 1px solid rgba(148,163,184,0.2);
       cursor: pointer;
       transition: transform 0.09s ease-out, box-shadow 0.09s ease-out, border-color 0.09s ease-out;
       font-size: 13px;
@@ -164,18 +204,13 @@ html, body {
 
     .card-local:hover {
       transform: translateY(-1px);
-      box-shadow: 0 16px 28px rgba(15, 23, 42, 0.18);
+      box-shadow: 0 16px 28px rgba(15,23,42,0.18);
       border-color: var(--color-primary);
     }
 
     .card-local.activo {
       border-color: var(--color-primary);
-      box-shadow: 0 18px 32px rgba(37, 99, 235, 0.22);
-    }
-
-    .card-local:focus-visible {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 2px;
+      box-shadow: 0 18px 32px rgba(37,99,235,0.22);
     }
 
     .card-local-titulo {
@@ -207,43 +242,36 @@ html, body {
     .pill-barrio {
       padding: 2px 6px;
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.04);
+      background: rgba(15,23,42,0.04);
     }
 
     .pill-valoracion {
       padding: 2px 6px;
       border-radius: 999px;
-      background: rgba(250, 204, 21, 0.14);
+      background: rgba(250,204,21,0.14);
       color: #92400e;
     }
 
-    .btn-flotante {
+    /* Botón flotante para abrir/cerrar lista */
+    #btnToggleLista {
       position: absolute;
-      z-index: 1100;
+      bottom: 20px;
+      left: 14px;
+      z-index: 1300;
       background: var(--color-panel);
       border-radius: 999px;
       padding: 8px 12px;
       display: flex;
       align-items: center;
       gap: 6px;
-      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+      box-shadow: 0 10px 20px rgba(15,23,42,0.2);
       cursor: pointer;
       font-size: 13px;
       color: var(--color-text);
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      font-family: inherit;
+      border: 1px solid rgba(148,163,184,0.4);
     }
 
-    .btn-flotante:hover {
-      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.25);
-    }
-
-    .btn-flotante:focus-visible {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 2px;
-    }
-
-    .btn-flotante .icon {
+    #btnToggleLista span.icon {
       width: 24px;
       height: 24px;
       border-radius: 999px;
@@ -252,26 +280,44 @@ html, body {
       align-items: center;
       justify-content: center;
       color: var(--color-primary);
-      font-size: 14px;
     }
 
-    /* Botón lista: encima de la tarjeta, en la misma esquina */
-   #btnToggleLista {
-  bottom: 220px;      /* justo encima de la tarjeta (12 + 200 + margen) */
-  right: 14px;        /* misma esquina que la tarjeta */
-  transform: none;
-  z-index: 1300;
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
-}
-
-    /* Buscar algo más a la derecha que el borde */
-    #btnToggleBusqueda {
+    /* Botones flotantes búsqueda/filtros */
+    #btnToggleBusqueda,
+    #btnToggleFiltros {
+      position: absolute;
       top: 76px;
-      left: 120px;
+      z-index: 1100;
+      background: var(--color-panel);
+      border-radius: 999px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 10px 20px rgba(15,23,42,0.18);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--color-text);
+      border: 1px solid rgba(148,163,184,0.4);
+    }
+
+    #btnToggleBusqueda span.icon,
+    #btnToggleFiltros span.icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--color-primary-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-primary);
+    }
+
+    #btnToggleBusqueda {
+      left: 14px;
     }
 
     #btnToggleFiltros {
-      top: 76px;
       right: 14px;
     }
 
@@ -283,35 +329,27 @@ html, body {
       background: var(--color-panel);
       border-radius: 999px;
       padding: 6px 10px;
-      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+      box-shadow: 0 10px 20px rgba(15,23,42,0.2);
       cursor: pointer;
       font-size: 12px;
       display: none;
-      border: 1px solid rgba(148, 163, 184, 0.4);
+      border: 1px solid rgba(148,163,184,0.4);
       color: var(--color-text);
-      font-family: inherit;
     }
 
-    #btnRecentraMi:focus-visible {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 2px;
-    }
-
+    /* Panel búsqueda rápida */
     .panel-busqueda {
       position: absolute;
-      top: 90px;
-      left: 80px;
+      top: 120px;
+      left: 14px;
       background: var(--color-panel);
-      padding: 8px 12px 10px;
+      padding: 10px 12px 12px;
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-soft);
       z-index: 1000;
-      width: 320px;
-      max-width: 360px;
+      max-width: 260px;
       font-size: 13px;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      max-height: calc(100vh - 110px);
-      overflow-y: auto;
+      border: 1px solid rgba(148,163,184,0.25);
     }
 
     .panel-busqueda h2 {
@@ -321,7 +359,6 @@ html, body {
     }
 
     .field-label {
-      display: block;
       font-size: 11px;
       font-weight: 500;
       color: var(--color-muted);
@@ -337,15 +374,14 @@ html, body {
       padding: 6px 8px;
       font-size: 13px;
       border-radius: 8px;
-      border: 1px solid rgba(148, 163, 184, 0.7);
+      border: 1px solid rgba(148,163,184,0.7);
       outline: none;
-      font-family: inherit;
     }
 
     .panel-busqueda input:focus,
     .panel-busqueda select:focus {
       border-color: var(--color-primary);
-      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+      box-shadow: 0 0 0 1px rgba(37,99,235,0.25);
     }
 
     .panel-busqueda button {
@@ -354,7 +390,6 @@ html, body {
       cursor: pointer;
       border-radius: 999px;
       border: none;
-      font-family: inherit;
     }
 
     .btn-primary {
@@ -362,45 +397,24 @@ html, body {
       color: #fff;
     }
 
-    .btn-primary:hover {
-      background: #1d4ed8;
-    }
-
-    .btn-primary:focus-visible {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 2px;
-    }
-
     .btn-ghost {
-      background: rgba(15, 23, 42, 0.03);
+      background: rgba(15,23,42,0.03);
       color: var(--color-text);
     }
 
-    .btn-ghost:hover {
-      background: rgba(15, 23, 42, 0.08);
-    }
-
-    .btn-ghost:focus-visible {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 2px;
-    }
-
+    /* Panel filtros */
     .panel-filtros {
       position: absolute;
-      top: 90px;
+      top: 120px;
       right: 14px;
-      width: 320px;
-      max-width: 360px;
-      min-width: 260px;
+      width: 300px;
       background: var(--color-panel);
-      padding: 8px 12px 10px;
+      padding: 10px 12px 12px;
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-soft);
       z-index: 1000;
       font-size: 13px;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      max-height: calc(100vh - 110px);
-      overflow-y: auto;
+      border: 1px solid rgba(148,163,184,0.25);
     }
 
     .panel-filtros h3 {
@@ -426,15 +440,14 @@ html, body {
       padding: 5px 7px;
       font-size: 13px;
       border-radius: 8px;
-      border: 1px solid rgba(148, 163, 184, 0.7);
+      border: 1px solid rgba(148,163,184,0.7);
       outline: none;
-      font-family: inherit;
     }
 
     .panel-filtros select:focus,
     .panel-filtros input[type="text"]:focus {
       border-color: var(--color-primary);
-      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+      box-shadow: 0 0 0 1px rgba(37,99,235,0.25);
     }
 
     .chip-row {
@@ -448,7 +461,7 @@ html, body {
       padding: 3px 8px;
       border-radius: 999px;
       font-size: 11px;
-      background: rgba(148, 163, 184, 0.12);
+      background: rgba(148,163,184,0.12);
       color: var(--color-muted);
     }
 
@@ -478,7 +491,6 @@ html, body {
       cursor: pointer;
       border-radius: 999px;
       border: none;
-      font-family: inherit;
     }
 
     .panel-filtros .btn-apply {
@@ -486,17 +498,9 @@ html, body {
       color: #fff;
     }
 
-    .panel-filtros .btn-apply:hover {
-      background: #1d4ed8;
-    }
-
     .panel-filtros .btn-reset {
-      background: rgba(15, 23, 42, 0.03);
+      background: rgba(15,23,42,0.03);
       color: var(--color-text);
-    }
-
-    .panel-filtros .btn-reset:hover {
-      background: rgba(15, 23, 42, 0.08);
     }
 
     #contadorResultados {
@@ -505,50 +509,22 @@ html, body {
       color: var(--color-muted);
     }
 
-    /* Quitamos la leyenda: ya no se muestra */
+    /* Leyenda */
     #leyendaCategorias {
-      display: none;
+      position: absolute;
+      bottom: 12px;
+      left: 14px;
+      z-index: 900;
+      background: var(--color-panel);
+      padding: 6px 8px;
+      border-radius: 10px;
+      box-shadow: 0 10px 20px rgba(15,23,42,0.18);
+      font-size: 11px;
+      max-width: 260px;
+      border: 1px solid rgba(148,163,184,0.25);
     }
 
-    .leyenda-titulo {
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .leyenda-lista {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 3px 12px;
-    }
-
-    .leyenda-lista li {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      white-space: nowrap;
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      display: inline-block;
-      flex-shrink: 0;
-    }
-
-    .dot-comida { background: #d7191c; }
-    .dot-cafeteria { background: #fdae61; }
-    .dot-alimentacion { background: #1a9641; }
-    .dot-moda { background: #7b3294; }
-    .dot-belleza { background: #4575b4; }
-    .dot-salud { background: #ffff00; border: 1px solid #ccc; }
-    .dot-ocio { background: #313695; }
-    .dot-deportes { background: #f46d43; }
-    .dot-servicios { background: #4d4d4d; }
-
+    /* Panel detalle */
     #panelDetalle {
       position: absolute;
       top: 64px;
@@ -557,7 +533,7 @@ html, body {
       max-width: 100%;
       height: calc(100% - 64px);
       background: linear-gradient(to bottom, #f9fafb, #ffffff);
-      box-shadow: -18px 0 35px rgba(15, 23, 42, 0.25);
+      box-shadow: -18px 0 35px rgba(15,23,42,0.25);
       z-index: 1200;
       transform: translateX(100%);
       transition: transform 0.25s ease-out;
@@ -573,11 +549,11 @@ html, body {
 
     #panelDetalleHeader {
       padding: 10px 14px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+      border-bottom: 1px solid rgba(148,163,184,0.3);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255,255,255,0.9);
       backdrop-filter: blur(8px);
     }
 
@@ -598,18 +574,23 @@ html, body {
       gap: 12px;
     }
 
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(148,163,184,0.12);
+      font-size: 11px;
+      color: var(--color-muted);
+      margin-right: 4px;
+    }
+
     .btn-favorito {
       border: none;
       background: none;
       cursor: pointer;
       font-size: 18px;
       margin-right: 6px;
-      padding: 4px;
-    }
-
-    .btn-favorito:focus-visible {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 2px;
     }
 
     .btn-favorito.activo {
@@ -618,116 +599,91 @@ html, body {
 
     #btnCerrarDetalle {
       border: none;
-      background: rgba(15, 23, 42, 0.04);
+      background: rgba(15,23,42,0.04);
       border-radius: 999px;
       width: 26px;
       height: 26px;
       cursor: pointer;
       font-size: 14px;
-      font-family: inherit;
-    }
-
-    #btnCerrarDetalle:hover {
-      background: rgba(15, 23, 42, 0.1);
-    }
-
-    #btnCerrarDetalle:focus-visible {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 2px;
     }
 
     a {
       color: var(--color-primary);
       text-decoration: none;
     }
-
     a:hover {
       text-decoration: underline;
     }
 
+    /* Bloques del detalle */
     .detalle-header {
       border-bottom: 1px solid #eee;
       padding-bottom: 8px;
     }
-
     .detalle-titulo-linea {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 8px;
     }
-
     .detalle-nombre {
       font-weight: 600;
       font-size: 16px;
     }
-
     .detalle-subtitulo {
       margin-top: 4px;
-      color: #555;
+      color: #666;
       font-size: 13px;
     }
-
     .detalle-info-principal {
       display: flex;
       flex-direction: column;
       gap: 4px;
     }
-
     .detalle-linea {
       display: flex;
       justify-content: space-between;
       gap: 12px;
       margin: 0;
     }
-
     .detalle-label {
       font-weight: 500;
       color: #555;
       font-size: 13px;
     }
-
     .detalle-valor {
       text-align: right;
       font-size: 13px;
     }
-
     .estado-abierto {
       color: #0a8a3a;
       font-weight: 600;
     }
-
     .estado-cerrado {
       color: #c0392b;
       font-weight: 600;
     }
-
     .detalle-bloque {
       margin-top: 4px;
     }
-
     .detalle-descripcion {
       margin: 4px 0 0;
       line-height: 1.4;
     }
-
     .detalle-redes-links {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       margin-top: 4px;
     }
-
     .detalle-redes-links a {
       font-size: 13px;
-      color: var(--color-primary);
+      color: #2563eb;
       text-decoration: none;
     }
-
     .detalle-redes-links a:hover {
       text-decoration: underline;
     }
-
     .detalle-boton-maps {
       display: inline-flex;
       align-items: center;
@@ -739,26 +695,21 @@ html, body {
       font-size: 13px;
       text-decoration: none;
     }
-
     .detalle-boton-maps:hover {
       background: #000;
-      text-decoration: none;
     }
-
     .detalle-foto img {
       width: 100%;
       max-height: 220px;
       object-fit: cover;
       border-radius: 8px;
     }
-
     .detalle-pill {
       padding: 2px 8px;
       border-radius: 999px;
       font-size: 11px;
       background: #f3f4f6;
     }
-
     .detalle-pill-valoracion {
       background: #fbbf24;
       color: #111827;
@@ -774,134 +725,79 @@ html, body {
         max-width: 100%;
         height: 55%;
         border-radius: 16px 16px 0 0;
-        transform: translateY(0);
       }
       .lista-wrapper.oculta {
         transform: translateY(105%);
       }
       #btnToggleLista {
         bottom: 16px;
-        right: 50%;
-        transform: translateX(50%);
+        left: 50%;
+        transform: translateX(-50%);
       }
     }
 
     @media (max-width: 768px) {
       .panel-busqueda {
-        top: 90px;
-        left: 10px;
-        width: calc(100vw - 20px);
-        max-width: none;
-        max-height: calc(100vh - 110px);
+        max-width: 90%;
+        left: 5%;
       }
       .panel-filtros {
         width: 92%;
         right: 4%;
-        top: 90px;
-        max-height: calc(100vh - 110px);
+        top: 118px;
+        max-height: 60%;
         overflow-y: auto;
       }
       #panelDetalle {
         width: 100%;
         border-radius: 16px 16px 0 0;
       }
-      .leyenda-lista {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    .btn-ver-detalle {
-      background: var(--color-primary);
-      color: #fff;
-      border: none;
-      border-radius: 999px;
-      padding: 5px 10px;
-      font-size: 12px;
-      cursor: pointer;
-      font-family: inherit;
-    }
-
-    .btn-ver-detalle:hover {
-      background: #1d4ed8;
-    }
-
-    .btn-ver-detalle:focus-visible {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 2px;
-    }
-
-    .skip-link {
-      position: absolute;
-      top: -40px;
-      left: 0;
-      background: var(--color-primary);
-      color: #fff;
-      padding: 8px 16px;
-      z-index: 10000;
-      font-size: 14px;
-      transition: top 0.2s;
-    }
-
-    .skip-link:focus {
-      top: 0;
     }
   </style>
 </head>
 <body>
-
-<a class="skip-link" href="#map">Ir al mapa</a>
-
-<noscript>
-  <div style="padding: 40px; text-align: center; font-family: sans-serif;">
-    <h2>JavaScript necesario</h2>
-    <p>Esta aplicación necesita JavaScript para funcionar. Por favor, actívalo en tu navegador.</p>
-  </div>
-</noscript>
-
-<header class="app-header">
+<div class="app-header">
   <div class="app-brand">
-    <div class="app-logo" aria-hidden="true"></div>
+    <div class="app-logo"></div>
     <div class="app-title">
       <h1>Comercio Local Sevilla</h1>
       <span>Explora negocios de barrio en tu ciudad</span>
     </div>
   </div>
   <div class="app-header-right">
-    <span class="badge" aria-label="Versión beta">Beta</span>
+    <span>Beta</span>
   </div>
-</header>
+</div>
 
-<main class="app-layout">
+<div class="app-layout">
   <div class="map-wrapper">
-    <div id="map" role="application" aria-label="Mapa interactivo de comercios locales en Sevilla"></div>
+    <div id="map"></div>
 
-    <button id="btnToggleLista" class="btn-flotante" aria-label="Mostrar u ocultar lista de locales" aria-expanded="false">
-      <span class="icon" aria-hidden="true">📍</span>
-      <span>Lista de locales</span>
-    </button>
+    <!-- Botón flotante lista -->
+    <div id="btnToggleLista">
+      <span class="icon">📍</span><span>Lista de locales</span>
+    </div>
 
-    <button id="btnToggleBusqueda" class="btn-flotante" aria-label="Abrir panel de búsqueda" aria-expanded="false">
-      <span class="icon" aria-hidden="true">🔎</span>
-      <span>Buscar</span>
-    </button>
+    <!-- Botones flotantes búsqueda / filtros / recentrar -->
+    <div id="btnToggleBusqueda">
+      <span class="icon">🔎</span><span>Buscar</span>
+    </div>
+    <div id="btnToggleFiltros">
+      <span class="icon">⚙️</span><span id="textoBtnFiltros">Filtros</span>
+    </div>
+    <div id="btnRecentraMi">Recentrar en mí</div>
 
-    <button id="btnToggleFiltros" class="btn-flotante" aria-label="Abrir panel de filtros" aria-expanded="false">
-      <span class="icon" aria-hidden="true">⚙️</span>
-      <span id="textoBtnFiltros">Filtros</span>
-    </button>
-
-    <button id="btnRecentraMi" aria-label="Recentrar mapa en mi ubicación">Recentrar en mí</button>
-
-    <div class="panel-busqueda" id="panelBusqueda" role="search" aria-label="Búsqueda rápida de locales" style="display:none;">
+    <!-- Panel búsqueda rápida -->
+    <div class="panel-busqueda" id="panelBusqueda" style="display:none;">
       <h2>¿Qué buscas hoy?</h2>
 
-      <label class="field-label" for="fTextoLibre">Qué</label>
-      <input id="fTextoLibre" type="text" placeholder="Ej: bar, panadería, ropa, gimnasio" autocomplete="off" />
+      <div class="field-label">Qué</div>
+      <input id="fTextoLibre" type="text" placeholder="Ej: bar, panadería, ropa, gimnasio" />
 
-      <label class="field-label" for="fUbicacionCliente">Dónde</label>
-      <input id="fUbicacionCliente" type="text" placeholder="Dirección o barrio" autocomplete="off" />
+      <div class="field-label">Dónde</div>
+      <input id="fUbicacionCliente" type="text" placeholder="Dirección o barrio" />
 
-      <label class="field-label" for="fRadioDistancia">Radio</label>
+      <div class="field-label">Radio</div>
       <select id="fRadioDistancia">
         <option value="">Sin límite</option>
         <option value="500">500 m</option>
@@ -910,17 +806,17 @@ html, body {
         <option value="3000">3 km</option>
       </select>
 
-      <div class="flex-row mt-sm">
+      <div style="margin-top:6px; display:flex; gap:6px;">
         <button id="btnBuscarRapido" class="btn-primary">Buscar</button>
         <button id="btnCercaDeMi" class="btn-ghost">Cerca de mí</button>
       </div>
     </div>
 
-    <div class="panel-filtros" id="panelFiltros" role="region" aria-label="Filtros avanzados" style="display:none;">
+    <!-- Panel filtros -->
+    <div class="panel-filtros" id="panelFiltros" style="display:none;">
       <h3>Filtros avanzados</h3>
 
       <div class="panel-section-title">Qué</div>
-
       <label class="field-label" for="fCategoria">Categoría principal</label>
       <select id="fCategoria">
         <option value="">Todas</option>
@@ -942,13 +838,12 @@ html, body {
       </select>
 
       <div class="panel-section-title">Precio y valoración</div>
-
-      <div class="flex-row">
+      <div style="display:flex; gap:6px;">
         <div style="flex:1;">
           <label class="field-label" for="fPrecioMin">Precio mín.</label>
           <select id="fPrecioMin">
-            <option value="1" selected>1 ★</option>
-            <option value="2">2 ★</option>
+            <option value="1">1 ★</option>
+            <option value="2" selected>2 ★</option>
             <option value="3">3 ★</option>
           </select>
         </div>
@@ -992,7 +887,7 @@ html, body {
       </div>
 
       <div class="panel-section-title">Resumen</div>
-      <div class="chip-row" id="chipsResumen" aria-live="polite">
+      <div class="chip-row" id="chipsResumen">
         <span class="chip-filter">Sin filtros activos</span>
       </div>
 
@@ -1001,60 +896,61 @@ html, body {
         <button id="btnQuitarFiltros" class="btn-reset">Quitar</button>
       </div>
 
-      <div id="contadorResultados" aria-live="polite">Mostrando todos los locales</div>
+      <div id="contadorResultados">Mostrando todos los locales</div>
     </div>
 
-    <!-- leyenda oculta por CSS, se puede eliminar si quieres -->
-    <nav id="leyendaCategorias" role="region" aria-label="Leyenda de categorías del mapa">
-      <div class="leyenda-titulo">Categorías</div>
-      <ul class="leyenda-lista">
-        <li><span class="dot dot-comida"></span> Comida</li>
-        <li><span class="dot dot-cafeteria"></span> Cafetería</li>
-        <li><span class="dot dot-alimentacion"></span> Alimentación</li>
-        <li><span class="dot dot-moda"></span> Moda</li>
-        <li><span class="dot dot-belleza"></span> Belleza</li>
-        <li><span class="dot dot-salud"></span> Salud</li>
-        <li><span class="dot dot-ocio"></span> Ocio</li>
-        <li><span class="dot dot-deportes"></span> Deportes</li>
-        <li><span class="dot dot-servicios"></span> Servicios</li>
-      </ul>
-    </nav>
+    <!-- Leyenda -->
+    <div id="leyendaCategorias">
+      <b>Categorías</b><br /><br>
+      <span style="color:#d7191c;">●</span> Comida<br>
+      <span style="color:#fdae61; margin-left:6px;">●</span> Cafetería<br>
+      <span style="color:#1a9641; margin-left:6px;">●</span> Alimentación<br /><br>
+      <span style="color:#7b3294;">●</span> Moda<br>
+      <span style="color:#4575b4; margin-left:6px;">●</span> Belleza<br>
+      <span style="color:#ffff00; margin-left:6px;">●</span> Salud<br /><br>
+      <span style="color:#313695;">●</span> Ocio<br>
+      <span style="color:#f46d43; margin-left:6px;">●</span> Deportes<br>
+      <span style="color:#4d4d4d; margin-left:6px;">●</span> Servicios<br>
+    </div>
 
-    <div id="panelDetalle" role="dialog" aria-label="Detalle del local" aria-hidden="true">
+    <!-- Panel detalle -->
+    <div id="panelDetalle">
       <div id="panelDetalleHeader">
         <h2 id="detalleNombre">Local</h2>
-        <div class="flex-row-center">
-          <button id="btnFavorito" class="btn-favorito" aria-label="Marcar como favorito">♡</button>
-          <button id="btnCerrarDetalle" aria-label="Cerrar panel de detalle">✕</button>
+        <div style="display:flex; align-items:center;">
+          <button id="btnFavorito" class="btn-favorito" title="Marcar como favorito">♡</button>
+          <button id="btnCerrarDetalle">✕</button>
         </div>
       </div>
       <div id="panelDetalleBody"></div>
     </div>
 
-    <aside class="lista-wrapper oculta" id="listaWrapper" role="complementary" aria-label="Lista de locales encontrados">
+    <!-- Lista (pestaña) -->
+    <aside class="lista-wrapper oculta" id="listaWrapper">
       <div class="lista-header">
         <div>
           <h2>Locales encontrados</h2>
-          <div id="textoResumenLista" class="text-muted-sm" aria-live="polite">
+          <div id="textoResumenLista" style="font-size:11px; color:var(--color-muted);">
             Mostrando todos los locales
           </div>
         </div>
-        <div class="text-muted-sm">
-          <span id="contadorLista" aria-live="polite">0 locales</span>
+        <div style="font-size:11px; color:var(--color-muted);">
+          <span id="contadorLista">0 locales</span>
         </div>
       </div>
-      <div class="lista-contenido" id="contenedorListaLocales" role="list">
-        <div class="lista-empty" role="status">
+      <div class="lista-contenido" id="contenedorListaLocales">
+        <div class="lista-empty">
           Aparecerán aquí los locales según los filtros aplicados.
         </div>
       </div>
     </aside>
   </div>
-</main>
+</div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.js"></script>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<!-- MarkerCluster JS -->
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
-
