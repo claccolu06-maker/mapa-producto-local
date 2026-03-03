@@ -64,12 +64,14 @@
 
     html, body {
       height: 100%;
+      width: 100%;
       margin: 0;
       padding: 0;
       font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--color-text);
       background: radial-gradient(circle at top left, #e0f2fe 0, #f9fafb 45%, #f5f5f7 100%);
-      overflow: hidden; /* sin scroll horizontal ni franja azul */
+      overflow-x: hidden;
+      overflow-y: hidden;
     }
 
     .flex-row {
@@ -182,12 +184,11 @@
       z-index: 1;
     }
 
-    /* Lista de locales: abajo centrada */
+    /* Lista de locales: abajo a la derecha, donde estaba la leyenda */
     .lista-wrapper {
       position: absolute;
-      bottom: 12px;              /* misma altura que la leyenda */
-      left: 50%;
-      transform: translateX(-50%);
+      bottom: 12px;
+      right: 14px;
       width: 360px;
       max-width: 80vw;
       height: 200px;
@@ -203,7 +204,7 @@
     }
 
     .lista-wrapper.oculta {
-      transform: translate(-50%, 110%);
+      transform: translateY(110%);
       opacity: 0;
       pointer-events: none;
     }
@@ -341,19 +342,18 @@
       font-size: 14px;
     }
 
-    /* Botón lista: justo encima de la tarjeta de lista */
+    /* Botón lista: encima de la tarjeta, en la misma esquina */
     #btnToggleLista {
-      bottom: 220px;  /* 12 + 200 + pequeño margen */
-      left: 50%;
-      transform: translateX(-50%);
+      bottom: 220px;  /* 12 + 200 + margen */
+      right: 14px;
       z-index: 1300;
       box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
     }
 
-    /* Buscar más a la derecha */
+    /* Buscar algo más a la derecha que el borde */
     #btnToggleBusqueda {
       top: 76px;
-      left: 120px;   /* antes 14px */
+      left: 120px;
     }
 
     #btnToggleFiltros {
@@ -383,7 +383,6 @@
       outline-offset: 2px;
     }
 
-    /* Panel búsqueda: sigue saliendo junto a la lupa, un poco a la derecha */
     .panel-busqueda {
       position: absolute;
       top: 90px;
@@ -592,20 +591,9 @@
       color: var(--color-muted);
     }
 
-    /* Leyenda abajo a la derecha */
+    /* Quitamos la leyenda: ya no se muestra */
     #leyendaCategorias {
-      position: absolute;
-      bottom: 12px;
-      right: 14px;  /* la pasamos a la derecha */
-      left: auto;
-      z-index: 900;
-      background: var(--color-panel);
-      padding: 8px 10px;
-      border-radius: 10px;
-      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
-      font-size: 11px;
-      max-width: 260px;
-      border: 1px solid rgba(148, 163, 184, 0.25);
+      display: none;
     }
 
     .leyenda-titulo {
@@ -872,15 +860,15 @@
         max-width: 100%;
         height: 55%;
         border-radius: 16px 16px 0 0;
-        transform: translateX(0);
+        transform: translateY(0);
       }
       .lista-wrapper.oculta {
         transform: translateY(105%);
       }
       #btnToggleLista {
         bottom: 16px;
-        left: 50%;
-        transform: translateX(-50%);
+        right: 50%;
+        transform: translateX(50%);
       }
     }
 
@@ -1102,6 +1090,7 @@
       <div id="contadorResultados" aria-live="polite">Mostrando todos los locales</div>
     </div>
 
+    <!-- leyenda oculta por CSS, se puede eliminar si quieres -->
     <nav id="leyendaCategorias" role="region" aria-label="Leyenda de categorías del mapa">
       <div class="leyenda-titulo">Categorías</div>
       <ul class="leyenda-lista">
@@ -1150,7 +1139,7 @@
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
