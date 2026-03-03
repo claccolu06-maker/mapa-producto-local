@@ -378,22 +378,24 @@
     }
 
     /* PANEL BÚSQUEDA CENTRADO */
-    .panel-busqueda {
-      position: absolute;
-      top: 90px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--color-panel);
-      padding: 10px 12px 12px;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-soft);
-      z-index: 1000;
-      max-width: 360px;
-      font-size: 13px;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      max-height: calc(100vh - 120px);
-      overflow-y: auto;
-    }
+   .panel-busqueda {
+  position: absolute;
+  top: 72px;                 /* menos separación del header */
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-panel);
+  padding: 8px 12px 10px;    /* padding algo menor */
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  z-index: 1000;
+  width: 32vw;               /* proporcional a ancho ventana */
+  max-width: 360px;
+  min-width: 280px;
+  font-size: 13px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  max-height: calc(100vh - 110px); /* 64 header + 10 margen + resto */
+  overflow-y: auto;
+}
 
     .panel-busqueda h2 {
       margin: 0 0 6px 0;
@@ -468,21 +470,22 @@
 
     /* PANEL FILTROS */
     .panel-filtros {
-      position: absolute;
-      top: 90px;
-      right: 14px;
-      width: 320px;
-      background: var(--color-panel);
-      padding: 10px 12px 12px;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-soft);
-      z-index: 1000;
-      font-size: 13px;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      max-height: calc(100vh - 120px);
-      overflow-y: auto;
-      max-width: 360px;
-    }
+  position: absolute;
+  top: 72px;
+  right: 14px;
+  width: 28vw;
+  max-width: 340px;
+  min-width: 260px;
+  background: var(--color-panel);
+  padding: 8px 12px 10px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  z-index: 1000;
+  font-size: 13px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+}
 
     .panel-filtros h3 {
       margin: 0 0 6px 0;
@@ -853,8 +856,15 @@
       background: #fbbf24;
       color: #111827;
     }
-
-    @media (max-width: 1024px) {
+@media (max-width: 1024px) {
+  .panel-busqueda {
+    top: 72px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90vw;
+    max-width: 480px;
+    max-height: calc(100vh - 100px);
+  }
       .lista-wrapper {
         top: auto;
         right: 0;
@@ -1145,3 +1155,4 @@
 <script src="script.js"></script>
 </body>
 </html>
+
