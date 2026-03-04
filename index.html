@@ -4,10 +4,7 @@
   <meta charset="UTF-8" />
   <title>Mapa Comercio Local Sevilla — Descubre negocios de barrio</title>
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
 
   <meta name="description" content="Explora y descubre comercios locales de barrio en Sevilla. Mapa interactivo con filtros por categoría, barrio, valoración, horarios y más." />
   <meta property="og:title" content="Mapa Comercio Local Sevilla" />
@@ -51,9 +48,15 @@
       --color-accent: #f97316;
       --color-text: #111827;
       --color-muted: #4b5563;
+      --color-success: #059669;
+      --color-danger: #dc2626;
       --radius-md: 10px;
       --radius-lg: 14px;
       --shadow-soft: 0 18px 30px rgba(15, 23, 42, 0.16);
+      --shadow-strong: 0 25px 50px rgba(15, 23, 42, 0.25);
+      --header-height: 64px;
+      --transition-fast: 0.15s ease-out;
+      --transition-normal: 0.22s ease-out;
     }
 
     *,
@@ -70,8 +73,11 @@
       color: var(--color-text);
       background: radial-gradient(circle at top left, #e0f2fe 0, #f9fafb 45%, #f5f5f7 100%);
       overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
+    /* ===== UTILIDADES ===== */
     .flex-row {
       display: flex;
       gap: 6px;
@@ -104,18 +110,20 @@
       border: 0;
     }
 
+    /* ===== HEADER ===== */
     .app-header {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
-      height: 64px;
+      height: var(--header-height);
       padding: 12px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      backdrop-filter: blur(10px);
-      background: linear-gradient(to right, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.9));
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: linear-gradient(to right, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.92));
       border-bottom: 1px solid rgba(148, 163, 184, 0.25);
       z-index: 1500;
     }
@@ -127,11 +135,12 @@
     }
 
     .app-logo {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       border-radius: 10px;
-      background: radial-gradient(circle at 30% 30%, #f97316, #2563eb);
-      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+      background: linear-gradient(135deg, #f97316, #2563eb);
+      box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
+      flex-shrink: 0;
     }
 
     .app-title {
@@ -143,7 +152,12 @@
       margin: 0;
       font-family: "DM Sans", system-ui, sans-serif;
       font-size: 18px;
-      letter-spacing: 0.01em;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      background: linear-gradient(135deg, #1e40af, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .app-title span {
@@ -155,13 +169,22 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 12px;
-      color: var(--color-muted);
     }
 
+    .badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--color-primary-soft), rgba(124, 58, 237, 0.1));
+      color: var(--color-primary);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+
+    /* ===== LAYOUT PRINCIPAL ===== */
     .app-layout {
       position: absolute;
-      top: 64px;
+      top: var(--header-height);
       bottom: 0;
       left: 0;
       right: 0;
@@ -185,84 +208,90 @@
       z-index: 1;
     }
 
-    /* Lista de locales: abajo a la derecha */
+    /* ===== LISTA DE LOCALES ===== */
     .lista-wrapper {
       position: absolute;
       bottom: 12px;
       right: 14px;
-      width: 360px;
-      max-width: 80vw;
-      height: 200px;
-      background: linear-gradient(to bottom, #f9fafb, #ffffff);
+      width: 380px;
+      max-width: calc(100vw - 28px);
+      height: 240px;
+      background: linear-gradient(to bottom, #ffffff, #f9fafb);
       border-radius: 16px;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      box-shadow: 0 18px 35px rgba(15, 23, 42, 0.25);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow: var(--shadow-strong);
       z-index: 1200;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: transform 0.22s ease-out, opacity 0.18s ease-out;
+      transition: transform var(--transition-normal), opacity var(--transition-fast);
     }
 
     .lista-wrapper.oculta {
-      transform: translateY(110%);
+      transform: translateY(calc(100% + 20px));
       opacity: 0;
       pointer-events: none;
     }
 
     .lista-header {
-      padding: 10px 12px;
+      padding: 12px 14px;
       border-bottom: 1px solid rgba(148, 163, 184, 0.2);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(255, 255, 255, 0.96);
+      background: rgba(255, 255, 255, 0.98);
       backdrop-filter: blur(8px);
-      font-size: 13px;
+      -webkit-backdrop-filter: blur(8px);
+      flex-shrink: 0;
     }
 
     .lista-header h2 {
       margin: 0;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
     }
 
     .lista-contenido {
-      padding: 8px 10px 10px;
+      padding: 10px 12px 12px;
       overflow-y: auto;
       flex: 1;
+      -webkit-overflow-scrolling: touch;
     }
 
     .lista-empty {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--color-muted);
+      text-align: center;
+      padding: 20px 10px;
     }
 
+    /* ===== TARJETAS DE LOCAL ===== */
     .card-local {
-      border-radius: 10px;
-      padding: 8px 9px;
-      margin-bottom: 8px;
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
       background: #ffffff;
-      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
       border: 1px solid rgba(148, 163, 184, 0.2);
       cursor: pointer;
-      transition: transform 0.09s ease-out, box-shadow 0.09s ease-out, border-color 0.09s ease-out;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
       font-size: 13px;
     }
 
     .card-local:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 16px 28px rgba(15, 23, 42, 0.18);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.15);
       border-color: var(--color-primary);
     }
 
     .card-local.activo {
       border-color: var(--color-primary);
-      box-shadow: 0 18px 32px rgba(37, 99, 235, 0.22);
+      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.2);
+      background: linear-gradient(to bottom, #ffffff, #eff6ff);
     }
 
     .card-local:focus-visible {
-      outline: 2px solid var(--color-primary);
+      outline: 3px solid var(--color-primary);
       outline-offset: 2px;
     }
 
@@ -270,18 +299,24 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 3px;
+      margin-bottom: 4px;
+      gap: 8px;
     }
 
     .card-local-nombre {
       font-weight: 600;
-      font-size: 13px;
+      font-size: 14px;
+      line-height: 1.3;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .card-local-etiquetas {
-      font-size: 11px;
+      font-size: 12px;
       color: var(--color-muted);
-      margin-bottom: 3px;
+      margin-bottom: 4px;
     }
 
     .card-local-meta {
@@ -290,50 +325,64 @@
       align-items: center;
       font-size: 11px;
       color: var(--color-muted);
+      gap: 8px;
     }
 
     .pill-barrio {
-      padding: 2px 6px;
+      padding: 3px 8px;
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.04);
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--color-primary);
+      font-weight: 500;
+      flex-shrink: 0;
     }
 
     .pill-valoracion {
-      padding: 2px 6px;
+      padding: 3px 8px;
       border-radius: 999px;
-      background: rgba(250, 204, 21, 0.14);
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
       color: #92400e;
+      font-weight: 600;
+      flex-shrink: 0;
     }
 
+    /* ===== BOTONES FLOTANTES ===== */
     .btn-flotante {
       position: absolute;
       z-index: 1100;
       background: var(--color-panel);
       border-radius: 999px;
-      padding: 8px 12px;
+      padding: 10px 14px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+      gap: 8px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
       cursor: pointer;
       font-size: 13px;
+      font-weight: 500;
       color: var(--color-text);
-      border: 1px solid rgba(148, 163, 184, 0.4);
+      border: 1px solid rgba(148, 163, 184, 0.3);
       font-family: inherit;
+      transition: all var(--transition-fast);
     }
 
     .btn-flotante:hover {
-      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.25);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+      transform: translateY(-1px);
+    }
+
+    .btn-flotante:active {
+      transform: translateY(0);
     }
 
     .btn-flotante:focus-visible {
-      outline: 2px solid var(--color-primary);
+      outline: 3px solid var(--color-primary);
       outline-offset: 2px;
     }
 
     .btn-flotante .icon {
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       border-radius: 999px;
       background: var(--color-primary-soft);
       display: flex;
@@ -341,107 +390,152 @@
       justify-content: center;
       color: var(--color-primary);
       font-size: 14px;
+      flex-shrink: 0;
     }
 
-    /* Botón lista: encima de la tarjeta de lista */
     #btnToggleLista {
-      bottom: 220px;  /* 12 + 200 + margen */
+      bottom: 264px;
       right: 14px;
-      transform: none;
-      z-index: 1300;
-      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+      z-index: 1250;
+    }
+
+    #btnToggleLista.lista-visible {
+      background: var(--color-primary);
+      color: #fff;
+      border-color: var(--color-primary);
+    }
+
+    #btnToggleLista.lista-visible .icon {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
     }
 
     #btnToggleBusqueda {
-      top: 76px;
-      left: 120px;
+      top: 12px;
+      left: 14px;
     }
 
     #btnToggleFiltros {
-      top: 76px;
+      top: 12px;
       right: 14px;
     }
 
     #btnRecentraMi {
       position: absolute;
-      bottom: 90px;
-      right: 14px;
+      bottom: 100px;
+      left: 14px;
       z-index: 1100;
       background: var(--color-panel);
       border-radius: 999px;
-      padding: 6px 10px;
-      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+      padding: 8px 14px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
       cursor: pointer;
       font-size: 12px;
+      font-weight: 500;
       display: none;
-      border: 1px solid rgba(148, 163, 184, 0.4);
+      border: 1px solid rgba(148, 163, 184, 0.3);
       color: var(--color-text);
       font-family: inherit;
+      transition: all var(--transition-fast);
+    }
+
+    #btnRecentraMi:hover {
+      background: var(--color-primary);
+      color: #fff;
+      border-color: var(--color-primary);
     }
 
     #btnRecentraMi:focus-visible {
-      outline: 2px solid var(--color-primary);
+      outline: 3px solid var(--color-primary);
       outline-offset: 2px;
     }
 
-    .panel-busqueda {
+    /* ===== PANELES DE BÚSQUEDA Y FILTROS ===== */
+    .panel-busqueda,
+    .panel-filtros {
       position: absolute;
-      top: 90px;
-      left: 80px;
       background: var(--color-panel);
-      padding: 8px 12px 10px;
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-soft);
-      z-index: 1000;
-      width: 320px;
-      max-width: 360px;
+      box-shadow: var(--shadow-strong);
+      z-index: 1300;
       font-size: 13px;
       border: 1px solid rgba(148, 163, 184, 0.25);
-      max-height: calc(100vh - 110px);
+      max-height: calc(100vh - var(--header-height) - 100px);
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .panel-busqueda {
+      top: 70px;
+      left: 14px;
+      width: 340px;
+      max-width: calc(100vw - 28px);
+      padding: 14px 16px 16px;
     }
 
     .panel-busqueda h2 {
-      margin: 0 0 6px 0;
-      font-size: 15px;
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .panel-filtros {
+      top: 70px;
+      right: 14px;
+      width: 340px;
+      max-width: calc(100vw - 28px);
+      padding: 14px 16px 16px;
+    }
+
+    .panel-filtros h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
       font-weight: 600;
     }
 
     .field-label {
       display: block;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 500;
       color: var(--color-muted);
-      margin-top: 6px;
-      margin-bottom: 3px;
+      margin-top: 10px;
+      margin-bottom: 4px;
     }
 
     .panel-busqueda input[type="text"],
-    .panel-busqueda select {
+    .panel-busqueda select,
+    .panel-filtros input[type="text"],
+    .panel-filtros select {
       width: 100%;
       box-sizing: border-box;
-      margin-bottom: 4px;
-      padding: 6px 8px;
-      font-size: 13px;
-      border-radius: 8px;
-      border: 1px solid rgba(148, 163, 184, 0.7);
+      padding: 10px 12px;
+      font-size: 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
       outline: none;
       font-family: inherit;
+      background: #fff;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
     }
 
     .panel-busqueda input:focus,
-    .panel-busqueda select:focus {
+    .panel-busqueda select:focus,
+    .panel-filtros input:focus,
+    .panel-filtros select:focus {
       border-color: var(--color-primary);
-      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
 
-    .panel-busqueda button {
-      padding: 6px 8px;
-      font-size: 13px;
+    .panel-busqueda button,
+    .panel-filtros button {
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
       border-radius: 999px;
       border: none;
       font-family: inherit;
+      transition: all var(--transition-fast);
     }
 
     .btn-primary {
@@ -451,124 +545,81 @@
 
     .btn-primary:hover {
       background: #1d4ed8;
+      transform: translateY(-1px);
     }
 
     .btn-primary:focus-visible {
-      outline: 2px solid var(--color-primary);
+      outline: 3px solid var(--color-primary);
       outline-offset: 2px;
     }
 
     .btn-ghost {
-      background: rgba(15, 23, 42, 0.03);
+      background: rgba(15, 23, 42, 0.05);
       color: var(--color-text);
     }
 
     .btn-ghost:hover {
-      background: rgba(15, 23, 42, 0.08);
+      background: rgba(15, 23, 42, 0.1);
     }
 
     .btn-ghost:focus-visible {
-      outline: 2px solid var(--color-primary);
+      outline: 3px solid var(--color-primary);
       outline-offset: 2px;
-    }
-
-    .panel-filtros {
-      position: absolute;
-      top: 90px;
-      right: 14px;
-      width: 320px;
-      max-width: 360px;
-      min-width: 260px;
-      background: var(--color-panel);
-      padding: 8px 12px 10px;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-soft);
-      z-index: 1000;
-      font-size: 13px;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      max-height: calc(100vh - 110px);
-      overflow-y: auto;
-    }
-
-    .panel-filtros h3 {
-      margin: 0 0 6px 0;
-      font-size: 14px;
-      font-weight: 600;
     }
 
     .panel-section-title {
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       color: var(--color-muted);
-      margin-top: 6px;
-      margin-bottom: 4px;
-    }
-
-    .panel-filtros select,
-    .panel-filtros input[type="text"] {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 5px 7px;
-      font-size: 13px;
-      border-radius: 8px;
-      border: 1px solid rgba(148, 163, 184, 0.7);
-      outline: none;
-      font-family: inherit;
-    }
-
-    .panel-filtros select:focus,
-    .panel-filtros input[type="text"]:focus {
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+      margin-top: 16px;
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
     }
 
     .chip-row {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      margin-top: 4px;
+      margin-top: 6px;
     }
 
     .chip-filter {
-      padding: 3px 8px;
+      padding: 4px 10px;
       border-radius: 999px;
       font-size: 11px;
-      background: rgba(148, 163, 184, 0.12);
-      color: var(--color-muted);
+      font-weight: 500;
+      background: var(--color-primary-soft);
+      color: var(--color-primary);
     }
 
     .checkbox-linea {
-      margin-top: 6px;
+      margin-top: 8px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: var(--color-muted);
+      gap: 8px;
+      font-size: 13px;
+      color: var(--color-text);
+      cursor: pointer;
     }
 
     .checkbox-linea input {
+      width: 18px;
+      height: 18px;
       accent-color: var(--color-primary);
+      cursor: pointer;
     }
 
     .panel-filtros .fila-botones {
       display: flex;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .panel-filtros button {
-      flex: 1;
-      padding: 6px 8px;
-      font-size: 13px;
-      cursor: pointer;
-      border-radius: 999px;
-      border: none;
-      font-family: inherit;
+      gap: 10px;
+      margin-top: 16px;
     }
 
     .panel-filtros .btn-apply {
+      flex: 2;
       background: var(--color-primary);
       color: #fff;
     }
@@ -578,37 +629,45 @@
     }
 
     .panel-filtros .btn-reset {
-      background: rgba(15, 23, 42, 0.03);
-      color: var(--color-text);
+      flex: 1;
+      background: rgba(220, 38, 38, 0.1);
+      color: var(--color-danger);
     }
 
     .panel-filtros .btn-reset:hover {
-      background: rgba(15, 23, 42, 0.08);
+      background: rgba(220, 38, 38, 0.2);
     }
 
     #contadorResultados {
-      margin-top: 6px;
-      font-size: 11px;
+      margin-top: 12px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(37, 99, 235, 0.05);
+      font-size: 12px;
       color: var(--color-muted);
+      text-align: center;
     }
 
+    /* ===== LEYENDA DE CATEGORÍAS ===== */
     #leyendaCategorias {
       position: absolute;
       bottom: 12px;
       left: 14px;
       z-index: 900;
       background: var(--color-panel);
-      padding: 8px 10px;
-      border-radius: 10px;
-      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+      padding: 12px 14px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
       font-size: 11px;
-      max-width: 260px;
+      max-width: 280px;
       border: 1px solid rgba(148, 163, 184, 0.25);
     }
 
     .leyenda-titulo {
       font-weight: 700;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--color-text);
     }
 
     .leyenda-lista {
@@ -616,51 +675,55 @@
       padding: 0;
       margin: 0;
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 3px 12px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px 10px;
     }
 
     .leyenda-lista li {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       white-space: nowrap;
+      font-size: 10px;
+      color: var(--color-muted);
     }
 
     .dot {
-      width: 8px;
-      height: 8px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
       display: inline-block;
       flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
-    .dot-comida { background: #d7191c; }
-    .dot-cafeteria { background: #fdae61; }
-    .dot-alimentacion { background: #1a9641; }
-    .dot-moda { background: #7b3294; }
-    .dot-belleza { background: #4575b4; }
-    .dot-salud { background: #ffff00; border: 1px solid #ccc; }
-    .dot-ocio { background: #313695; }
-    .dot-deportes { background: #f46d43; }
-    .dot-servicios { background: #4d4d4d; }
+    /* COLORES CORREGIDOS para coincidir con los marcadores */
+    .dot-comida { background: #cb2b3e; }
+    .dot-cafeteria { background: #f69730; }
+    .dot-alimentacion { background: #2aad27; }
+    .dot-moda { background: #9c2bcb; }
+    .dot-belleza { background: #2a81cb; }
+    .dot-salud { background: #cac428; }
+    .dot-ocio { background: #cb8427; }
+    .dot-deportes { background: #7b7b7b; }
+    .dot-servicios { background: #3d3d3d; }
 
+    /* ===== PANEL DE DETALLE ===== */
     #panelDetalle {
       position: absolute;
-      top: 64px;
+      top: 0;
       right: 0;
-      width: 360px;
+      width: 400px;
       max-width: 100%;
-      height: calc(100% - 64px);
-      background: linear-gradient(to bottom, #f9fafb, #ffffff);
-      box-shadow: -18px 0 35px rgba(15, 23, 42, 0.25);
-      z-index: 1200;
+      height: 100%;
+      background: linear-gradient(to bottom, #ffffff, #f9fafb);
+      box-shadow: -20px 0 40px rgba(15, 23, 42, 0.2);
+      z-index: 1400;
       transform: translateX(100%);
-      transition: transform 0.25s ease-out;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       flex-direction: column;
-      font-size: 13px;
-      border-radius: 16px 0 0 0;
+      font-size: 14px;
     }
 
     #panelDetalle.abierto {
@@ -668,43 +731,55 @@
     }
 
     #panelDetalleHeader {
-      padding: 10px 14px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      flex-shrink: 0;
     }
 
     #panelDetalle h2 {
       margin: 0;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     #panelDetalleBody {
-      padding: 10px 14px 14px;
+      padding: 16px 18px 20px;
       overflow-y: auto;
       flex: 1;
       font-size: 14px;
-      color: #222;
+      color: var(--color-text);
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
+      -webkit-overflow-scrolling: touch;
     }
 
     .btn-favorito {
       border: none;
       background: none;
       cursor: pointer;
-      font-size: 18px;
-      margin-right: 6px;
-      padding: 4px;
+      font-size: 22px;
+      padding: 6px;
+      border-radius: 999px;
+      transition: all var(--transition-fast);
+    }
+
+    .btn-favorito:hover {
+      background: rgba(225, 29, 72, 0.1);
     }
 
     .btn-favorito:focus-visible {
-      outline: 2px solid var(--color-primary);
+      outline: 3px solid var(--color-primary);
       outline-offset: 2px;
     }
 
@@ -714,13 +789,17 @@
 
     #btnCerrarDetalle {
       border: none;
-      background: rgba(15, 23, 42, 0.04);
+      background: rgba(15, 23, 42, 0.05);
       border-radius: 999px;
-      width: 26px;
-      height: 26px;
+      width: 32px;
+      height: 32px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 16px;
       font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
     }
 
     #btnCerrarDetalle:hover {
@@ -728,10 +807,149 @@
     }
 
     #btnCerrarDetalle:focus-visible {
-      outline: 2px solid var(--color-primary);
+      outline: 3px solid var(--color-primary);
       outline-offset: 2px;
     }
 
+    /* Contenido del detalle */
+    .detalle-header {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      padding-bottom: 12px;
+    }
+
+    .detalle-titulo-linea {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .detalle-nombre {
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .detalle-subtitulo {
+      margin-top: 6px;
+      color: var(--color-muted);
+      font-size: 14px;
+    }
+
+    .detalle-info-principal {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      background: rgba(37, 99, 235, 0.03);
+      border-radius: 10px;
+    }
+
+    .detalle-linea {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 0;
+    }
+
+    .detalle-label {
+      font-weight: 500;
+      color: var(--color-muted);
+      font-size: 13px;
+    }
+
+    .detalle-valor {
+      text-align: right;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .estado-abierto {
+      color: var(--color-success);
+      font-weight: 600;
+    }
+
+    .estado-cerrado {
+      color: var(--color-danger);
+      font-weight: 600;
+    }
+
+    .detalle-bloque {
+      margin-top: 4px;
+    }
+
+    .detalle-descripcion {
+      margin: 6px 0 0;
+      line-height: 1.5;
+      color: var(--color-muted);
+    }
+
+    .detalle-redes-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .detalle-redes-links a {
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--color-primary-soft);
+      color: var(--color-primary);
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all var(--transition-fast);
+    }
+
+    .detalle-redes-links a:hover {
+      background: var(--color-primary);
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .detalle-boton-maps {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 20px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #111827, #1f2937);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all var(--transition-fast);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .detalle-boton-maps:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      text-decoration: none;
+    }
+
+    .detalle-foto img {
+      width: 100%;
+      max-height: 240px;
+      object-fit: cover;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .detalle-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      background: #f3f4f6;
+    }
+
+    .detalle-pill-valoracion {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #111827;
+    }
+
+    /* ===== LINKS ===== */
     a {
       color: var(--color-primary);
       text-decoration: none;
@@ -741,125 +959,70 @@
       text-decoration: underline;
     }
 
-    .detalle-header {
-      border-bottom: 1px solid #eee;
-      padding-bottom: 8px;
-    }
-
-    .detalle-titulo-linea {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .detalle-nombre {
-      font-weight: 600;
-      font-size: 16px;
-    }
-
-    .detalle-subtitulo {
-      margin-top: 4px;
-      color: #555;
-      font-size: 13px;
-    }
-
-    .detalle-info-principal {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .detalle-linea {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      margin: 0;
-    }
-
-    .detalle-label {
-      font-weight: 500;
-      color: #555;
-      font-size: 13px;
-    }
-
-    .detalle-valor {
-      text-align: right;
-      font-size: 13px;
-    }
-
-    .estado-abierto {
-      color: #0a8a3a;
-      font-weight: 600;
-    }
-
-    .estado-cerrado {
-      color: #c0392b;
-      font-weight: 600;
-    }
-
-    .detalle-bloque {
-      margin-top: 4px;
-    }
-
-    .detalle-descripcion {
-      margin: 4px 0 0;
-      line-height: 1.4;
-    }
-
-    .detalle-redes-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .detalle-redes-links a {
-      font-size: 13px;
-      color: var(--color-primary);
-      text-decoration: none;
-    }
-
-    .detalle-redes-links a:hover {
-      text-decoration: underline;
-    }
-
-    .detalle-boton-maps {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: #111827;
+    /* ===== POPUP DE LEAFLET ===== */
+    .btn-ver-detalle {
+      background: var(--color-primary);
       color: #fff;
-      font-size: 13px;
-      text-decoration: none;
-    }
-
-    .detalle-boton-maps:hover {
-      background: #000;
-      text-decoration: none;
-    }
-
-    .detalle-foto img {
-      width: 100%;
-      max-height: 220px;
-      object-fit: cover;
-      border-radius: 8px;
-    }
-
-    .detalle-pill {
-      padding: 2px 8px;
+      border: none;
       border-radius: 999px;
-      font-size: 11px;
-      background: #f3f4f6;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all var(--transition-fast);
     }
 
-    .detalle-pill-valoracion {
-      background: #fbbf24;
-      color: #111827;
+    .btn-ver-detalle:hover {
+      background: #1d4ed8;
     }
 
+    .btn-ver-detalle:focus-visible {
+      outline: 3px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    /* ===== ACCESIBILIDAD ===== */
+    .skip-link {
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--color-primary);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 0 0 10px 10px;
+      z-index: 10000;
+      font-size: 14px;
+      font-weight: 500;
+      transition: top 0.2s;
+      text-decoration: none;
+    }
+
+    .skip-link:focus {
+      top: 0;
+    }
+
+    /* ===== OVERLAY PARA MÓVIL ===== */
+    .panel-overlay {
+      position: fixed;
+      top: var(--header-height);
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1250;
+      opacity: 0;
+      visibility: hidden;
+      transition: all var(--transition-normal);
+    }
+
+    .panel-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* ===== RESPONSIVE ===== */
     @media (max-width: 1024px) {
       .lista-wrapper {
         top: auto;
@@ -868,78 +1031,127 @@
         bottom: 0;
         width: 100%;
         max-width: 100%;
-        height: 55%;
-        border-radius: 16px 16px 0 0;
+        height: 50vh;
+        max-height: 400px;
+        border-radius: 20px 20px 0 0;
         transform: translateY(0);
       }
+
       .lista-wrapper.oculta {
-        transform: translateY(105%);
+        transform: translateY(calc(100% + 20px));
       }
+
       #btnToggleLista {
-        bottom: 16px;
+        bottom: calc(50vh + 10px);
         right: 50%;
         transform: translateX(50%);
+      }
+
+      .lista-wrapper.oculta ~ #btnToggleLista,
+      #btnToggleLista:not(.lista-visible) {
+        bottom: 20px;
+      }
+
+      #leyendaCategorias {
+        bottom: auto;
+        top: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: 90vw;
+      }
+
+      .leyenda-lista {
+        grid-template-columns: repeat(3, 1fr);
       }
     }
 
     @media (max-width: 768px) {
-      .panel-busqueda {
-        top: 90px;
-        left: 10px;
-        width: calc(100vw - 20px);
-        max-width: none;
-        max-height: calc(100vh - 110px);
+      .app-title span {
+        display: none;
       }
+
+      .panel-busqueda,
       .panel-filtros {
-        width: 92%;
-        right: 4%;
-        top: 90px;
-        max-height: calc(100vh - 110px);
-        overflow-y: auto;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: 70vh;
+        border-radius: 20px 20px 0 0;
+        padding: 20px;
       }
+
       #panelDetalle {
         width: 100%;
-        border-radius: 16px 16px 0 0;
+        border-radius: 20px 20px 0 0;
+        height: 85vh;
+        top: auto;
+        bottom: 0;
+        transform: translateY(100%);
       }
+
+      #panelDetalle.abierto {
+        transform: translateY(0);
+      }
+
       .leyenda-lista {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      #btnToggleBusqueda,
+      #btnToggleFiltros {
+        padding: 8px 12px;
+      }
+
+      #btnToggleBusqueda span:not(.icon),
+      #btnToggleFiltros span:not(.icon) {
+        display: none;
+      }
+
+      #btnRecentraMi {
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 80px;
       }
     }
 
-    .btn-ver-detalle {
-      background: var(--color-primary);
-      color: #fff;
-      border: none;
-      border-radius: 999px;
-      padding: 5px 10px;
-      font-size: 12px;
-      cursor: pointer;
-      font-family: inherit;
+    @media (max-width: 480px) {
+      .app-header {
+        padding: 10px 12px;
+      }
+
+      .app-logo {
+        width: 32px;
+        height: 32px;
+      }
+
+      .app-title h1 {
+        font-size: 16px;
+      }
+
+      .lista-wrapper {
+        height: 45vh;
+      }
+
+      #leyendaCategorias {
+        display: none;
+      }
+
+      .card-local {
+        padding: 8px 10px;
+      }
     }
 
-    .btn-ver-detalle:hover {
-      background: #1d4ed8;
+    /* ===== ANIMACIÓN DE CARGA ===== */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
 
-    .btn-ver-detalle:focus-visible {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 2px;
-    }
-
-    .skip-link {
-      position: absolute;
-      top: -40px;
-      left: 0;
-      background: var(--color-primary);
-      color: #fff;
-      padding: 8px 16px;
-      z-index: 10000;
-      font-size: 14px;
-      transition: top 0.2s;
-    }
-
-    .skip-link:focus {
-      top: 0;
+    .loading {
+      animation: pulse 1.5s ease-in-out infinite;
     }
   </style>
 </head>
@@ -948,7 +1160,7 @@
 <a class="skip-link" href="#map">Ir al mapa</a>
 
 <noscript>
-  <div style="padding: 40px; text-align: center; font-family: sans-serif;">
+  <div style="padding: 40px; text-align: center; font-family: sans-serif; background: #fff; min-height: 100vh;">
     <h2>JavaScript necesario</h2>
     <p>Esta aplicación necesita JavaScript para funcionar. Por favor, actívalo en tu navegador.</p>
   </div>
@@ -963,31 +1175,36 @@
     </div>
   </div>
   <div class="app-header-right">
-    <span class="badge" aria-label="Versión beta">Beta</span>
+    <span class="badge" aria-label="Versión beta">Beta v2.0</span>
   </div>
 </header>
 
 <main class="app-layout">
   <div class="map-wrapper">
-    <div id="map" role="application" aria-label="Mapa interactivo de comercios locales en Sevilla"></div>
+    <div id="map" role="application" aria-label="Mapa interactivo de comercios locales en Sevilla" tabindex="0"></div>
 
-    <button id="btnToggleLista" class="btn-flotante" aria-label="Mostrar u ocultar lista de locales" aria-expanded="false">
+    <!-- Overlay para móvil -->
+    <div class="panel-overlay" id="panelOverlay" aria-hidden="true"></div>
+
+    <!-- Botones flotantes -->
+    <button id="btnToggleLista" class="btn-flotante lista-visible" aria-label="Mostrar u ocultar lista de locales" aria-expanded="true" aria-controls="listaWrapper">
       <span class="icon" aria-hidden="true">📍</span>
-      <span>Lista de locales</span>
+      <span>Lista</span>
     </button>
 
-    <button id="btnToggleBusqueda" class="btn-flotante" aria-label="Abrir panel de búsqueda" aria-expanded="false">
+    <button id="btnToggleBusqueda" class="btn-flotante" aria-label="Abrir panel de búsqueda" aria-expanded="false" aria-controls="panelBusqueda">
       <span class="icon" aria-hidden="true">🔎</span>
       <span>Buscar</span>
     </button>
 
-    <button id="btnToggleFiltros" class="btn-flotante" aria-label="Abrir panel de filtros" aria-expanded="false">
+    <button id="btnToggleFiltros" class="btn-flotante" aria-label="Abrir panel de filtros" aria-expanded="false" aria-controls="panelFiltros">
       <span class="icon" aria-hidden="true">⚙️</span>
       <span id="textoBtnFiltros">Filtros</span>
     </button>
 
-    <button id="btnRecentraMi" aria-label="Recentrar mapa en mi ubicación">Recentrar en mí</button>
+    <button id="btnRecentraMi" aria-label="Recentrar mapa en mi ubicación">📍 Recentrar en mí</button>
 
+    <!-- Panel de búsqueda -->
     <div class="panel-busqueda" id="panelBusqueda" role="search" aria-label="Búsqueda rápida de locales" style="display:none;">
       <h2>¿Qué buscas hoy?</h2>
 
@@ -997,42 +1214,43 @@
       <label class="field-label" for="fUbicacionCliente">Dónde</label>
       <input id="fUbicacionCliente" type="text" placeholder="Dirección o barrio" autocomplete="off" />
 
-      <label class="field-label" for="fRadioDistancia">Radio</label>
+      <label class="field-label" for="fRadioDistancia">Radio de búsqueda</label>
       <select id="fRadioDistancia">
-        <option value="">Sin límite</option>
-        <option value="500">500 m</option>
-        <option value="1000">1 km</option>
-        <option value="2000">2 km</option>
-        <option value="3000">3 km</option>
+        <option value="">Sin límite de distancia</option>
+        <option value="500">500 metros</option>
+        <option value="1000">1 kilómetro</option>
+        <option value="2000">2 kilómetros</option>
+        <option value="3000">3 kilómetros</option>
       </select>
 
-      <div class="flex-row mt-sm">
-        <button id="btnBuscarRapido" class="btn-primary">Buscar</button>
-        <button id="btnCercaDeMi" class="btn-ghost">Cerca de mí</button>
+      <div class="flex-row mt-sm" style="margin-top: 16px;">
+        <button id="btnBuscarRapido" class="btn-primary" style="flex: 2;">🔍 Buscar</button>
+        <button id="btnCercaDeMi" class="btn-ghost" style="flex: 1;">📍 Cerca de mí</button>
       </div>
     </div>
 
+    <!-- Panel de filtros -->
     <div class="panel-filtros" id="panelFiltros" role="region" aria-label="Filtros avanzados" style="display:none;">
       <h3>Filtros avanzados</h3>
 
-      <div class="panel-section-title">Qué</div>
+      <div class="panel-section-title">Categoría y tipo</div>
 
       <label class="field-label" for="fCategoria">Categoría principal</label>
       <select id="fCategoria">
-        <option value="">Todas</option>
-        <option value="Comida">Comida</option>
-        <option value="Cafetería">Cafetería</option>
-        <option value="Alimentación">Alimentación</option>
-        <option value="Moda">Moda</option>
-        <option value="Belleza">Belleza</option>
-        <option value="Salud">Salud</option>
-        <option value="Ocio">Ocio</option>
-        <option value="Deportes">Deportes</option>
-        <option value="Servicios">Servicios</option>
-        <option value="Otros">Otros</option>
+        <option value="">Todas las categorías</option>
+        <option value="Comida">🍽️ Comida</option>
+        <option value="Cafetería">☕ Cafetería</option>
+        <option value="Alimentación">🥖 Alimentación</option>
+        <option value="Moda">👗 Moda</option>
+        <option value="Belleza">💄 Belleza</option>
+        <option value="Salud">🏥 Salud</option>
+        <option value="Ocio">🎮 Ocio</option>
+        <option value="Deportes">⚽ Deportes</option>
+        <option value="Servicios">🔧 Servicios</option>
+        <option value="Otros">📦 Otros</option>
       </select>
 
-      <label class="field-label" for="fTipoDetalle">Tipo dentro de la categoría</label>
+      <label class="field-label" for="fTipoDetalle">Tipo específico</label>
       <select id="fTipoDetalle">
         <option value="">Todos los tipos</option>
       </select>
@@ -1043,65 +1261,68 @@
         <div style="flex:1;">
           <label class="field-label" for="fPrecioMin">Precio mín.</label>
           <select id="fPrecioMin">
-            <option value="1" selected>1 ★</option>
-            <option value="2">2 ★</option>
-            <option value="3">3 ★</option>
+            <option value="1" selected>€</option>
+            <option value="2">€€</option>
+            <option value="3">€€€</option>
           </select>
         </div>
         <div style="flex:1;">
           <label class="field-label" for="fPrecioMax">Precio máx.</label>
           <select id="fPrecioMax">
-            <option value="1">1 ★</option>
-            <option value="2">2 ★</option>
-            <option value="3" selected>3 ★</option>
+            <option value="1">€</option>
+            <option value="2">€€</option>
+            <option value="3" selected>€€€</option>
           </select>
         </div>
       </div>
 
       <label class="field-label" for="fValoracionMin">Valoración mínima</label>
       <select id="fValoracionMin">
-        <option value="0">Cualquiera</option>
-        <option value="3">3★ o más</option>
-        <option value="4">4★ o más</option>
-        <option value="4.5">4.5★ o más</option>
+        <option value="0">Cualquier valoración</option>
+        <option value="3">⭐ 3 o más</option>
+        <option value="4">⭐ 4 o más</option>
+        <option value="4.5">⭐ 4.5 o más</option>
       </select>
 
-      <label class="field-label" for="fOrden">Ordenar por</label>
+      <label class="field-label" for="fOrden">Ordenar resultados</label>
       <select id="fOrden">
         <option value="ninguno">Sin orden especial</option>
-        <option value="valoracion_desc">Mejor valorados primero</option>
-        <option value="distancia_asc">Más cerca primero</option>
+        <option value="valoracion_desc">⭐ Mejor valorados</option>
+        <option value="distancia_asc">📍 Más cercanos</option>
       </select>
 
-      <div class="panel-section-title">Dónde</div>
+      <div class="panel-section-title">Ubicación</div>
       <label class="field-label" for="fBarrio">Barrio</label>
-      <select id="fBarrio"></select>
+      <select id="fBarrio">
+        <option value="">Todos los barrios</option>
+      </select>
 
-      <div class="panel-section-title">Estado</div>
-      <div class="checkbox-linea">
+      <div class="panel-section-title">Estado y vista</div>
+      <label class="checkbox-linea">
         <input type="checkbox" id="fSoloAbiertos" />
-        <label for="fSoloAbiertos">Solo abiertos ahora</label>
-      </div>
-      <div class="checkbox-linea">
+        <span>Solo abiertos ahora</span>
+      </label>
+      <label class="checkbox-linea">
         <input type="checkbox" id="fSoloEnMapa" />
-        <label for="fSoloEnMapa">Solo locales en la vista actual</label>
-      </div>
+        <span>Solo en la vista actual del mapa</span>
+      </label>
 
-      <div class="panel-section-title">Resumen</div>
+      <div class="panel-section-title">Filtros activos</div>
       <div class="chip-row" id="chipsResumen" aria-live="polite">
-        <span class="chip-filter">Sin filtros activos</span>
+        <span class="chip-filter">Sin filtros</span>
       </div>
 
       <div class="fila-botones">
-        <button id="btnAplicarFiltros" class="btn-apply">Aplicar filtros</button>
-        <button id="btnQuitarFiltros" class="btn-reset">Quitar</button>
+        <button id="btnAplicarFiltros" class="btn-apply">✓ Aplicar</button>
+        <button id="btnQuitarFiltros" class="btn-reset">✕ Limpiar</button>
       </div>
 
-      <div id="contadorResultados" aria-live="polite">Mostrando todos los locales</div>
+      <div id="contadorResultados" aria-live="polite">Cargando locales...</div>
     </div>
 
+    <!-- Leyenda de categorías -->
     <nav id="leyendaCategorias" role="region" aria-label="Leyenda de categorías del mapa">
-      <div class="leyenda-titulo">Categorías</div>
+      <div class="leyenda-titulo">📍 Categorías</div>
       <ul class="leyenda-lista">
         <li><span class="dot dot-comida"></span> Comida</li>
         <li><span class="dot dot-cafeteria"></span> Cafetería</li>
@@ -1115,23 +1336,25 @@
       </ul>
     </nav>
 
-    <div id="panelDetalle" role="dialog" aria-label="Detalle del local" aria-hidden="true">
+    <!-- Panel de detalle -->
+    <div id="panelDetalle" role="dialog" aria-label="Detalle del local" aria-hidden="true" aria-modal="true">
       <div id="panelDetalleHeader">
         <h2 id="detalleNombre">Local</h2>
         <div class="flex-row-center">
-          <button id="btnFavorito" class="btn-favorito" aria-label="Marcar como favorito">♡</button>
-          <button id="btnCerrarDetalle" aria-label="Cerrar panel de detalle">✕</button>
+          <button id="btnFavorito" class="btn-favorito" aria-label="Marcar como favorito" title="Añadir a favoritos">♡</button>
+          <button id="btnCerrarDetalle" aria-label="Cerrar panel de detalle" title="Cerrar">✕</button>
         </div>
       </div>
       <div id="panelDetalleBody"></div>
     </div>
 
-    <aside class="lista-wrapper oculta" id="listaWrapper" role="complementary" aria-label="Lista de locales encontrados">
+    <!-- Lista de locales -->
+    <aside class="lista-wrapper" id="listaWrapper" role="complementary" aria-label="Lista de locales encontrados">
       <div class="lista-header">
         <div>
           <h2>Locales encontrados</h2>
           <div id="textoResumenLista" class="text-muted-sm" aria-live="polite">
-            Mostrando todos los locales
+            Cargando locales...
           </div>
         </div>
         <div class="text-muted-sm">
@@ -1139,8 +1362,8 @@
         </div>
       </div>
       <div class="lista-contenido" id="contenedorListaLocales" role="list">
-        <div class="lista-empty" role="status">
-          Aparecerán aquí los locales según los filtros aplicados.
+        <div class="lista-empty loading" role="status">
+          Cargando locales...
         </div>
       </div>
     </aside>
