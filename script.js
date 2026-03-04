@@ -1,11 +1,17 @@
 // =============================
+// MAPA COMERCIO LOCAL SEVILLA
+// Versión 2.0 - Mejorado
+// =============================
+
+// =============================
 // UTILIDADES
 // =============================
 
-/** MEJORA: Sanitizar HTML para prevenir XSS */
+/** Sanitizar HTML para prevenir XSS */
 function escaparHTML(str) {
+  if (str === null || str === undefined) return "";
   const div = document.createElement("div");
-  div.textContent = str || "";
+  div.textContent = String(str);
   return div.innerHTML;
 }
 
@@ -19,12 +25,14 @@ function normalizarTexto(str) {
 
 function parseHoraToMinutos(horaStr) {
   if (!horaStr) return null;
-  const [h, m] = horaStr.split(":").map(Number);
+  const partes = horaStr.split(":");
+  if (partes.length < 2) return null;
+  const [h, m] = partes.map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return null;
   return h * 60 + m;
 }
 
-/** MEJORA: Acepta parámetro `ahora` para no crear múltiples Date() */
+/** Comprueba si un local está abierto */
 function estaAbiertoAhora(local, ahora) {
   const horario = local.horario;
   if (!horario) return !!local.horario_abierto;
@@ -46,17 +54,28 @@ function estaAbiertoAhora(local, ahora) {
     if (mIni <= mFin) {
       if (minutosAhora >= mIni && minutosAhora <= mFin) return true;
     } else {
-      // Tramo nocturno (ej: 22:00-02:00)
       if (minutosAhora >= mIni || minutosAhora <= mFin) return true;
     }
   }
   return false;
 }
 
+/** Debounce para optimizar eventos frecuentes */
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 // =============================
 // ESTADO GLOBAL CENTRALIZADO
 // =============================
-/** MEJORA: Todas las variables globales agrupadas en un objeto */
 const App = {
   todosLosLocales: [],
   localesFiltrados: [],
@@ -71,7 +90,9 @@ const App = {
   localSeleccionadoId: null,
   markerSeleccionado: null,
   markerUbicacion: null,
-  animacionActiva: null, // MEJORA: Control de animación
+  animacionActiva: null,
+  eventosRegistrados: false,
+  cargando: false,
 };
 
 // =============================
@@ -79,47 +100,57 @@ const App = {
 // =============================
 const CLAVE_FAVORITOS = "mapa_sevilla_favoritos";
 const CLAVE_FILTROS = "mapa_sevilla_filtros";
+const MAX_LISTA = 300;
+const SEVILLA_CENTER = [37.3891, -5.9845];
+const SEVILLA_ZOOM = 14;
 
 // =============================
-// MAPA CENTRADO EN SEVILLA
+// INICIALIZACIÓN DEL MAPA
 // =============================
-/** MEJORA: var → const */
 const map = L.map("map", {
   zoomControl: true,
   inertia: true,
   inertiaDeceleration: 3000,
   tap: true,
   preferCanvas: true,
-}).setView([37.3891, -5.9845], 14);
+  maxZoom: 19,
+  minZoom: 11,
+}).setView(SEVILLA_CENTER, SEVILLA_ZOOM);
 
 const boundsSevilla = L.latLngBounds(
-  [37.30, -6.10],
-  [37.50, -5.80]
+  [37.28, -6.12],
+  [37.52, -5.78]
 );
 map.setMaxBounds(boundsSevilla);
+
 map.on("drag", function () {
   map.panInsideBounds(boundsSevilla, { animate: false });
 });
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
-  attribution: "© OpenStreetMap contributors",
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 }).addTo(map);
 
-// MarkerCluster
+map.zoomControl.setPosition('bottomright');
+
+// MarkerCluster optimizado
 const clusterGroup = L.markerClusterGroup({
   spiderfyOnEveryZoom: false,
   disableClusteringAtZoom: 17,
   chunkedLoading: true,
-  chunkDelay: 80,
-  chunkInterval: 200,
-  maxClusterRadius: 70,
+  chunkDelay: 50,
+  chunkInterval: 150,
+  maxClusterRadius: 60,
   removeOutsideVisibleBounds: true,
+  animate: true,
+  animateAddingMarkers: false,
+  showCoverageOnHover: false,
 });
 map.addLayer(clusterGroup);
 
 // =============================
-// ICONOS
+// ICONOS POR CATEGORÍA
 // =============================
 function crearIconoColor(url) {
   return L.icon({
@@ -148,27 +179,29 @@ const iconosCategoria = {
 const iconoPorDefecto = iconosCategoria["Otros"];
 const iconoSeleccionado = crearIconoColor("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-gold.png");
 
+const iconoUbicacionUsuario = L.divIcon({
+  className: 'ubicacion-usuario-marker',
+  html: '<div style="width:20px;height:20px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border:3px solid white;border-radius:50%;box-shadow:0 2px 10px rgba(59,130,246,0.5);"></div>',
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+});
+
 // =============================
 // GEOLOCALIZACIÓN
 // =============================
 function dibujarUbicacionUsuario(lat, lng) {
   App.ubicacionUsuario = { lat, lng };
+  
   if (App.markerUbicacion) {
     App.markerUbicacion.setLatLng([lat, lng]);
   } else {
     App.markerUbicacion = L.marker([lat, lng], {
-      title: "Estás aquí",
-      icon: L.icon({
-        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-        shadowSize: [41, 41],
-      }),
+      title: "Tu ubicación",
+      icon: iconoUbicacionUsuario,
+      zIndexOffset: 1000,
     })
       .addTo(map)
-      .bindPopup("Estás aquí");
+      .bindPopup("<strong>📍 Estás aquí</strong>");
   }
 }
 
@@ -180,7 +213,7 @@ function localizarUsuarioSimple() {
       dibujarUbicacionUsuario(pos.coords.latitude, pos.coords.longitude);
     },
     (err) => {
-      console.warn("No se pudo localizar usuario:", err);
+      console.warn("No se pudo localizar usuario:", err.message);
     },
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
   );
@@ -188,9 +221,11 @@ function localizarUsuarioSimple() {
 
 function buscarCercaDeMi() {
   if (!navigator.geolocation) {
-    alert("Tu dispositivo no permite obtener la ubicación.");
+    mostrarNotificacion("Tu dispositivo no permite obtener la ubicación.", "error");
     return;
   }
+
+  mostrarNotificacion("Obteniendo tu ubicación...", "info");
 
   navigator.geolocation.getCurrentPosition(
     (pos) => {
@@ -198,16 +233,17 @@ function buscarCercaDeMi() {
       const lng = pos.coords.longitude;
       dibujarUbicacionUsuario(lat, lng);
       App.puntoReferencia = { lat, lng };
-      map.setView([lat, lng], 15);
+      map.setView([lat, lng], 15, { animate: true });
 
       const radioSelect = document.getElementById("fRadioDistancia");
       if (radioSelect && !radioSelect.value) radioSelect.value = "1000";
 
       aplicarFiltros(true);
+      mostrarNotificacion("Mostrando locales cerca de ti", "success");
     },
     (err) => {
-      console.warn("Error ubicación cerca de mí:", err);
-      alert("No hemos podido obtener tu ubicación. Revisa permisos de ubicación del navegador.");
+      console.warn("Error ubicación:", err);
+      mostrarNotificacion("No pudimos obtener tu ubicación. Revisa los permisos.", "error");
     },
     { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
   );
@@ -215,23 +251,95 @@ function buscarCercaDeMi() {
 
 function recentrarEnMi() {
   if (!App.ubicacionUsuario) {
-    alert("Aún no tenemos tu ubicación.");
+    mostrarNotificacion("Aún no tenemos tu ubicación.", "info");
     return;
   }
-  map.setView([App.ubicacionUsuario.lat, App.ubicacionUsuario.lng], 15);
+  map.setView([App.ubicacionUsuario.lat, App.ubicacionUsuario.lng], 16, { animate: true });
 }
 
 // =============================
-// GEOCODIFICAR TEXTO
+// NOTIFICACIONES
+// =============================
+function mostrarNotificacion(mensaje, tipo = "info") {
+  let container = document.getElementById("notificaciones");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "notificaciones";
+    container.style.cssText = `
+      position: fixed;
+      top: 76px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    `;
+    document.body.appendChild(container);
+  }
+
+  const colores = {
+    info: { bg: "#eff6ff", border: "#3b82f6", text: "#1e40af" },
+    success: { bg: "#f0fdf4", border: "#22c55e", text: "#166534" },
+    error: { bg: "#fef2f2", border: "#ef4444", text: "#991b1b" },
+  };
+
+  const color = colores[tipo] || colores.info;
+
+  const notif = document.createElement("div");
+  notif.style.cssText = `
+    background: ${color.bg};
+    border: 1px solid ${color.border};
+    color: ${color.text};
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    pointer-events: auto;
+    animation: slideDown 0.3s ease-out;
+  `;
+  notif.textContent = mensaje;
+
+  if (!document.getElementById("notif-styles")) {
+    const style = document.createElement("style");
+    style.id = "notif-styles";
+    style.textContent = `
+      @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes slideUp {
+        from { opacity: 1; transform: translateY(0); }
+        to { opacity: 0; transform: translateY(-10px); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  container.appendChild(notif);
+
+  setTimeout(() => {
+    notif.style.animation = "slideUp 0.3s ease-out forwards";
+    setTimeout(() => notif.remove(), 300);
+  }, 3000);
+}
+
+// =============================
+// GEOCODIFICAR DIRECCIÓN
 // =============================
 function geocodificarDireccion(texto) {
   const url =
     "https://nominatim.openstreetmap.org/search?format=json&q=" +
-    encodeURIComponent(texto) +
+    encodeURIComponent(texto + ", Sevilla, España") +
     "&limit=1";
 
   return fetch(url, { headers: { "Accept-Language": "es" } })
-    .then((r) => r.json())
+    .then((r) => {
+      if (!r.ok) throw new Error("Error en la búsqueda");
+      return r.json();
+    })
     .then((res) => {
       if (!Array.isArray(res) || res.length === 0) {
         throw new Error("No se ha encontrado esa ubicación");
@@ -266,12 +374,16 @@ function guardarFavoritos() {
 }
 
 function esFavorito(idLocal) {
-  return App.favoritos.has(idLocal);
+  return App.favoritos.has(String(idLocal));
 }
 
 function toggleFavorito(idLocal) {
-  if (App.favoritos.has(idLocal)) App.favoritos.delete(idLocal);
-  else App.favoritos.add(idLocal);
+  const id = String(idLocal);
+  if (App.favoritos.has(id)) {
+    App.favoritos.delete(id);
+  } else {
+    App.favoritos.add(id);
+  }
   guardarFavoritos();
 }
 
@@ -297,6 +409,7 @@ function obtenerEstadoFiltros() {
 
 function aplicarEstadoFiltros(estado) {
   if (!estado) return;
+  
   const setValue = (id, v) => {
     const el = document.getElementById(id);
     if (el) el.value = v ?? "";
@@ -309,16 +422,23 @@ function aplicarEstadoFiltros(estado) {
   setValue("fBarrio", estado.barrio);
   setValue("fOrden", estado.orden || "ninguno");
   setValue("fValoracionMin", estado.valoracionMin || "0");
+  setValue("fTextoLibre", estado.textoLibre);
+  setValue("fUbicacionCliente", estado.ubicacionTexto);
+  setValue("fRadioDistancia", estado.radioDistancia);
 
   const cbAbiertos = document.getElementById("fSoloAbiertos");
   if (cbAbiertos) cbAbiertos.checked = !!estado.soloAbiertos;
 
   const cbMapa = document.getElementById("fSoloEnMapa");
   if (cbMapa) cbMapa.checked = !!estado.soloEnMapa;
+}
 
-  setValue("fTextoLibre", estado.textoLibre);
-  setValue("fUbicacionCliente", estado.ubicacionTexto);
-  setValue("fRadioDistancia", estado.radioDistancia);
+function guardarFiltros() {
+  try {
+    localStorage.setItem(CLAVE_FILTROS, JSON.stringify(obtenerEstadoFiltros()));
+  } catch (e) {
+    console.warn("No se pudieron guardar los filtros:", e);
+  }
 }
 
 // =============================
@@ -327,11 +447,15 @@ function aplicarEstadoFiltros(estado) {
 function rellenarBarrios() {
   App.barriosUnicos.clear();
   App.todosLosLocales.forEach((l) => {
-    if (l.barrio) App.barriosUnicos.add(l.barrio);
+    if (l.barrio && l.barrio.toLowerCase() !== "desconocido") {
+      App.barriosUnicos.add(l.barrio);
+    }
   });
 
   const select = document.getElementById("fBarrio");
   if (!select) return;
+  
+  const valorActual = select.value;
   select.innerHTML = "";
 
   const optAll = document.createElement("option");
@@ -347,6 +471,10 @@ function rellenarBarrios() {
       opt.textContent = barrio;
       select.appendChild(opt);
     });
+
+  if (valorActual && App.barriosUnicos.has(valorActual)) {
+    select.value = valorActual;
+  }
 }
 
 function construirTiposPorCategoria() {
@@ -363,12 +491,15 @@ function rellenarTiposDetalle() {
   const categoria = document.getElementById("fCategoria")?.value || "";
   const selectTipo = document.getElementById("fTipoDetalle");
   if (!selectTipo) return;
+  
   selectTipo.innerHTML = "";
 
   const optAll = document.createElement("option");
   optAll.value = "";
   optAll.textContent = "Todos los tipos";
   selectTipo.appendChild(optAll);
+
+  if (!categoria) return;
 
   const setTipos = App.tiposPorCategoria[categoria] || new Set();
   Array.from(setTipos)
@@ -394,19 +525,19 @@ function actualizarChipsResumen() {
   if (estado.categoria) chips.push(estado.categoria);
   if (estado.tipo_detalle) chips.push(estado.tipo_detalle);
   if (estado.barrio) chips.push(estado.barrio);
-  if (estado.soloAbiertos) chips.push("Abierto ahora");
-  if (estado.soloEnMapa) chips.push("Solo en vista");
-  if (estado.orden === "valoracion_desc") chips.push("Mejor valorados");
-  if (estado.orden === "distancia_asc") chips.push("Más cerca primero");
+  if (estado.soloAbiertos) chips.push("🟢 Abierto");
+  if (estado.soloEnMapa) chips.push("🗺️ Vista actual");
+  if (estado.orden === "valoracion_desc") chips.push("⭐ Mejor valorados");
+  if (estado.orden === "distancia_asc") chips.push("📍 Más cercanos");
   if (parseFloat(estado.valoracionMin || "0") > 0) chips.push(`≥ ${estado.valoracionMin}★`);
-  if (estado.textoLibre) chips.push('Texto: "' + estado.textoLibre + '"');
+  if (estado.textoLibre) chips.push(`"${estado.textoLibre}"`);
 
   cont.innerHTML = "";
 
   if (chips.length === 0) {
     const span = document.createElement("span");
     span.className = "chip-filter";
-    span.textContent = "Sin filtros activos";
+    span.textContent = "Sin filtros";
     cont.appendChild(span);
     actualizarTextoBtnFiltros(0);
     return;
@@ -431,22 +562,23 @@ function actualizarTextoBtnFiltros(numFiltros) {
 // =============================
 // HELPERS PARA DIRECCIÓN
 // =============================
-/** MEJORA: Extraída lógica repetida de dirección a función reutilizable */
 function obtenerDireccionTexto(local) {
   const rawBarrio = (local.barrio || "").trim();
   const rawDireccion = (local.direccion || "").trim();
+  
   const barrio = rawBarrio.toLowerCase() === "desconocido" ? "" : rawBarrio;
 
   let direccion = rawDireccion;
   if (!direccion || direccion.toLowerCase() === "dirección desconocida") {
     if (barrio) {
-      direccion = `Barrio de ${barrio}`;
+      direccion = `${barrio}, Sevilla`;
     } else if (local.lat && local.lng) {
-      direccion = `${local.lat.toFixed(5)}, ${local.lng.toFixed(5)}`;
+      direccion = `${local.lat.toFixed(4)}, ${local.lng.toFixed(4)}`;
     } else {
       direccion = "Sevilla";
     }
   }
+  
   return { barrio, direccion };
 }
 
@@ -454,8 +586,7 @@ function obtenerDireccionTexto(local) {
 // LISTA LATERAL DE LOCALES
 // =============================
 function actualizarListaLocales(lista) {
-  const maxLista = 300;
-  App.localesFiltrados = (lista || []).slice(0, maxLista);
+  App.localesFiltrados = (lista || []).slice(0, MAX_LISTA);
 
   const contenedor = document.getElementById("contenedorListaLocales");
   const contadorLista = document.getElementById("contadorLista");
@@ -465,14 +596,20 @@ function actualizarListaLocales(lista) {
   contenedor.innerHTML = "";
 
   if (!App.localesFiltrados.length) {
-    contenedor.innerHTML =
-      '<div class="lista-empty" role="status">No se han encontrado locales con estos filtros.</div>';
+    contenedor.innerHTML = `
+      <div class="lista-empty" role="status">
+        <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
+        <div>No se encontraron locales con estos filtros.</div>
+        <div style="margin-top: 6px; font-size: 11px;">Prueba a ampliar los criterios de búsqueda.</div>
+      </div>
+    `;
     contadorLista.textContent = "0 locales";
-    actualizarResumenLista("Sin resultados con los filtros actuales");
+    actualizarResumenLista("Sin resultados");
     return;
   }
 
-  contadorLista.textContent = `${App.localesFiltrados.length} ${App.localesFiltrados.length === 1 ? "local" : "locales"}`;
+  const total = App.localesFiltrados.length;
+  contadorLista.textContent = `${total} ${total === 1 ? "local" : "locales"}`;
 
   const fragment = document.createDocumentFragment();
 
@@ -480,10 +617,9 @@ function actualizarListaLocales(lista) {
     const card = document.createElement("div");
     card.className = "card-local";
     card.dataset.id = local.id;
-    // MEJORA: Accesibilidad — navegable por teclado
     card.setAttribute("role", "listitem");
     card.setAttribute("tabindex", "0");
-    card.setAttribute("aria-label", `${local.nombre || "Local sin nombre"}, ${local.categoria || ""}`);
+    card.setAttribute("aria-label", `${local.nombre || "Local"}, ${local.categoria || ""}`);
 
     const categoria = local.categoria || "Sin categoría";
     const tipo = local.tipo_detalle || "";
@@ -495,7 +631,6 @@ function actualizarListaLocales(lista) {
         : null;
     const precio = local.precio || null;
 
-    // MEJORA: escaparHTML en TODOS los datos dinámicos
     card.innerHTML = `
       <div class="card-local-titulo">
         <div class="card-local-nombre">${escaparHTML(local.nombre || "Local sin nombre")}</div>
@@ -516,7 +651,6 @@ function actualizarListaLocales(lista) {
       seleccionarLocalDesdeLista(local.id);
     });
 
-    // MEJORA: Permitir activar con Enter/Space
     card.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
@@ -539,29 +673,42 @@ function seleccionarLocalDesdeLista(idLocal) {
   if (!local) return;
 
   if (local.lat && local.lng) {
-    map.setView([local.lat, local.lng], 18, { animate: true });
+    map.setView([local.lat, local.lng], 17, { animate: true });
   }
 
   const marker = App.markerPorId[idLocal];
   if (marker) {
     resaltarMarkerSeleccionado(marker);
-    if (marker.openPopup) marker.openPopup();
+    setTimeout(() => {
+      if (marker.openPopup) marker.openPopup();
+    }, 300);
   }
 
   abrirPanelDetalle(local);
 
   // Ocultar lista en móvil
-  const listaWrapper = document.getElementById("listaWrapper");
-  if (listaWrapper && !listaWrapper.classList.contains("oculta")) {
-    listaWrapper.classList.add("oculta");
-    setTimeout(() => map.invalidateSize(), 220);
+  if (window.innerWidth <= 1024) {
+    const listaWrapper = document.getElementById("listaWrapper");
+    const btnToggleLista = document.getElementById("btnToggleLista");
+    if (listaWrapper && !listaWrapper.classList.contains("oculta")) {
+      listaWrapper.classList.add("oculta");
+      if (btnToggleLista) {
+        btnToggleLista.classList.remove("lista-visible");
+        btnToggleLista.setAttribute("aria-expanded", "false");
+      }
+      setTimeout(() => map.invalidateSize(), 250);
+    }
   }
 }
 
 function resaltarCardSeleccionada() {
   const cards = document.querySelectorAll(".card-local");
   cards.forEach((card) => {
-    card.classList.toggle("activo", card.dataset.id === String(App.localSeleccionadoId));
+    const isActive = card.dataset.id === String(App.localSeleccionadoId);
+    card.classList.toggle("activo", isActive);
+    if (isActive) {
+      card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   });
 }
 
@@ -571,7 +718,6 @@ function actualizarResumenLista(texto) {
   el.textContent = texto || "Mostrando todos los locales";
 }
 
-/** MEJORA: Cancelación de animación previa para evitar conflictos */
 function resaltarMarkerSeleccionado(marker) {
   // Restaurar icono del marker previo
   if (App.markerSeleccionado && App.markerSeleccionado !== marker) {
@@ -584,7 +730,6 @@ function resaltarMarkerSeleccionado(marker) {
 
   App.markerSeleccionado = marker;
 
-  // Asegurar que el marker tiene _localData
   if (!marker._localData) {
     const id = Object.keys(App.markerPorId).find(
       (key) => App.markerPorId[key] === marker
@@ -597,16 +742,17 @@ function resaltarMarkerSeleccionado(marker) {
 
   marker.setIcon(iconoSeleccionado);
 
-  // MEJORA: Cancelar animación anterior antes de iniciar nueva
+  // Cancelar animación anterior
   if (App.animacionActiva) {
     clearInterval(App.animacionActiva);
     App.animacionActiva = null;
   }
 
+  // Animación de rebote
   const originalLatLng = marker.getLatLng();
   let step = 0;
-  const maxStep = 10;
-  const offset = 0.00015;
+  const maxStep = 8;
+  const offset = 0.00012;
 
   App.animacionActiva = setInterval(() => {
     step++;
@@ -617,7 +763,7 @@ function resaltarMarkerSeleccionado(marker) {
       clearInterval(App.animacionActiva);
       App.animacionActiva = null;
     }
-  }, 25);
+  }, 30);
 }
 
 // =============================
@@ -635,26 +781,33 @@ function crearMarkerDesdeLocal(local) {
   const nombre = escaparHTML(local.nombre || "Local sin nombre");
   const lat = local.lat;
   const lng = local.lng;
-  const query = encodeURIComponent((local.nombre || "") + " Sevilla");
-  const urlMaps =
-    "https://www.google.com/maps/search/?api=1&query=" + lat + "," + lng +
-    "&query_place_id=" + query;
+  const urlMaps = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
 
   const tieneValoracion = typeof local.valoracion === "number" && local.valoracion > 0;
   const valoracionText = tieneValoracion
     ? "⭐ " + local.valoracion.toFixed(1) + "/5"
-    : "Sin valoración";
-  const recomendadoText = local.recomendado ? "Recomendado" : "";
+    : "";
 
-  // MEJORA: HTML del popup sanitizado
+  const abiertoAhora = estaAbiertoAhora(local);
+  const estadoText = abiertoAhora 
+    ? '<span style="color:#059669;font-weight:600;">Abierto</span>' 
+    : '<span style="color:#dc2626;font-weight:600;">Cerrado</span>';
+
   const popupHtml = `
-    <b>${nombre}</b><br><br>
-    ${escaparHTML(valoracionText)}${recomendadoText ? " · " + escaparHTML(recomendadoText) : ""}<br><br>
-    <a href="${escaparHTML(urlMaps)}" target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a><br><br>
-    <button class="btn-ver-detalle" data-id="${escaparHTML(String(local.id))}">Ver detalle</button>
+    <div style="min-width:180px;">
+      <strong style="font-size:14px;">${nombre}</strong><br>
+      <span style="font-size:12px;color:#666;">${escaparHTML(local.categoria || "")}${local.tipo_detalle ? " · " + escaparHTML(local.tipo_detalle) : ""}</span><br>
+      ${valoracionText ? `<span style="font-size:12px;">${valoracionText}</span><br>` : ""}
+      <span style="font-size:12px;">${estadoText}</span><br>
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+        <a href="${escaparHTML(urlMaps)}" target="_blank" rel="noopener noreferrer" 
+           style="font-size:11px;color:#2563eb;text-decoration:none;">📍 Google Maps</a>
+        <button class="btn-ver-detalle" data-id="${escaparHTML(String(local.id))}">Ver detalle</button>
+      </div>
+    </div>
   `;
 
-  marker.bindPopup(popupHtml);
+  marker.bindPopup(popupHtml, { maxWidth: 280 });
 
   App.markerPorId[local.id] = marker;
   marker._localData = local;
@@ -667,16 +820,17 @@ function crearMarkerDesdeLocal(local) {
 // =============================
 function abrirPanelDetalle(local) {
   App.ultimoDetalleLocal = local;
+  
   const panel = document.getElementById("panelDetalle");
   const titulo = document.getElementById("detalleNombre");
   const body = document.getElementById("panelDetalleBody");
   const btnFav = document.getElementById("btnFavorito");
+  
   if (!panel || !titulo || !body || !btnFav) return;
 
-  // MEJORA: escaparHTML en título
   titulo.textContent = local.nombre || "Local";
 
-  const precioText = local.precio ? "★".repeat(local.precio) : "Sin datos";
+  const precioText = local.precio ? "€".repeat(local.precio) : "Sin datos";
   const tieneValoracion = typeof local.valoracion === "number" && local.valoracion > 0;
   const valoracionText = tieneValoracion
     ? "⭐ " + local.valoracion.toFixed(1) + "/5"
@@ -688,7 +842,6 @@ function abrirPanelDetalle(local) {
   const foto = local.foto || "";
   const { barrio, direccion } = obtenerDireccionTexto(local);
 
-  // MEJORA: Todo el contenido dinámico pasa por escaparHTML
   body.innerHTML = `
     <div class="detalle-header">
       <div class="detalle-titulo-linea">
@@ -705,19 +858,19 @@ function abrirPanelDetalle(local) {
 
     <div class="detalle-info-principal">
       <p class="detalle-linea">
-        <span class="detalle-label">Dirección</span>
+        <span class="detalle-label">📍 Dirección</span>
         <span class="detalle-valor">${escaparHTML(direccion)}</span>
       </p>
       <p class="detalle-linea">
-        <span class="detalle-label">Barrio</span>
+        <span class="detalle-label">🏘️ Barrio</span>
         <span class="detalle-valor">${escaparHTML(barrio || "Sevilla")}</span>
       </p>
       <p class="detalle-linea">
-        <span class="detalle-label">Precio</span>
+        <span class="detalle-label">💰 Precio</span>
         <span class="detalle-valor">${escaparHTML(precioText)}</span>
       </p>
       <p class="detalle-linea">
-        <span class="detalle-label">Estado</span>
+        <span class="detalle-label">🕐 Estado</span>
         <span class="detalle-valor ${abiertoAhora ? "estado-abierto" : "estado-cerrado"}">
           ${abiertoAhora ? "Abierto ahora" : "Cerrado ahora"}
         </span>
@@ -726,17 +879,17 @@ function abrirPanelDetalle(local) {
 
     ${desc ? `
       <div class="detalle-bloque">
-        <p class="detalle-label">Descripción</p>
+        <p class="detalle-label">📝 Descripción</p>
         <p class="detalle-descripcion">${escaparHTML(desc)}</p>
       </div>` : ""}
 
     ${(redes.web || redes.ig || redes.tiktok) ? `
-      <div class="detalle-bloque detalle-redes">
-        <p class="detalle-label">Presencia online</p>
+      <div class="detalle-bloque">
+        <p class="detalle-label">🌐 Redes sociales</p>
         <div class="detalle-redes-links">
-          ${redes.web ? `<a href="${escaparHTML(redes.web)}" target="_blank" rel="noopener noreferrer">Web</a>` : ""}
-          ${redes.ig ? `<a href="${escaparHTML(redes.ig)}" target="_blank" rel="noopener noreferrer">Instagram</a>` : ""}
-          ${redes.tiktok ? `<a href="${escaparHTML(redes.tiktok)}" target="_blank" rel="noopener noreferrer">TikTok</a>` : ""}
+          ${redes.web ? `<a href="${escaparHTML(redes.web)}" target="_blank" rel="noopener noreferrer">🌐 Web</a>` : ""}
+          ${redes.ig ? `<a href="${escaparHTML(redes.ig)}" target="_blank" rel="noopener noreferrer">📷 Instagram</a>` : ""}
+          ${redes.tiktok ? `<a href="${escaparHTML(redes.tiktok)}" target="_blank" rel="noopener noreferrer">🎵 TikTok</a>` : ""}
         </div>
       </div>` : ""}
 
@@ -744,40 +897,69 @@ function abrirPanelDetalle(local) {
       <a class="detalle-boton-maps"
          href="https://www.google.com/maps/search/?api=1&query=${local.lat},${local.lng}"
          target="_blank" rel="noopener noreferrer">
-        Ver ruta en Google Maps
+        🗺️ Abrir en Google Maps
       </a>
     </div>
 
     ${foto ? `<div class="detalle-foto">
                 <img src="${escaparHTML(foto)}"
-                     alt="${escaparHTML(local.nombre || "Foto del local")}"
+                     alt="Foto de ${escaparHTML(local.nombre || "local")}"
                      loading="lazy"
-                     onerror="this.style.display='none'">
+                     onerror="this.parentElement.style.display='none'">
               </div>` : ""}
   `;
 
-  // Favorito
-  if (esFavorito(local.id)) {
-    btnFav.classList.add("activo");
-    btnFav.textContent = "♥";
-    btnFav.setAttribute("aria-label", "Quitar de favoritos");
-  } else {
-    btnFav.classList.remove("activo");
-    btnFav.textContent = "♡";
-    btnFav.setAttribute("aria-label", "Marcar como favorito");
-  }
+  // Actualizar botón favorito
+  actualizarBotonFavorito(btnFav, local.id);
 
-  // MEJORA: aria-hidden para accesibilidad
+  // Mostrar panel
   panel.classList.add("abierto");
   panel.setAttribute("aria-hidden", "false");
+
+  // Mostrar overlay en móvil
+  const overlay = document.getElementById("panelOverlay");
+  if (overlay && window.innerWidth <= 768) {
+    overlay.classList.add("visible");
+    overlay.setAttribute("aria-hidden", "false");
+  }
+
+  // Focus para accesibilidad
+  setTimeout(() => {
+    const btnCerrar = document.getElementById("btnCerrarDetalle");
+    if (btnCerrar) btnCerrar.focus();
+  }, 300);
+}
+
+function actualizarBotonFavorito(btn, idLocal) {
+  if (!btn) return;
+  
+  if (esFavorito(idLocal)) {
+    btn.classList.add("activo");
+    btn.textContent = "♥";
+    btn.setAttribute("aria-label", "Quitar de favoritos");
+    btn.title = "Quitar de favoritos";
+  } else {
+    btn.classList.remove("activo");
+    btn.textContent = "♡";
+    btn.setAttribute("aria-label", "Añadir a favoritos");
+    btn.title = "Añadir a favoritos";
+  }
 }
 
 function cerrarPanelDetalle() {
   const panel = document.getElementById("panelDetalle");
+  const overlay = document.getElementById("panelOverlay");
+  
   if (panel) {
     panel.classList.remove("abierto");
     panel.setAttribute("aria-hidden", "true");
   }
+  
+  if (overlay) {
+    overlay.classList.remove("visible");
+    overlay.setAttribute("aria-hidden", "true");
+  }
+  
   App.ultimoDetalleLocal = null;
 }
 
@@ -787,10 +969,10 @@ function cerrarPanelDetalle() {
 function pintarMapa(listaLocales, hacerFitBounds) {
   const cont = document.getElementById("contadorResultados");
   if (cont) {
-    cont.textContent =
-      !listaLocales || listaLocales.length === 0
-        ? "No hay locales con los filtros actuales"
-        : "Mostrando " + listaLocales.length + " locales";
+    const num = listaLocales?.length || 0;
+    cont.textContent = num === 0
+      ? "No hay locales con los filtros actuales"
+      : `Mostrando ${num} ${num === 1 ? "local" : "locales"}`;
   }
 
   clusterGroup.clearLayers();
@@ -798,34 +980,36 @@ function pintarMapa(listaLocales, hacerFitBounds) {
   App.markerSeleccionado = null;
 
   const markers = [];
-  listaLocales.forEach((local) => {
+  (listaLocales || []).forEach((local) => {
     if (!local.lat || !local.lng) return;
+    if (!boundsSevilla.contains(L.latLng(local.lat, local.lng))) return;
     markers.push(crearMarkerDesdeLocal(local));
   });
 
-  clusterGroup.addLayers(markers);
-
-  const markersEnSevilla = markers.filter((m) => boundsSevilla.contains(m.getLatLng()));
-
-  if (hacerFitBounds && markersEnSevilla.length > 0) {
-    map.fitBounds(L.featureGroup(markersEnSevilla).getBounds(), { padding: [40, 40] });
-  } else if (App.primerPintado && markersEnSevilla.length > 0) {
-    App.primerPintado = false;
-    map.fitBounds(L.featureGroup(markersEnSevilla).getBounds(), { padding: [40, 40] });
-  } else if (App.primerPintado) {
-    App.primerPintado = false;
-    map.setView([37.3891, -5.9845], 13);
+  if (markers.length > 0) {
+    clusterGroup.addLayers(markers);
   }
 
-  // MEJORA: NO se registra evento aquí — se registra UNA sola vez en initEventos()
+  if (hacerFitBounds && markers.length > 0) {
+    const group = L.featureGroup(markers);
+    map.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 16 });
+  } else if (App.primerPintado) {
+    App.primerPintado = false;
+    if (markers.length > 0) {
+      const group = L.featureGroup(markers);
+      map.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 15 });
+    } else {
+      map.setView(SEVILLA_CENTER, SEVILLA_ZOOM);
+    }
+  }
+
   actualizarListaLocales(listaLocales);
-  actualizarResumenLista();
 }
 
 // =============================
 // APLICAR FILTROS
 // =============================
-function aplicarFiltros(hacerFitBounds) {
+function aplicarFiltros(hacerFitBounds = false) {
   const categoria = document.getElementById("fCategoria")?.value || "";
   const tipo_detalle = document.getElementById("fTipoDetalle")?.value || "";
   const precioMin = parseInt(document.getElementById("fPrecioMin")?.value || "1", 10);
@@ -839,8 +1023,6 @@ function aplicarFiltros(hacerFitBounds) {
   const valoracionMin = parseFloat(document.getElementById("fValoracionMin")?.value || "0");
 
   const bounds = soloEnMapa ? map.getBounds() : null;
-
-  // MEJORA: Fecha compartida para no crear múltiples Date()
   const ahora = new Date();
 
   App.localesFiltrados = App.todosLosLocales.filter((local) => {
@@ -859,7 +1041,6 @@ function aplicarFiltros(hacerFitBounds) {
       if (v < valoracionMin) return false;
     }
 
-    // MEJORA: Usa campo pre-calculado _busqueda
     if (textoLibre) {
       if (!local._busqueda || !local._busqueda.includes(textoLibre)) return false;
     }
@@ -874,6 +1055,7 @@ function aplicarFiltros(hacerFitBounds) {
     }
 
     if (soloEnMapa && bounds) {
+      if (!local.lat || !local.lng) return false;
       if (!bounds.contains(L.latLng(local.lat, local.lng))) return false;
     }
 
@@ -894,26 +1076,27 @@ function aplicarFiltros(hacerFitBounds) {
   }
 
   // Guardar filtros
-  try {
-    localStorage.setItem(CLAVE_FILTROS, JSON.stringify(obtenerEstadoFiltros()));
-  } catch (e) {
-    console.warn("No se pudieron guardar los filtros:", e);
-  }
+  guardarFiltros();
 
+  // Actualizar UI
   actualizarChipsResumen();
   pintarMapa(App.localesFiltrados, hacerFitBounds);
 
-  // Resumen
+  // Actualizar resumen
   const resumenEl = document.getElementById("textoResumenLista");
   if (resumenEl) {
     const count = App.localesFiltrados.length;
+    let texto = `Mostrando ${count} ${count === 1 ? "local" : "locales"}`;
+    
     if (soloEnMapa) {
-      resumenEl.textContent = `Mostrando ${count} locales (filtrando por vista actual)`;
+      texto += " en la vista actual";
     } else if (orden === "distancia_asc" && App.puntoReferencia) {
-      resumenEl.textContent = `Mostrando ${count} locales ordenados por distancia`;
-    } else {
-      resumenEl.textContent = `Mostrando ${count} locales`;
+      texto += " por cercanía";
+    } else if (orden === "valoracion_desc") {
+      texto += " por valoración";
     }
+    
+    resumenEl.textContent = texto;
   }
 }
 
@@ -921,18 +1104,30 @@ function aplicarFiltros(hacerFitBounds) {
 // CARGA DE LOCALES
 // =============================
 function cargarLocales() {
+  App.cargando = true;
+  
+  const contenedor = document.getElementById("contenedorListaLocales");
+  if (contenedor) {
+    contenedor.innerHTML = `
+      <div class="lista-empty loading" role="status">
+        <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
+        <div>Cargando locales...</div>
+      </div>
+    `;
+  }
+
   fetch("locales.json")
-    .then((r) => r.json())
+    .then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
     .then((locales) => {
       if (!Array.isArray(locales)) {
         throw new Error("locales.json debe ser un array []");
       }
 
       App.todosLosLocales = locales.map((l, idx) => {
-        // MEJORA: Normalizar ID siempre a string
         l.id = String(l.id ?? idx + 1);
-
-        // MEJORA: Validar coordenadas
         l.lat = parseFloat(l.lat) || null;
         l.lng = parseFloat(l.lng) || null;
 
@@ -943,9 +1138,9 @@ function cargarLocales() {
         if (!("barrio" in l)) l.barrio = "";
         if (!("direccion" in l)) l.direccion = "";
 
-        // MEJORA: Pre-calcular campo de búsqueda normalizado
+        // Pre-calcular campo de búsqueda normalizado
         l._busqueda = normalizarTexto(
-          `${l.nombre || ""} ${l.categoria || ""} ${l.tipo_detalle || ""} ${l.barrio || ""}`
+          `${l.nombre || ""} ${l.categoria || ""} ${l.tipo_detalle || ""} ${l.barrio || ""} ${l.descripcion || ""}`
         );
 
         return l;
@@ -968,6 +1163,7 @@ function cargarLocales() {
           }
         }
 
+        // En móvil, desactivar "solo en mapa" por defecto
         if (L.Browser.mobile) {
           const cbMapa = document.getElementById("fSoloEnMapa");
           if (cbMapa) cbMapa.checked = false;
@@ -976,13 +1172,31 @@ function cargarLocales() {
         console.warn("No se pudieron leer filtros guardados:", e);
       }
 
+      App.cargando = false;
       actualizarChipsResumen();
       aplicarFiltros(true);
+
+      mostrarNotificacion(`${App.todosLosLocales.length} locales cargados`, "success");
     })
     .catch((e) => {
       console.error("Error cargando locales:", e);
+      App.cargando = false;
+      
       const cont = document.getElementById("contadorResultados");
-      if (cont) cont.textContent = "Error al cargar los datos. Revisa la consola.";
+      if (cont) cont.textContent = "Error al cargar los datos";
+
+      if (contenedor) {
+        contenedor.innerHTML = `
+          <div class="lista-empty" role="alert">
+            <div style="font-size: 24px; margin-bottom: 8px;">❌</div>
+            <div>Error al cargar los locales</div>
+            <div style="margin-top: 6px; font-size: 11px;">${escaparHTML(e.message)}</div>
+            <button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; border-radius: 999px; border: none; background: #2563eb; color: white; cursor: pointer;">Reintentar</button>
+          </div>
+        `;
+      }
+
+      mostrarNotificacion("Error al cargar los locales", "error");
     });
 }
 
@@ -994,7 +1208,7 @@ function habilitarSwipeCerrar(elemento, onCerrar) {
 
   let touchStartY = null;
   let touchCurrentY = null;
-  const desplazamientoMinimo = 60;
+  const desplazamientoMinimo = 80;
 
   elemento.addEventListener("touchstart", function (e) {
     if (e.touches.length !== 1) return;
@@ -1022,10 +1236,45 @@ function habilitarSwipeCerrar(elemento, onCerrar) {
 }
 
 // =============================
+// CERRAR PANELES
+// =============================
+function cerrarPanelBusqueda() {
+  const panel = document.getElementById("panelBusqueda");
+  const btn = document.getElementById("btnToggleBusqueda");
+  const overlay = document.getElementById("panelOverlay");
+  
+  if (panel) panel.style.display = "none";
+  if (btn) btn.setAttribute("aria-expanded", "false");
+  if (overlay && window.innerWidth <= 768) {
+    overlay.classList.remove("visible");
+  }
+}
+
+function cerrarPanelFiltros() {
+  const panel = document.getElementById("panelFiltros");
+  const btn = document.getElementById("btnToggleFiltros");
+  const overlay = document.getElementById("panelOverlay");
+  
+  if (panel) panel.style.display = "none";
+  if (btn) btn.setAttribute("aria-expanded", "false");
+  if (overlay && window.innerWidth <= 768) {
+    overlay.classList.remove("visible");
+  }
+}
+
+function cerrarTodosLosPaneles() {
+  cerrarPanelBusqueda();
+  cerrarPanelFiltros();
+  cerrarPanelDetalle();
+}
+
+// =============================
 // INICIALIZACIÓN DE EVENTOS
 // =============================
-/** MEJORA: Todos los eventos organizados en una sola función */
 function initEventos() {
+  if (App.eventosRegistrados) return;
+  App.eventosRegistrados = true;
+
   const btnToggleBusqueda = document.getElementById("btnToggleBusqueda");
   const btnToggleFiltros = document.getElementById("btnToggleFiltros");
   const panelBusqueda = document.getElementById("panelBusqueda");
@@ -1033,21 +1282,56 @@ function initEventos() {
   const btnRecentraMi = document.getElementById("btnRecentraMi");
   const listaWrapper = document.getElementById("listaWrapper");
   const btnToggleLista = document.getElementById("btnToggleLista");
+  const panelOverlay = document.getElementById("panelOverlay");
 
-  // --- Toggle paneles ---
+  // --- Toggle panel de búsqueda ---
   if (btnToggleBusqueda && panelBusqueda) {
     btnToggleBusqueda.addEventListener("click", () => {
       const abierto = panelBusqueda.style.display === "block";
-      panelBusqueda.style.display = abierto ? "none" : "block";
-      btnToggleBusqueda.setAttribute("aria-expanded", !abierto);
+      
+      if (abierto) {
+        cerrarPanelBusqueda();
+      } else {
+        cerrarPanelFiltros();
+        panelBusqueda.style.display = "block";
+        btnToggleBusqueda.setAttribute("aria-expanded", "true");
+        
+        if (window.innerWidth <= 768 && panelOverlay) {
+          panelOverlay.classList.add("visible");
+        }
+        
+        // Focus en el primer input
+        setTimeout(() => {
+          const input = document.getElementById("fTextoLibre");
+          if (input) input.focus();
+        }, 100);
+      }
     });
   }
 
+  // --- Toggle panel de filtros ---
   if (btnToggleFiltros && panelFiltros) {
     btnToggleFiltros.addEventListener("click", () => {
       const abierto = panelFiltros.style.display === "block";
-      panelFiltros.style.display = abierto ? "none" : "block";
-      btnToggleFiltros.setAttribute("aria-expanded", !abierto);
+      
+      if (abierto) {
+        cerrarPanelFiltros();
+      } else {
+        cerrarPanelBusqueda();
+        panelFiltros.style.display = "block";
+        btnToggleFiltros.setAttribute("aria-expanded", "true");
+        
+        if (window.innerWidth <= 768 && panelOverlay) {
+          panelOverlay.classList.add("visible");
+        }
+      }
+    });
+  }
+
+  // --- Overlay ---
+  if (panelOverlay) {
+    panelOverlay.addEventListener("click", () => {
+      cerrarTodosLosPaneles();
     });
   }
 
@@ -1057,22 +1341,27 @@ function initEventos() {
     btnBuscarRapido.addEventListener("click", (e) => {
       e.preventDefault();
       const txtUbic = document.getElementById("fUbicacionCliente")?.value.trim();
+      
       if (txtUbic) {
+        mostrarNotificacion("Buscando ubicación...", "info");
         geocodificarDireccion(txtUbic)
           .then((coords) => {
             App.puntoReferencia = coords;
             map.setView([coords.lat, coords.lng], 15);
             aplicarFiltros(true);
+            cerrarPanelBusqueda();
+            mostrarNotificacion("Ubicación encontrada", "success");
           })
           .catch((err) => {
             console.warn(err);
-            alert("No hemos encontrado esa ubicación. Prueba con otra dirección o barrio.");
+            mostrarNotificacion("No encontramos esa ubicación", "error");
             App.puntoReferencia = null;
             aplicarFiltros(true);
           });
       } else {
         App.puntoReferencia = null;
         aplicarFiltros(true);
+        cerrarPanelBusqueda();
       }
     });
   }
@@ -1083,18 +1372,22 @@ function initEventos() {
     btnCerca.addEventListener("click", (e) => {
       e.preventDefault();
       buscarCercaDeMi();
+      cerrarPanelBusqueda();
     });
   }
 
-  // --- Aplicar / Quitar filtros ---
+  // --- Aplicar filtros ---
   const btnAplicar = document.getElementById("btnAplicarFiltros");
   if (btnAplicar) {
     btnAplicar.addEventListener("click", (e) => {
       e.preventDefault();
       aplicarFiltros(true);
+      cerrarPanelFiltros();
+      mostrarNotificacion("Filtros aplicados", "success");
     });
   }
 
+  // --- Quitar filtros ---
   const btnQuitar = document.getElementById("btnQuitarFiltros");
   if (btnQuitar) {
     btnQuitar.addEventListener("click", (e) => {
@@ -1104,23 +1397,28 @@ function initEventos() {
       document.getElementById("fTipoDetalle").value = "";
       document.getElementById("fPrecioMin").value = "1";
       document.getElementById("fPrecioMax").value = "3";
+      
       const sb = document.getElementById("fBarrio");
       if (sb) sb.value = "";
+      
       document.getElementById("fSoloAbiertos").checked = false;
       document.getElementById("fSoloEnMapa").checked = false;
       document.getElementById("fOrden").value = "ninguno";
+      
       const vm = document.getElementById("fValoracionMin");
       if (vm) vm.value = "0";
+      
       const tLibre = document.getElementById("fTextoLibre");
       if (tLibre) tLibre.value = "";
+      
       const ubi = document.getElementById("fUbicacionCliente");
       if (ubi) ubi.value = "";
+      
       const rd = document.getElementById("fRadioDistancia");
       if (rd) rd.value = "";
 
       App.puntoReferencia = null;
 
-      // MEJORA: Resetear tipos de detalle al quitar filtros
       rellenarTiposDetalle();
 
       try {
@@ -1132,6 +1430,8 @@ function initEventos() {
       App.localesFiltrados = App.todosLosLocales;
       actualizarChipsResumen();
       aplicarFiltros(true);
+      
+      mostrarNotificacion("Filtros eliminados", "info");
     });
   }
 
@@ -1149,20 +1449,10 @@ function initEventos() {
     btnCerrarDetalle.addEventListener("click", () => cerrarPanelDetalle());
   }
 
-  // MEJORA: Cerrar con Escape
+  // --- Cerrar con Escape ---
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      cerrarPanelDetalle();
-
-      // También cerrar paneles de búsqueda/filtros si están abiertos
-      if (panelBusqueda && panelBusqueda.style.display === "block") {
-        panelBusqueda.style.display = "none";
-        btnToggleBusqueda?.setAttribute("aria-expanded", "false");
-      }
-      if (panelFiltros && panelFiltros.style.display === "block") {
-        panelFiltros.style.display = "none";
-        btnToggleFiltros?.setAttribute("aria-expanded", "false");
-      }
+      cerrarTodosLosPaneles();
     }
   });
 
@@ -1172,29 +1462,26 @@ function initEventos() {
     btnFavorito.addEventListener("click", () => {
       if (!App.ultimoDetalleLocal) return;
       toggleFavorito(App.ultimoDetalleLocal.id);
-
-      if (esFavorito(App.ultimoDetalleLocal.id)) {
-        btnFavorito.classList.add("activo");
-        btnFavorito.textContent = "♥";
-        btnFavorito.setAttribute("aria-label", "Quitar de favoritos");
-      } else {
-        btnFavorito.classList.remove("activo");
-        btnFavorito.textContent = "♡";
-        btnFavorito.setAttribute("aria-label", "Marcar como favorito");
-      }
+      actualizarBotonFavorito(btnFavorito, App.ultimoDetalleLocal.id);
+      
+      const esFav = esFavorito(App.ultimoDetalleLocal.id);
+      mostrarNotificacion(
+        esFav ? "Añadido a favoritos ♥" : "Eliminado de favoritos",
+        esFav ? "success" : "info"
+      );
     });
   }
 
-  // --- Recentrar ---
-  map.on("moveend", () => {
+  // --- Recentrar en mí ---
+  map.on("moveend", debounce(() => {
     if (App.ubicacionUsuario && btnRecentraMi) {
       const d = map.distance(
         L.latLng(App.ubicacionUsuario.lat, App.ubicacionUsuario.lng),
         map.getCenter()
       );
-      btnRecentraMi.style.display = d > 800 ? "block" : "none";
+      btnRecentraMi.style.display = d > 500 ? "block" : "none";
     }
-  });
+  }, 200));
 
   if (btnRecentraMi) {
     btnRecentraMi.addEventListener("click", (e) => {
@@ -1205,11 +1492,17 @@ function initEventos() {
 
   // --- Toggle lista ---
   if (btnToggleLista && listaWrapper) {
+    // Estado inicial: lista visible
+    listaWrapper.classList.remove("oculta");
+    btnToggleLista.classList.add("lista-visible");
+    btnToggleLista.setAttribute("aria-expanded", "true");
+
     btnToggleLista.addEventListener("click", () => {
       const seOculta = !listaWrapper.classList.contains("oculta");
       listaWrapper.classList.toggle("oculta");
+      btnToggleLista.classList.toggle("lista-visible", !seOculta);
       btnToggleLista.setAttribute("aria-expanded", !seOculta);
-      setTimeout(() => map.invalidateSize(), 220);
+      setTimeout(() => map.invalidateSize(), 250);
     });
   }
 
@@ -1217,8 +1510,11 @@ function initEventos() {
   habilitarSwipeCerrar(listaWrapper, () => {
     if (!listaWrapper.classList.contains("oculta")) {
       listaWrapper.classList.add("oculta");
-      btnToggleLista?.setAttribute("aria-expanded", "false");
-      setTimeout(() => map.invalidateSize(), 220);
+      if (btnToggleLista) {
+        btnToggleLista.classList.remove("lista-visible");
+        btnToggleLista.setAttribute("aria-expanded", "false");
+      }
+      setTimeout(() => map.invalidateSize(), 250);
     }
   });
 
@@ -1226,35 +1522,57 @@ function initEventos() {
     cerrarPanelDetalle();
   });
 
-  // MEJORA: Registrar popupopen UNA sola vez aquí (antes estaba en pintarMapa → memory leak)
+  habilitarSwipeCerrar(panelBusqueda, () => {
+    cerrarPanelBusqueda();
+  });
+
+  habilitarSwipeCerrar(panelFiltros, () => {
+    cerrarPanelFiltros();
+  });
+
+  // --- Popup del cluster ---
   clusterGroup.on("popupopen", function (e) {
     const popupNode = e.popup.getElement();
     if (!popupNode) return;
+    
     const btn = popupNode.querySelector(".btn-ver-detalle");
     if (!btn) return;
+    
+    // Evitar múltiples listeners
+    if (btn.dataset.listenerAdded) return;
+    btn.dataset.listenerAdded = "true";
+    
     btn.addEventListener("click", function () {
       const id = this.getAttribute("data-id");
       const local = App.todosLosLocales.find((l) => String(l.id) === String(id));
+      
       if (local) {
         App.localSeleccionadoId = local.id;
         resaltarCardSeleccionada();
+        
         const marker = App.markerPorId[local.id];
         if (marker) {
           resaltarMarkerSeleccionado(marker);
-          if (local.lat && local.lng) {
-            map.setView([local.lat, local.lng], 18, { animate: true });
-          }
         }
+        
         abrirPanelDetalle(local);
+        e.popup.close();
       }
     });
   });
+
+  // --- Redimensionar mapa al cambiar tamaño de ventana ---
+  window.addEventListener("resize", debounce(() => {
+    map.invalidateSize();
+  }, 200));
 }
 
 // =============================
 // ARRANQUE
 // =============================
 document.addEventListener("DOMContentLoaded", function () {
+  console.log("🗺️ Mapa Comercio Local Sevilla v2.0");
+  
   cargarFavoritosGuardados();
   initEventos();
   localizarUsuarioSimple();
